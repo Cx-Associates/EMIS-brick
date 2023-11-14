@@ -10,6 +10,9 @@ project = Project(
     time_frame=('past week'),
 )
 
+graph_path = 'src/brick_models/msl.ttl'
+project.set_metadata(graph_path)
+
 modelset = EnergyModelset(
     project,
     models=[
@@ -26,17 +29,17 @@ modelset = EnergyModelset(
 # mass flow, knowing that the system is set to maintain dP setpoint and radiator valves are opening and closing to
 # raise/drop system pressure.
 
-modelset.heating_system.set(
-    predict=['boilers', 'pumps', 'deltaT'],
+modelset.heating_system.train(
+    predict=['boilers', 'pumps', 'dT'],
     functionOf=['TOWT']
 )
 
-modelset.chw_system.set(
+modelset.chw_system.train(
     predict=[''],
     functionOf=['TOWT', 'occupancy']
 )
 
-modelset.chiller.set(
+modelset.chiller.train(
     ['chiller_power_meter'],
     functionOf=['TOWT']
 )

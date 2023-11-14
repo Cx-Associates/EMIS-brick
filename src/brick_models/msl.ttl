@@ -1,0 +1,144 @@
+@prefix bldg: <https://cxa-brick.org/main_street_landing#> .
+@prefix ref: <https://brickschema.org/schema/Brick/ref#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix unit: <http://qudt.org/vocab/unit/> .
+
+#Chilled water system
+bldg:database   a   ref:Database ;
+    rdfs:label  "ACE IoT Cloud Database" ;
+    bldg:connstring "https://manager.aceiot.cloud/api/points/cxa/cxa_main_st_landing/" ;
+.
+
+# Chiller and sensors
+## timeseries first
+bldg:chiller_supply_water_temp_sensor  a  brick:Temperature_Sensor ;
+    brick:hasUnit unit:DEG_F ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/analogInput/18" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+bldg:chiller_return_water_temp_sensor  a  brick:Temperature_Sensor ;
+    brick:hasUnit unit:DEG_F ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/analogInput/19" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+bldg:chiller_status  a  brick:Status  ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/binaryOutput/5" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+bldg:chiller_power_meter  a  brick:Power_Sensor  ;
+    brick:hasUnit   unit:KiloW ;
+    ref:hasExternalReference [ a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/analogValue/11" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+## remaining modeling
+bldg:chiller  a  brick:Chiller ;
+    brick:hasInputSubstance  bldg:chiller_return_water ;
+    brick:hasOutputSubstance  bldg:chiller_supply_water ;
+    brick:isMeteredBy  bldg:chiller_power_meter ;
+    brick:isMeasuredBy  bldg:chiller_status .
+
+bldg:chilled_water  a  brick:Chilled_Water  ;
+    brick:hasPart bldg:chiller_supply_water ;
+    brick:hasPart bldg:chiller_return_water .
+
+bldg:chilled_hx_supply_water  a  brick:Chilled_Water ;
+    brick:isPartOf bldg:chilled_water .
+
+bldg:chilled_hx_return_water  a  brick:Chilled_Water ;
+    brick:isPartOf bldg:chilled_water .
+
+bldg:hx  a  brick:Heat_Exchanger  ;
+     brick:hasInputSubstance bldg:chilled_hx_return_water ;
+     brick:hasOutputSubstance bldg:chilled_hx_supply_water .
+
+bldg:v3  a  brick:Valve  ;
+     brick:hasInputSubstance bldg:chilled_water ;
+     brick:hasOutputSubstance bldg:chilled_water ;
+     brick:feeds bldg:hx ;
+     brick:feeds bldg:chiller_supply_water . #this is something of a deviation; reconsider
+
+# chilled water system pumps
+## timeseries
+bldg:p2a_status  a  brick:Status ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/binaryOutput/12" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+bldg:p2a_speed_sensor  a  brick:Speed_Sensor ;
+    brick:hasUnit unit:PERCENT ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/analogOutput/4" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+bldg:p2b_status  a  brick:Status ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/binaryOutput/13" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+bldg:p2b_speed_sensor  a  brick:Speed_Sensor ;
+    brick:hasUnit unit:PERCENT ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/analogOutput/4" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+bldg:p3a_status  a  brick:Status ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/binaryOutput/6" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+bldg:p3b_status  a  brick:Status ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId   "2404:7-240407/binaryOutput/7" ;
+        ref:storedAt  bldg:database ;
+    ] .
+
+## remaining mapping
+
+bldg:p2a  a  brick:Pump  ;
+      brick:hasInputSubstance bldg:chilled_water ;
+      brick:hasOutputSubstance bldg:chilled_water ;
+      brick:feeds bldg:v3 .
+
+bldg:p2b  a  brick:Pump  ;
+      brick:hasInputSubstance bldg:chilled_water ;
+      brick:hasOutputSubstance bldg:chilled_water ;
+      brick:feeds bldg:v3 .
+
+bldg:p3a  a  brick:Pump  ;
+      brick:hasInputSubstance bldg:chilled_water ;
+      brick:hasOutputSubstance bldg:chilled_water ;
+      brick:feeds bldg:chiller .
+
+bldg:p3b  a  brick:Pump  ;
+      brick:hasInputSubstance bldg:chilled_water ;
+      brick:hasOutputSubstance bldg:chilled_water ;
+      brick:feeds bldg:chiller .
+
+bldg:chilled_water_system a brick:Chilled_Water_System ;
+    brick:hasInputSubstance bldg:chilled_water_system_return_water ;
+    brick:hasOutputSubstance bldg:chilled_water_system_supply_water ;
+    brick:hasPart bldg:chiller,
+        bldg:p2a,
+        bldg:p2b,
+        bldg:p3a,
+        bldg:p3b .
