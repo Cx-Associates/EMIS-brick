@@ -51,7 +51,7 @@ class Project():
             time_frames.update({'baseline': baseline})
             min_date, max_date = baseline.tuple[0], baseline.tuple[1]
         if "performance" in kwargs.keys():
-            pass
+            pass #ToDo: refactor above lines and repeat for performance and report
         if "report" in kwargs.keys():
             pass
         if None in [min_date, max_date]:
@@ -70,20 +70,20 @@ class EnergyModelset():
     """
 
     """
-    def __init__(self, project, models):
+    def __init__(self, project, systems):
         self.project = project
-        self.model_names = models
+        self.systems = systems
         self.brick_model = project.brick_model
-        for model_name in self.model_names:
+        for system_name in self.systems:
             instance = EnergyModel(
-                model_name,
+                system_name,
                 project
             )
-            self.__setattr__(model_name, instance)
+            self.__setattr__(system_name, instance)
 
     def get_data(self):
-        for energy_model_name in self.model_names:
-            model = getattr(self, energy_model_name)
+        for system_name in self.systems:
+            model = getattr(self, system_name)
             model.get_data(self.project)
 
 class EnergyModel(Model):
@@ -106,8 +106,9 @@ class EnergyModel(Model):
         :param project:
         :return:
         """
-        brick_model = project.brick_model.get_data(
-            self.name, project
+        time_frame = project.time_frames['total'].tuple
+        project.brick_model.get_system_timeseries(
+            self.name, time_frame
         )
         pass
 

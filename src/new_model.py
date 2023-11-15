@@ -17,7 +17,7 @@ project.set_metadata(graph_path)
 
 modelset = EnergyModelset(
     project,
-    models=[
+    systems=[
         'heating_system',
         'chw_system',
         'chiller',
