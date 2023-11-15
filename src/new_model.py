@@ -7,7 +7,9 @@ from utils import Project, EnergyModelset
 project = Project(
     name='Main Street Landing',
     location=(44.48, -73.21),
-    time_frame=('past week'),
+)
+project.set_time_frames(
+    baseline=('2023-11-08T00:00:00', '2023-11-15T00:00:00'),
 )
 
 graph_path = 'src/brick_models/msl.ttl'
@@ -21,6 +23,7 @@ modelset = EnergyModelset(
         'chiller',
     ]
 )
+modelset.get_data()
 
 # We can use pump speed (P4a and P4b) as a proxy for flow, and we know delta T between supply and return. We can then
 # set up a proxy energy consumption value as e = m*c*deltaT. Calibrate this against monthly fuel consumption data in
