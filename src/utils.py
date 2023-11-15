@@ -43,16 +43,27 @@ class Project():
         :param kwargs:
         :return:
         """
+        min_date, max_date = None, None
         time_frames = {}
         if "baseline" in kwargs.keys():
             str_ = kwargs['baseline']
             baseline = TimeFrame(str_)
             time_frames.update({'baseline': baseline})
+            min_date, max_date = baseline.tuple[0], baseline.tuple[1]
         if "performance" in kwargs.keys():
             pass
         if "report" in kwargs.keys():
             pass
-
+        if None in [min_date, max_date]:
+            raise('No time frames passed. Need any of: baseline, performance, or report kwargs.')
+        for key, value in time_frames.items():
+            start, end = value.tuple[0], value.tuple[1]
+            if start < min_date:
+                min_date = start
+            if end > max_date:
+                max_date = end
+        total = TimeFrame((min_date, max_date))
+        time_frames.update({'total': total})
         self.time_frames = time_frames
 
 class EnergyModelset():
@@ -61,9 +72,9 @@ class EnergyModelset():
     """
     def __init__(self, project, models):
         self.project = project
-        self.models = models
+        self.model_names = models
         self.brick_model = project.brick_model
-        for model_name in self.models:
+        for model_name in self.model_names:
             instance = EnergyModel(
                 model_name,
                 project
@@ -71,8 +82,9 @@ class EnergyModelset():
             self.__setattr__(model_name, instance)
 
     def get_data(self):
-        for energy_model in self.models:
-            energy_model.get_data(self.project)
+        for energy_model_name in self.model_names:
+            model = getattr(self, energy_model_name)
+            model.get_data(self.project)
 
 class EnergyModel(Model):
     """
@@ -80,6 +92,7 @@ class EnergyModel(Model):
     """
     def __init__(self, name, project):
         super().__init__()
+        self.name = name
         self.project = project
         self.get_equipment(name)
 
@@ -93,6 +106,9 @@ class EnergyModel(Model):
         :param project:
         :return:
         """
+        brick_model = project.brick_model.get_data(
+            self.name, project
+        )
         pass
 
     def train(self, predict, functionOf):
