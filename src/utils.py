@@ -40,9 +40,9 @@ class EnergyModel(Model):
     def __init__(self, name, parent):
         super().__init__()
         self.energy_modelset = parent
-        self.check_name(name)
+        self.get_equipment(name)
 
-    def check_name(self, name):
+    def get_equipment(self, name):
         project = self.energy_modelset.project
         brick_model = project.brick_model
         res_list = brick_model.get_entities(name)
