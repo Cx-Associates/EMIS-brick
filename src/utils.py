@@ -29,20 +29,31 @@ class EnergyModelset():
     def __init__(self, project, models):
         self.project = project
         self.models = models
+        self.brick_model = project.brick_model
         for model_name in self.models:
-            instance = EnergyModel(model_name, self)
+            instance = EnergyModel(model_name, self.brick_model)
             self.__setattr__(model_name, instance)
+
 
 class EnergyModel(Model):
     """
 
     """
-    def __init__(self, name, parent):
+    def __init__(self, name, brick_model=None):
         super().__init__()
-        self.energy_modelset = parent
+        self.brick_model = brick_model
         self.get_equipment(name)
 
-    def get_equipment(self, name):
-        project = self.energy_modelset.project
-        brick_model = project.brick_model
-        res_list = brick_model.get_entities(name)
+    def get_equipment(self, name=None, class_=None):
+        brick_model = self.brick_model
+        res_list = brick_model.get_entities(name, class_)
+
+    def train(self, predict, functionOf):
+        """
+
+        :param predict:
+        :param functionOf:
+        :return:
+        """
+        if functionOf == 'TOWT':
+            pass
