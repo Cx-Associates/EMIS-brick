@@ -29,7 +29,7 @@ class Project():
         if isinstance(self.location, str):
             pass #ToDo: add code to resolve lat, long as a function of place, e.g. google geocode REST api
 
-    def set_metadata(self, model_path):
+    def load_graph(self, model_path):
         """
 
         :param model_path:
@@ -72,19 +72,18 @@ class EnergyModelset():
     """
     def __init__(self, project, systems):
         self.project = project
-        self.systems = systems
+        self.systems = {}
         self.brick_model = project.brick_model
-        for system_name in self.systems:
+        for system_name in systems:
             instance = EnergyModel(
                 system_name,
                 project
             )
-            self.__setattr__(system_name, instance)
+            self.systems.update({system_name: instance})
 
     def get_data(self):
-        for system_name in self.systems:
-            model = getattr(self, system_name)
-            model.get_data(self.project)
+        for k, v in self.systems.items():
+            v.get_data(self.project)
 
 class EnergyModel(Model):
     """
@@ -94,11 +93,20 @@ class EnergyModel(Model):
         super().__init__()
         self.name = name
         self.project = project
-        self.get_equipment(name)
+        self.check_system(name)
 
-    def get_equipment(self, name=None, class_=None):
+    def check_system(self, name=None):
         brick_model = self.project.brick_model
-        res_list = brick_model.get_entities(name, class_)
+        res_list = brick_model.get_entities(name)
+        if len(res_list) == 0:
+            raise Exception(f"Couldn't find an entity named {name} in the loaded graph.")
+        elif len(res_list) > 1:
+            raise Exception(f"Found more than one entity named {name} in the loaded graph. Each system in the "
+                            f"modelset must have a unique name; otherwise you should either modify the graph (make a "
+                            f"new, abritrary system) or modify this function to filter the graph query based on more "
+                            f"than simply the name of a system.")
+        else:
+            print(f"Found entity named {name} in graph.")
 
     def get_data(self, project):
         """

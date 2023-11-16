@@ -13,13 +13,13 @@ project.set_time_frames(
 )
 
 graph_path = 'src/brick_models/msl.ttl'
-project.set_metadata(graph_path)
+project.load_graph(graph_path)
 
 modelset = EnergyModelset(
     project,
     systems=[
         'heating_system',
-        'chw_system',
+        'chilled_water_system',
         'chiller',
     ]
 )
@@ -32,17 +32,17 @@ modelset.get_data()
 # mass flow, knowing that the system is set to maintain dP setpoint and radiator valves are opening and closing to
 # raise/drop system pressure.
 
-modelset.heating_system.train(
+modelset.systems['heating_system'].train(
     predict=['boilers', 'pumps', 'dT'],
     functionOf=['TOWT']
 )
 
-modelset.chw_system.train(
+modelset.systems['chilled_water_system'].train(
     predict=[''],
     functionOf=['TOWT', 'occupancy']
 )
 
-modelset.chiller.train(
+modelset.systems['chiller'].train(
     ['chiller_power_meter'],
     functionOf=['TOWT']
 )

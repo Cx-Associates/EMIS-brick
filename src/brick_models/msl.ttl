@@ -159,7 +159,7 @@ bldg:chilled_water_system a brick:Chilled_Water_System ;
 bldg:p4a_vfd_output  a  brick:Speed_Sensor ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId  "/2404:9-240409/AnalogOutput/5" ;
+        ref:hasTimeseriesId  "2404:9-240409/AnalogOutput/5" ;
         ref:storedAt  bldg:database ;
     ] ;
     brick:isPointOf  bldg:p4a .
@@ -167,7 +167,7 @@ bldg:p4a_vfd_output  a  brick:Speed_Sensor ;
 bldg:p4b_vfd_output  a  brick:Speed_Sensor ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId  "/2404:9-240409/AnalogOutput/6" ;
+        ref:hasTimeseriesId  "2404:9-240409/AnalogOutput/6" ;
         ref:storedAt  bldg:database ;
     ] ;
     brick:isPointOf  bldg:p4b .
@@ -175,7 +175,7 @@ bldg:p4b_vfd_output  a  brick:Speed_Sensor ;
 bldg:heating_system_supply_temp  a  brick:Temperature_Sensor ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId  "/2404:9-240409/analogInput/16" ;
+        ref:hasTimeseriesId  "2404:9-240409/analogInput/16" ;
         ref:storedAt  bldg:database ;
     ] ;
     brick:isPointOf  bldg:heating_system_supply_water .
@@ -183,7 +183,7 @@ bldg:heating_system_supply_temp  a  brick:Temperature_Sensor ;
 bldg:heating_system_return_temp  a  brick:Temperature_Sensor ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId  "/2404:9-240409/analogInput/15" ;
+        ref:hasTimeseriesId  "2404:9-240409/analogInput/15" ;
         ref:storedAt  bldg:database ;
     ] ;
     brick:isPointOf  bldg:heating_system_return_water .
