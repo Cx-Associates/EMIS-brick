@@ -1,8 +1,10 @@
 """
 
 """
+import pandas as pd
 
 from subrepos.energy_models.src.utils import Model, TOWT
+from subrepos.energy_models.src.open_meteo import open_meteo_get
 from subrepos.brickwork.utils import BrickModel
 
 
@@ -15,8 +17,6 @@ class TimeFrame():
             pass
             # ToDO: auto-parse to ensure this is API-friendly
             # ToDo: where should TZ localization take place? Project has coordinates ...
-
-
 
 class Project():
     """
@@ -66,6 +66,24 @@ class Project():
         time_frames.update({'total': total})
         self.time_frames = time_frames
 
+    def join_weather_data(self, df, feature='temperature_2m'):
+        """
+
+        :param df: any time-series dataframe with a datetimeindex
+        :return df: resampled to hourly
+        """
+        try:
+            lat, long = self.location[0], self.location[1]
+        except NameError:
+            raise Exception(f'project {self.name} must have "location" attribute in order to get weather data.')
+        df_ = df.resample('h').mean()
+        start, end = df_.index[0], df_.index[-1]
+        s_temp = open_meteo_get((lat, long), (start, end), feature)
+        df_ = pd.concat([df_, s_temp], axis=1)
+
+        return df_
+
+
 class EnergyModelset():
     """
 
@@ -82,6 +100,11 @@ class EnergyModelset():
             self.systems.update({system_name: instance})
 
     def get_data(self):
+        """For each system in the modelset (for each individual model), get timeseries data of all the entities in
+        the system.
+
+        :return:
+        """
         for k, v in self.systems.items():
             v.get_data(self.project)
 
@@ -109,11 +132,13 @@ class EnergyModel(Model):
             print(f"Found entity named {name} in graph.")
 
     def get_data(self, project):
-        """
+        """Get timeseries data for each system in the model.
 
         :param project:
         :return:
         """
+        #ToDo: may, in this method, want to check if there are already specified time-series for model data,
+        # rather than returning all timeseries of a system (which is fine for now_
         time_frame = project.time_frames['total'].tuple
         project.brick_model.get_system_timeseries(
             self.name, time_frame

@@ -33,7 +33,7 @@ modelset.get_data()
 # raise/drop system pressure.
 
 modelset.systems['heating_system'].train(
-    predict=['boilers', 'pumps', 'dT'],
+    predict=['pumps', 'dT'],
     functionOf=['TOWT']
 )
 

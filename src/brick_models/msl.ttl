@@ -8,7 +8,7 @@
 
 bldg:database   a   ref:Database ;
     rdfs:label  "ACE IoT Cloud Database" ;
-    bldg:connstring "https://manager.aceiot.cloud/api/points/cxa/cxa_main_st_landing/" ;
+    bldg:connstring "/cxa_main_st_landing/" ;
 .
 
 # chilled water system
@@ -123,16 +123,17 @@ bldg:p3b_status  a  brick:Status ;
     brick:isPointOf  bldg:p3b .
 
 ## remaining mapping
-
 bldg:p2a  a  brick:Pump  ;
       brick:hasInputSubstance bldg:chilled_water ;
       brick:hasOutputSubstance bldg:chilled_water ;
-      brick:feeds bldg:v3 .
+      brick:feeds bldg:v3 ;
+      brick:hasPoint bldg:p2a_speed_sensor , bldg:p2a_status .
 
 bldg:p2b  a  brick:Pump  ;
       brick:hasInputSubstance bldg:chilled_water ;
       brick:hasOutputSubstance bldg:chilled_water ;
-      brick:feeds bldg:v3 .
+      brick:feeds bldg:v3 ;
+      brick:hasPoint bldg:p2b_speed_sensor , bldg:p2b_status .
 
 bldg:p3a  a  brick:Pump  ;
       brick:hasInputSubstance bldg:chilled_water ;
@@ -159,7 +160,7 @@ bldg:chilled_water_system a brick:Chilled_Water_System ;
 bldg:p4a_vfd_output  a  brick:Speed_Sensor ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId  "2404:9-240409/AnalogOutput/5" ;
+        ref:hasTimeseriesId  "2404:9-240409/analogOutput/5" ;
         ref:storedAt  bldg:database ;
     ] ;
     brick:isPointOf  bldg:p4a .
@@ -167,7 +168,7 @@ bldg:p4a_vfd_output  a  brick:Speed_Sensor ;
 bldg:p4b_vfd_output  a  brick:Speed_Sensor ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId  "2404:9-240409/AnalogOutput/6" ;
+        ref:hasTimeseriesId  "2404:9-240409/analogOutput/6" ;
         ref:storedAt  bldg:database ;
     ] ;
     brick:isPointOf  bldg:p4b .
