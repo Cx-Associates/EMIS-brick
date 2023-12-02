@@ -120,10 +120,10 @@ class EnergyModel(Model):
 
     def check_system(self, name=None):
         brick_model = self.project.brick_model
-        res_list = brick_model.get_entities(name)
-        if len(res_list) == 0:
+        res = brick_model.get_entities(name)
+        if len(res.list_) == 0:
             raise Exception(f"Couldn't find an entity named {name} in the loaded graph.")
-        elif len(res_list) > 1:
+        elif len(res.list_) > 1:
             raise Exception(f"Found more than one entity named {name} in the loaded graph. Each system in the "
                             f"modelset must have a unique name; otherwise you should either modify the graph (make a "
                             f"new, abritrary system) or modify this function to filter the graph query based on more "

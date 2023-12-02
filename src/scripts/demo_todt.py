@@ -19,7 +19,7 @@ project.load_graph(graph_path)
 
 # get heating system timeseries
 heating_system = project.brick_model.get_entities_of_system('heating_system')
-for entity in heating_system.list:
+for entity in heating_system.list_:
     entity.get_all_timeseries(time_frame)
 df = heating_system.join_last_response()
 

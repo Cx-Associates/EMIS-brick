@@ -14,13 +14,13 @@ project.load_graph(graph_path)
 
 # get timeseries data by equipment type
 pumps = project.brick_model.get_entities(brick_class='Pump')
-for pump in pumps.list:
+for pump in pumps.list_:
     pump.get_all_timeseries(time_frame)
 df = pumps.join_last_response()
 
 # get timeseries data for whole heating system
 heating_system = project.brick_model.get_entities_of_system('heating_system')
-for entity in heating_system.list:
+for entity in heating_system.list_:
     entity.get_all_timeseries(time_frame)
 df_heating_system = heating_system.join_last_response()
 
