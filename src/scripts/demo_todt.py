@@ -49,7 +49,6 @@ energy_model.score()
 
 # plot of BTUs against OAT
 energy_model.scatterplot(x='OAT', y='Btus')
-energy_model.scatterplot()
 
 # plot of Y-predicted vs Y-actual
 energy_model.scatterplot()

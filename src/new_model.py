@@ -4,17 +4,22 @@ project.
 """
 from utils import Project, EnergyModelset
 
+# create an instance of the project class, giving it a name and a location
 project = Project(
     name='Main Street Landing',
     location=(44.48, -73.21),
 )
+
+# set the project baseline period
 project.set_time_frames(
-    baseline=('2023-11-08T00:00:00', '2023-11-15T00:00:00'),
+    baseline=('2023-11-08T00:00:00', '2023-12-01T00:00:00'),
 )
 
+# set filepath for brick model .ttl file, and load it into the project
 graph_path = 'src/brick_models/msl.ttl'
 project.load_graph(graph_path)
 
+# create an instance of the energy modelset class and designate the systems for which to create individual energy models
 modelset = EnergyModelset(
     project,
     systems=[
@@ -23,6 +28,8 @@ modelset = EnergyModelset(
         'chiller',
     ]
 )
+
+# get data for each modelset (for each designated time frame)
 modelset.get_data()
 
 # We can use pump speed (P4a and P4b) as a proxy for flow, and we know delta T between supply and return. We can then

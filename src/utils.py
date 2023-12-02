@@ -19,7 +19,7 @@ class TimeFrame():
             # ToDo: where should TZ localization take place? Project has coordinates ...
 
 class Project():
-    """
+    """Project class.
 
     """
     def __init__(self, **kwargs):
