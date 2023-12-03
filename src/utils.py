@@ -36,6 +36,7 @@ class Project():
         :return:
         """
         self.brick_model = BrickModel(model_path)
+        self.graph_filepath = model_path
 
     def set_time_frames(self, **kwargs):
         """
@@ -140,10 +141,10 @@ class EnergyModel(Model):
         #ToDo: may, in this method, want to check if there are already specified time-series for model data,
         # rather than returning all timeseries of a system (which is fine for now_
         time_frame = project.time_frames['total'].tuple
-        project.brick_model.get_system_timeseries(
+        df = project.brick_model.get_system_timeseries(
             self.name, time_frame
         )
-        pass
+        self.dataframe = df
 
     def train(self, predict, functionOf):
         """

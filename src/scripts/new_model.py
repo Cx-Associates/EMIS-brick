@@ -2,7 +2,7 @@
 project.
 
 """
-from utils import Project, EnergyModelset
+from src.utils import Project, EnergyModelset
 
 # create an instance of the project class, giving it a name and a location
 project = Project(
@@ -12,11 +12,11 @@ project = Project(
 
 # set the project baseline period
 project.set_time_frames(
-    baseline=('2023-11-08T00:00:00', '2023-12-01T00:00:00'),
+    baseline=('2023-11-08T00:00:00', '2023-12-03T00:00:00'),
 )
 
 # set filepath for brick model .ttl file, and load it into the project
-graph_path = 'src/brick_models/msl.ttl'
+graph_path = 'brick_models/msl_heating-only.ttl'
 project.load_graph(graph_path)
 
 # create an instance of the energy modelset class and designate the systems for which to create individual energy models
@@ -24,8 +24,8 @@ modelset = EnergyModelset(
     project,
     systems=[
         'heating_system',
-        'chilled_water_system',
-        'chiller',
+        # 'chilled_water_system',
+        # 'chiller',
     ]
 )
 
