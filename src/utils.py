@@ -23,8 +23,10 @@ class Project():
 
     """
     def __init__(self, **kwargs):
+        self.name = None
         self.location = None
         self.brick_model = None
+        self.weather_data = None  # pandas.Series
         self.__dict__.update(kwargs.copy())
         if isinstance(self.location, str):
             pass #ToDo: add code to resolve lat, long as a function of place, e.g. google geocode REST api
@@ -84,15 +86,29 @@ class Project():
 
         return df_
 
+    def get_weather_data(self, feature='temperature_2m'):
+        """
+
+        :param feature:
+        :return:
+        """
+        try:
+            lat, long = self.location[0], self.location[1]
+        except NameError:
+            raise Exception(f'project {self.name} must have "location" attribute in order to get weather data.')
+        start, end = self.time_frames['total'].tuple[0], self.time_frames['total'].tuple[1]
+        s_temp = open_meteo_get((lat, long), (start, end), feature)
+        self.weather_data = s_temp
 
 class EnergyModelset():
     """
 
     """
-    def __init__(self, project, systems):
+    def __init__(self, project, systems, time_frames=None):
         self.project = project
+        if time_frames is None:
+            self.time_frames = project.time_frames
         self.systems = {}
-        self.brick_model = project.brick_model
         for system_name in systems:
             instance = EnergyModel(
                 system_name,
@@ -106,17 +122,30 @@ class EnergyModelset():
 
         :return:
         """
-        for k, v in self.systems.items():
-            v.get_data(self.project)
+        for name, energy_model_instance in self.systems.items():
+            energy_model_instance.get_data()
+
+    def set_model_type(self, dict_):
+        for model_name, model_type in dict_.items():
+            if model_type == 'TOWT':
+                train_start = self.project.time_frames['baseline'].tuple[0]
+                train_end = self.project.time_frames['baseline'].tuple[1]
+                towt = TOWT(self.systems[model_name], train_start=train_start, train_end=train_end)
+                df = towt.add_TOWT_features(self.project.weather_data, temp_col='temperature_2m')
+                towt.X.data = df
+                self.systems[model_name] = towt
+
 
 class EnergyModel(Model):
     """
 
     """
-    def __init__(self, name, project):
+    def __init__(self, name, project, time_frames=None):
         super().__init__()
         self.name = name
         self.project = project
+        if time_frames is None:
+            self.time_frames = project.time_frames
         res = self.check_system(name) #todo: binds energy model to system, correct?
         self.system_entities = res
 
@@ -124,9 +153,9 @@ class EnergyModel(Model):
     def check_system(self, name=None):
         brick_model = self.project.brick_model
         res = brick_model.get_entities(name)
-        if len(res.list_) == 0:
+        if len(res.entities_list) == 0:
             raise Exception(f"Couldn't find an entity named {name} in the loaded graph.")
-        elif len(res.list_) > 1:
+        elif len(res.entities_list) > 1:
             raise Exception(f"Found more than one entity named {name} in the loaded graph. Each system in the "
                             f"modelset must have a unique name; otherwise you should either modify the graph (make a "
                             f"new, abritrary system) or modify this function to filter the graph query based on more "
@@ -136,7 +165,7 @@ class EnergyModel(Model):
         system_entities = brick_model.get_entities_of_system(name)
         return system_entities
 
-    def get_data(self, project):
+    def get_data(self):
         """Get timeseries data for each system in the model.
 
         :param project:
@@ -144,34 +173,44 @@ class EnergyModel(Model):
         """
         #ToDo: may, in this method, want to check if there are already specified time-series for model data,
         # rather than returning all timeseries of a system (which is fine for now_
-        time_frame = project.time_frames['total'].tuple
-        df = project.brick_model.get_system_timeseries(
+        time_frame = self.project.time_frames['total'].tuple
+        df = self.project.brick_model.get_system_timeseries(
             self.name, time_frame
         )
         self.dataframe = df
 
-    def train(self, functionOf):
-        """
-
-        :param predict:
-        :param functionOf:
-        :return:
-        """
-        if 'TOWT' in functionOf:
-            train_start = self.project.time_frames['baseline'].tuple[0]
-            train_end = self.project.time_frames['baseline'].tuple[1]
-            towt = TOWT(
-                self,
-                train_start=train_start,
-                train_end=train_end
-            )
-            pass
-
-    def add_features(self):
+    def add_system_features(self):
         """
 
         :return:
         """
         if self.name == 'heating_system':
-            pumps = [x for x in self.system_entities.list_ if x.brick_class == 'Pump']
-            supply_water = [x for x in self.system_entities.list_ if x.brick_class == 'Pump']
+            pumps_df = None
+            temps_df = None
+            for entity in self.project.brick_model.systems['heating_system'].entities_list:
+                if entity.brick_class == 'Pump':
+                    for timeseries_response in entity.last_response.values():
+                        if timeseries_response.brick_class == 'Speed_Sensor':
+                            if pumps_df is None:
+                                pumps_df = timeseries_response.data
+                            else:
+                                pumps_df = pd.concat([pumps_df, timeseries_response.data], axis=1)
+                elif entity.brick_class == 'Supply_Hot_Water':
+                    for timeseries_response in entity.last_response.values():
+                        if timeseries_response.brick_class == 'Temperature_Sensor':
+                            if temps_df is None:
+                                temps_df = timeseries_response.data
+                            else:
+                                temps_df = pd.concat([temps_df, timeseries_response.data], axis=1)
+                elif entity.brick_class == 'Return_Hot_Water':
+                    for timeseries_response in entity.last_response.values():
+                        if timeseries_response.brick_class == 'Temperature_Sensor':
+                            if temps_df is None:
+                                temps_df = timeseries_response.data * -1
+                            else:
+                                new_data = timeseries_response.data * -1
+                                temps_df = pd.concat([temps_df, new_data], axis=1)
+            pumps_total_df = pumps_df.sum(axis=1)
+            dTemp_df = temps_df.sum(axis=1)
+            psuedo_Btus_df = pumps_total_df * dTemp_df
+            self.Y.data = psuedo_Btus_df

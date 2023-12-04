@@ -13,7 +13,7 @@ project = Project(
 
 # set the project baseline period
 project.set_time_frames(
-    baseline=('2023-11-08T00:00:00', '2023-12-03T00:00:00'),
+    baseline=('2023-11-08', '2023-12-04'),
 )
 
 # set filepath for brick model .ttl file, and load it into the project
@@ -30,7 +30,8 @@ modelset = EnergyModelset(
     ]
 )
 
-# get data for each modelset (for each designated time frame)
+# get weather data, then get relevant building timeseries data
+project.get_weather_data()
 modelset.get_data()
 
 # We can use pump speed (P4a and P4b) as a proxy for flow, and we know delta T between supply and return. We can then
@@ -41,12 +42,11 @@ modelset.get_data()
 # raise/drop system pressure.
 
 # custom feature engineering for heating system
-modelset.systems['heating_system'].add_features()
-
-modelset.systems['heating_system'].train(
-    predict=['pseudo_Btus'],
-    functionOf=['TOWT']
-)
+modelset.systems['heating_system'].add_system_features()
+modelset.set_model_type({'heating_system': 'TOWT'})
+modelset.systems['heating_system'].train()
+modelset.scores()
+pass
 
 # modelset.systems['chilled_water_system'].train(
 #     predict=[''],
