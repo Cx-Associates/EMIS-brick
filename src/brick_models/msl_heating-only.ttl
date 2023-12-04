@@ -60,10 +60,10 @@ bldg:p4b  a  brick:Pump  ;
     brick:hasOutputSubstance  bldg:heating_system_supply_water ;
     brick:hasPoint bldg:p4b_vfd_output .
 
-bldg:heating_system_supply_water  a  brick:Hot_Water ;
+bldg:heating_system_supply_water  a  brick:Supply_Hot_Water ;
     brick:hasPoint bldg:heating_system_supply_temp .
 
-bldg:heating_system_return_water  a  brick:Hot_Water ;
+bldg:heating_system_return_water  a  brick:Return_Hot_Water ;
     brick:hasPoint bldg:heating_system_return_temp .
 
 bldg:heating_system   a  brick:Hot_Water_System  ;

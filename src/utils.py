@@ -117,7 +117,9 @@ class EnergyModel(Model):
         super().__init__()
         self.name = name
         self.project = project
-        self.check_system(name)
+        res = self.check_system(name) #todo: binds energy model to system, correct?
+        self.system_entities = res
+
 
     def check_system(self, name=None):
         brick_model = self.project.brick_model
@@ -131,6 +133,8 @@ class EnergyModel(Model):
                             f"than simply the name of a system.")
         else:
             print(f"Found entity named {name} in graph.")
+        system_entities = brick_model.get_entities_of_system(name)
+        return system_entities
 
     def get_data(self, project):
         """Get timeseries data for each system in the model.
@@ -146,7 +150,7 @@ class EnergyModel(Model):
         )
         self.dataframe = df
 
-    def train(self, predict, functionOf):
+    def train(self, functionOf):
         """
 
         :param predict:
@@ -162,3 +166,12 @@ class EnergyModel(Model):
                 train_end=train_end
             )
             pass
+
+    def add_features(self):
+        """
+
+        :return:
+        """
+        if self.name == 'heating_system':
+            pumps = [x for x in self.system_entities.list_ if x.brick_class == 'Pump']
+            supply_water = [x for x in self.system_entities.list_ if x.brick_class == 'Pump']

@@ -3,11 +3,12 @@ project.
 
 """
 from src.utils import Project, EnergyModelset
+from config_MSL import config_dict, heating_system_Btus
 
 # create an instance of the project class, giving it a name and a location
 project = Project(
-    name='Main Street Landing',
-    location=(44.48, -73.21),
+    name=config_dict['name'],
+    location=config_dict['location'],
 )
 
 # set the project baseline period
@@ -39,17 +40,20 @@ modelset.get_data()
 # mass flow, knowing that the system is set to maintain dP setpoint and radiator valves are opening and closing to
 # raise/drop system pressure.
 
+# custom feature engineering for heating system
+modelset.systems['heating_system'].add_features()
+
 modelset.systems['heating_system'].train(
-    predict=['pumps', 'dT'],
+    predict=['pseudo_Btus'],
     functionOf=['TOWT']
 )
 
-modelset.systems['chilled_water_system'].train(
-    predict=[''],
-    functionOf=['TOWT', 'occupancy']
-)
-
-modelset.systems['chiller'].train(
-    ['chiller_power_meter'],
-    functionOf=['TOWT']
-)
+# modelset.systems['chilled_water_system'].train(
+#     predict=[''],
+#     functionOf=['TOWT', 'occupancy']
+# )
+#
+# modelset.systems['chiller'].train(
+#     ['chiller_power_meter'],
+#     functionOf=['TOWT']
+# )
