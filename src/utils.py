@@ -135,24 +135,24 @@ class EnergyModelset():
             energy_model_instance.get_data()
 
     def set_models(self, list_):
-        # train_start = self.project.time_frames['baseline'].tuple[0]
-        # train_end = self.project.time_frames['baseline'].tuple[1]
         for tuple in list_:
             system_name, model_type = tuple[0], tuple[1]
             df = resample_and_join([self.systems[system_name].Y_data, self.project.weather_data])
             if model_type == 'TOWT':
                 towt = TOWT(
                     df,
-                    # train_start=train_start,
-                    # train_end=train_end,
                     Y_col='pseudo_Btus'
                 )
                 towt.add_TOWT_features(df, temp_col='temperature_2m')
                 self.systems[system_name].energy_models.update({'TOWT': towt})
             elif model_type == 'TODTweekend':
                 todtweekend = TODT(
-
+                    df,
+                    Y_col='pseudo_Btus',
+                    weekend=True
                 )
+                todtweekend.add_TODT_features(df, temp_col='temperature_2m')
+                self.systems[system_name].energy_models.update({'TODTweekend': todtweekend})
 
 
 class System():
