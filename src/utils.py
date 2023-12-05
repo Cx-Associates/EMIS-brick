@@ -3,10 +3,19 @@
 """
 import pandas as pd
 
-from subrepos.energy_models.src.utils import Model, TOWT
+from subrepos.energy_models.src.utils import TOWT, TODT
 from subrepos.energy_models.src.open_meteo import open_meteo_get
 from subrepos.brickwork.utils import BrickModel
 
+def resample_and_join(list_):
+    """ToDO: spruce up this function with some automated interval detection. For now it just resamples to hourly
+
+    :param list:
+    :return:
+    """
+    resampled_list = [s.resample('h').mean() for s in list_]
+    df = pd.concat(resampled_list, axis=1).dropna()
+    return df
 
 class TimeFrame():
     def __init__(self, arg):
@@ -25,7 +34,7 @@ class Project():
     def __init__(self, **kwargs):
         self.name = None
         self.location = None
-        self.brick_model = None
+        self.brick_graph = None
         self.weather_data = None  # pandas.Series
         self.__dict__.update(kwargs.copy())
         if isinstance(self.location, str):
@@ -37,7 +46,7 @@ class Project():
         :param model_path:
         :return:
         """
-        self.brick_model = BrickModel(model_path)
+        self.brick_graph = BrickModel(model_path)
         self.graph_filepath = model_path
 
     def set_time_frames(self, **kwargs):
@@ -110,7 +119,7 @@ class EnergyModelset():
             self.time_frames = project.time_frames
         self.systems = {}
         for system_name in systems:
-            instance = EnergyModel(
+            instance = System(
                 system_name,
                 project
             )
@@ -125,34 +134,44 @@ class EnergyModelset():
         for name, energy_model_instance in self.systems.items():
             energy_model_instance.get_data()
 
-    def set_model_type(self, dict_):
-        for model_name, model_type in dict_.items():
+    def set_models(self, list_):
+        # train_start = self.project.time_frames['baseline'].tuple[0]
+        # train_end = self.project.time_frames['baseline'].tuple[1]
+        for tuple in list_:
+            system_name, model_type = tuple[0], tuple[1]
+            df = resample_and_join([self.systems[system_name].Y_data, self.project.weather_data])
             if model_type == 'TOWT':
-                train_start = self.project.time_frames['baseline'].tuple[0]
-                train_end = self.project.time_frames['baseline'].tuple[1]
-                towt = TOWT(self.systems[model_name], train_start=train_start, train_end=train_end)
-                df = towt.add_TOWT_features(self.project.weather_data, temp_col='temperature_2m')
-                towt.X.data = df
-                self.systems[model_name] = towt
+                towt = TOWT(
+                    df,
+                    # train_start=train_start,
+                    # train_end=train_end,
+                    Y_col='pseudo_Btus'
+                )
+                towt.add_TOWT_features(df, temp_col='temperature_2m')
+                self.systems[system_name].energy_models.update({'TOWT': towt})
+            elif model_type == 'TODTweekend':
+                todtweekend = TODT(
+
+                )
 
 
-class EnergyModel(Model):
+class System():
     """
 
     """
     def __init__(self, name, project, time_frames=None):
-        super().__init__()
         self.name = name
         self.project = project
         if time_frames is None:
             self.time_frames = project.time_frames
-        res = self.check_system(name) #todo: binds energy model to system, correct?
+        res = self.check_graph_for_system(name) #todo: binds energy model to system, correct?
         self.system_entities = res
+        self.Y_data = None
+        self.energy_models = {}
 
-
-    def check_system(self, name=None):
-        brick_model = self.project.brick_model
-        res = brick_model.get_entities(name)
+    def check_graph_for_system(self, name=None):
+        brick_graph = self.project.brick_graph
+        res = brick_graph.get_entities(name)
         if len(res.entities_list) == 0:
             raise Exception(f"Couldn't find an entity named {name} in the loaded graph.")
         elif len(res.entities_list) > 1:
@@ -162,7 +181,7 @@ class EnergyModel(Model):
                             f"than simply the name of a system.")
         else:
             print(f"Found entity named {name} in graph.")
-        system_entities = brick_model.get_entities_of_system(name)
+        system_entities = brick_graph.get_entities_of_system(name)
         return system_entities
 
     def get_data(self):
@@ -174,12 +193,12 @@ class EnergyModel(Model):
         #ToDo: may, in this method, want to check if there are already specified time-series for model data,
         # rather than returning all timeseries of a system (which is fine for now_
         time_frame = self.project.time_frames['total'].tuple
-        df = self.project.brick_model.get_system_timeseries(
+        df = self.project.brick_graph.get_system_timeseries(
             self.name, time_frame
         )
         self.dataframe = df
 
-    def add_system_features(self):
+    def add_model_features(self):
         """
 
         :return:
@@ -187,7 +206,7 @@ class EnergyModel(Model):
         if self.name == 'heating_system':
             pumps_df = None
             temps_df = None
-            for entity in self.project.brick_model.systems['heating_system'].entities_list:
+            for entity in self.project.brick_graph.systems['heating_system'].entities_list:
                 if entity.brick_class == 'Pump':
                     for timeseries_response in entity.last_response.values():
                         if timeseries_response.brick_class == 'Speed_Sensor':
@@ -212,5 +231,14 @@ class EnergyModel(Model):
                                 temps_df = pd.concat([temps_df, new_data], axis=1)
             pumps_total_df = pumps_df.sum(axis=1)
             dTemp_df = temps_df.sum(axis=1)
-            psuedo_Btus_df = pumps_total_df * dTemp_df
-            self.Y.data = psuedo_Btus_df
+            pseudo_Btus_df = pumps_total_df * dTemp_df
+            self.Y_data = pseudo_Btus_df
+            self.Y_data.name = 'pseudo_Btus'
+
+    def train(self):
+        for model_name, model in self.energy_models.items():
+            if not 'baseline' in model.time_frames.keys():
+                # unless the energy model itself has been given a baseline explicitly, at this point (for training)
+                # it needs to assume the baseline period of the project as a whole.
+                model.time_frames.update({'baseline': self.project.time_frames['baseline']})
+            model.train()

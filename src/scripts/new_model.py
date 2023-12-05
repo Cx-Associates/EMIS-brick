@@ -42,8 +42,11 @@ modelset.get_data()
 # raise/drop system pressure.
 
 # custom feature engineering for heating system
-modelset.systems['heating_system'].add_system_features()
-modelset.set_model_type({'heating_system': 'TOWT'})
+modelset.systems['heating_system'].add_model_features()
+modelset.set_models([
+    ('heating_system', 'TOWT'),
+    ('heating_system', 'TODTweekend'),
+])
 modelset.systems['heating_system'].train()
 modelset.scores()
 pass
