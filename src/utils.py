@@ -113,7 +113,11 @@ class EnergyModelset():
     """
 
     """
-    def __init__(self, project, systems, time_frames=None):
+    def __init__(self,
+                 project,
+                 systems,
+                 equipment,
+                 time_frames=None):
         self.project = project
         if time_frames is None:
             self.time_frames = project.time_frames
@@ -135,16 +139,21 @@ class EnergyModelset():
             energy_model_instance.get_data()
 
     def set_models(self, list_):
+        system = None
         for tuple in list_:
             system_name, model_type = tuple[0], tuple[1]
-            df = resample_and_join([self.systems[system_name].Y_data, self.project.weather_data])
+            try:
+                system = self.systems[system_name]
+            except AttributeError:
+                msg = f'System {system_name} not found in brick graph.'
+            df = resample_and_join([system.Y_data, self.project.weather_data])
             if model_type == 'TOWT':
                 towt = TOWT(
                     df,
                     Y_col='pseudo_Btus'
                 )
                 towt.add_TOWT_features(df, temp_col='temperature_2m')
-                self.systems[system_name].energy_models.update({'TOWT': towt})
+                system.energy_models.update({'TOWT': towt})
             elif model_type == 'TODTweekend':
                 todtweekend = TODT(
                     df,
@@ -152,11 +161,18 @@ class EnergyModelset():
                     weekend=True
                 )
                 todtweekend.add_TODT_features(df, temp_col='temperature_2m')
-                self.systems[system_name].energy_models.update({'TODTweekend': todtweekend})
+                system.energy_models.update({'TODTweekend': todtweekend})
+            else:
+                msg = f'Cannot instantiate a {model_type} model for {system_name} because that model type is not yet ' \
+                      f'configured.'
+                raise Exception(msg)
 
 
 class System():
-    """
+    """A system should be a set of physical equipment, like pumps and boilers for a hot water system. For this
+    purpose, the system should not include sensors, meters, or other data-related items. A chilled water system
+    might comprise a chiller, pumps, and the chilled water itself. It might or might not include elements of the
+    condenser water system.
 
     """
     def __init__(self, name, project, time_frames=None):
@@ -180,7 +196,7 @@ class System():
                             f"new, abritrary system) or modify this function to filter the graph query based on more "
                             f"than simply the name of a system.")
         else:
-            print(f"Found entity named {name} in graph.")
+            print(f"Found entity named {name} in graph. \n")
         system_entities = brick_graph.get_entities_of_system(name)
         return system_entities
 
@@ -242,3 +258,9 @@ class System():
                 # it needs to assume the baseline period of the project as a whole.
                 model.time_frames.update({'baseline': self.project.time_frames['baseline']})
             model.train()
+
+
+
+class Equipment(System):...
+
+#ToDo: make a new class called System??

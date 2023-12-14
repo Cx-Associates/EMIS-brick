@@ -7,7 +7,7 @@ config_dict = {
     'location': (44.48, -73.21),
 }
 
-# feature engineering
+# feature engineering if needed
 def heating_system_Btus(df):
     '''
 
@@ -15,3 +15,4 @@ def heating_system_Btus(df):
     :return:
     '''
     df['deltaT'] = df['heating_sysytem_return_water__heating']
+    #ToDo: this is incomplete. not currently needed?

@@ -17,7 +17,7 @@ project.set_time_frames(
 )
 
 # set filepath for brick model .ttl file, and load it into the project
-graph_path = 'brick_models/msl_heating-only.ttl'
+graph_path = 'brick_models/msl_heating-cooling.ttl'
 project.load_graph(graph_path)
 
 # create an instance of the energy modelset class and designate the systems for which to create individual energy models
@@ -26,7 +26,9 @@ modelset = EnergyModelset(
     systems=[
         'heating_system',
         # 'chilled_water_system',
-        # 'chiller',
+    ],
+    equipment=[
+        'chiller'
     ]
 )
 
@@ -39,6 +41,9 @@ modelset.systems['heating_system'].add_model_features()
 modelset.set_models([
     ('heating_system', 'TOWT'),
     ('heating_system', 'TODTweekend'),
+    ('chiller', 'TOWT'),
+    ('chiller', 'TODTweekend'),
+    ('sgndoigdsion', 'fsanio'),
 ])
 modelset.systems['heating_system'].train()
 df = modelset.systems['heating_system'].energy_models['TODTweekend']
