@@ -13,7 +13,7 @@ project = Project(
 
 # set the project baseline period
 project.set_time_frames(
-    baseline=('2023-11-08', '2023-12-04'),
+    baseline=('2023-11-08', '2023-12-12'),
 )
 
 # set filepath for brick model .ttl file, and load it into the project
@@ -34,13 +34,6 @@ modelset = EnergyModelset(
 project.get_weather_data()
 modelset.get_data()
 
-# We can use pump speed (P4a and P4b) as a proxy for flow, and we know delta T between supply and return. We can then
-# set up a proxy energy consumption value as e = m*c*deltaT. Calibrate this against monthly fuel consumption data in
-# the future if we want. It doesn't need to be calibrated for energy management. The biggest missing piece here: is
-# there a characteristic equation (can we look at pump curves) to describe how well pump speed approximates total
-# mass flow, knowing that the system is set to maintain dP setpoint and radiator valves are opening and closing to
-# raise/drop system pressure.
-
 # custom feature engineering for heating system
 modelset.systems['heating_system'].add_model_features()
 modelset.set_models([
@@ -48,7 +41,10 @@ modelset.set_models([
     ('heating_system', 'TODTweekend'),
 ])
 modelset.systems['heating_system'].train()
-modelset.scores()
+df = modelset.systems['heating_system'].energy_models['TODTweekend']
+df.timeplot(weather=True)
+df.scatterplot()
+df.dayplot()
 pass
 
 # modelset.systems['chilled_water_system'].train(

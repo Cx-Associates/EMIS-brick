@@ -4,7 +4,7 @@
 import pandas as pd
 
 from subrepos.energy_models.src.utils import TOWT, TODT
-from subrepos.energy_models.src.open_meteo import open_meteo_get
+from subrepos.energy_models.src.apis.open_meteo import open_meteo_get
 from subrepos.brickwork.utils import BrickModel
 
 def resample_and_join(list_):

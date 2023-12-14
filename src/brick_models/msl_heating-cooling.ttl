@@ -1,0 +1,88 @@
+@prefix bldg: <https://cxa-brick.org/main_street_landing#> .
+@prefix ref: <https://brickschema.org/schema/Brick/ref#> .
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix unit: <http://qudt.org/vocab/unit/> .
+
+# whole building
+
+bldg:database   a   ref:Database ;
+    rdfs:label  "ACE IoT Cloud Database" ;
+    bldg:connstring "/cxa_main_st_landing/" ;
+.
+
+# heating system
+## timeseries first
+bldg:p4a_vfd_output  a  brick:Speed_Sensor ;
+    brick:hasUnit  unit:PERCENT ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId  "2404:9-240409/analogOutput/5" ;
+        ref:storedAt  bldg:database ;
+    ] ;
+    brick:isPointOf  bldg:p4a .
+
+bldg:p4b_vfd_output  a  brick:Speed_Sensor ;
+    brick:hasUnit  unit:PERCENT ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId  "2404:9-240409/analogOutput/6" ;
+        ref:storedAt  bldg:database ;
+    ] ;
+    brick:isPointOf  bldg:p4b .
+
+bldg:heating_system_supply_temp  a  brick:Temperature_Sensor ;
+    brick:hasUnit  unit:DEG_F ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId  "2404:9-240409/analogInput/16" ;
+        ref:storedAt  bldg:database ;
+    ] ;
+    brick:isPointOf  bldg:heating_system_supply_water .
+
+bldg:heating_system_return_temp  a  brick:Temperature_Sensor ;
+    brick:hasUnit  unit:DEG_F ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId  "2404:9-240409/analogInput/15" ;
+        ref:storedAt  bldg:database ;
+    ] ;
+    brick:isPointOf  bldg:heating_system_return_water .
+
+## remaining mapping
+bldg:p4a  a  brick:Pump  ;
+    brick:hasInputSubstance  bldg:heating_system_supply_water ;
+    brick:hasOutputSubstance  bldg:heating_system_supply_water ;
+    brick:hasPoint bldg:p4a_vfd_output .
+
+bldg:p4b  a  brick:Pump  ;
+    brick:hasInputSubstance  bldg:heating_system_supply_water ;
+    brick:hasOutputSubstance  bldg:heating_system_supply_water ;
+    brick:hasPoint bldg:p4b_vfd_output .
+
+bldg:heating_system_supply_water  a  brick:Supply_Hot_Water ;
+    brick:hasPoint bldg:heating_system_supply_temp .
+
+bldg:heating_system_return_water  a  brick:Return_Hot_Water ;
+    brick:hasPoint bldg:heating_system_return_temp .
+
+bldg:heating_system   a  brick:Hot_Water_System  ;
+    brick:hasInputSubstance  bldg:heating_system_return_water ;
+    brick:hasOutputSubstance  bldg:heating_system_supply_water ;
+    brick:hasPart  bldg:p4a, bldg:p4b .
+
+
+# cooling system
+## timeseries first
+bldg:chiller_power_meter  a  brick:Electric_Power_Sensor ;
+    brick:hasUnit  unit:KiloW ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId  "2404:7-240407/analogValue/11" ;
+        ref:storedAt  bldg:database ;
+    ] ;
+    brick:isPointOf  bldg:chiller .
+
+## remaining mapping
+bldg:chiller  a  brick:Chiller  ;
+    brick:hasPoint  bldg:chiller_power_meter  .
