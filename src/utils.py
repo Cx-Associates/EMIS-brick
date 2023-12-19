@@ -210,7 +210,6 @@ class EnergyModelset():
             df.to_csv('report.csv')
 
 
-
 class GraphEntity():
     """A system should be a set of physical equipment, like pumps and boilers for a hot water system. For this
     purpose, the system should not include sensors, meters, or other data-related items. A chilled water system
