@@ -38,7 +38,8 @@ modelset.get_data()
 
 # custom feature engineering for heating system
 ## 'cast' models as any of TOWT, TODTweekend, TODT (for now)
-modelset.systems['heating_system'].add_model_features()
+modelset.systems['heating_system'].feature_enginering()
+modelset.equipment['chiller'].feature_enginering()
 modelset.set_models([
     ('heating_system', 'TOWT'),
     ('heating_system', 'TODTweekend'),

@@ -151,31 +151,35 @@ class EnergyModelset():
             energy_model_instance.get_data()
 
     def set_models(self, list_):
-        system = None
+        entity = None
         for tuple in list_:
-            system_name, model_type = tuple[0], tuple[1]
+            entity_name, model_type = tuple[0], tuple[1]
             try:
-                system = self.systems[system_name]
-            except AttributeError:
-                msg = f'System {system_name} not found in brick graph.'
-            df = resample_and_join([system.Y_data, self.project.weather_data])
+                entity = self.systems[entity_name]
+            except KeyError:
+                try:
+                    entity = self.equipment[entity_name]
+                except KeyError:
+                    msg = f'Entity {entity_name} not found in systems attribute of EnergyModelset instance.'
+                    raise Exception(msg)
+            df = resample_and_join([entity.Y_data, self.project.weather_data])
             if model_type == 'TOWT':
                 towt = TOWT(
                     df,
-                    Y_col='pseudo_Btus'
+                    Y_col=entity.Y_data.name,
                 )
                 towt.add_TOWT_features(df, temp_col='temperature_2m')
-                system.energy_models.update({'TOWT': towt})
+                entity.energy_models.update({'TOWT': towt})
             elif model_type == 'TODTweekend':
                 todtweekend = TODT(
                     df,
-                    Y_col='pseudo_Btus',
+                    Y_col=entity.Y_data.name,
                     weekend=True
                 )
                 todtweekend.add_TODT_features(df, temp_col='temperature_2m')
-                system.energy_models.update({'TODTweekend': todtweekend})
+                entity.energy_models.update({'TODTweekend': todtweekend})
             else:
-                msg = f'Cannot instantiate a {model_type} model for {system_name} because that model type is not yet ' \
+                msg = f'Cannot instantiate a {model_type} model for {entity_name} because that model type is not yet ' \
                       f'configured.'
                 raise Exception(msg)
 
@@ -228,7 +232,7 @@ class GraphEntity():
         )
         self.dataframe = df
 
-    def add_model_features(self):
+    def feature_enginering(self):
         """
 
         :return:
@@ -264,6 +268,10 @@ class GraphEntity():
             pseudo_Btus_df = pumps_total_df * dTemp_df
             self.Y_data = pseudo_Btus_df
             self.Y_data.name = 'pseudo_Btus'
+        elif self.name == 'chiller':
+            self.Y_data = self.dataframe
+            self.Y_data.name = 'chiller_power'
+
 
     def train(self):
         for model_name, model in self.energy_models.items():
