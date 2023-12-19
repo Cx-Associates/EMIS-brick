@@ -36,6 +36,7 @@ class Project():
         self.location = None
         self.brick_graph = None
         self.weather_data = None  # pandas.Series
+        self.time_frames = {}
         self.__dict__.update(kwargs.copy())
         if isinstance(self.location, str):
             pass #ToDo: add code to resolve lat, long as a function of place, e.g. google geocode REST api
@@ -56,7 +57,10 @@ class Project():
         :return:
         """
         min_date, max_date = None, None
-        time_frames = {}
+        if self.time_frames:
+            time_frames = self.time_frames
+        else:
+            time_frames = {}
         if "baseline" in kwargs.keys():
             str_ = kwargs['baseline']
             baseline = TimeFrame(str_)
@@ -64,8 +68,11 @@ class Project():
             min_date, max_date = baseline.tuple[0], baseline.tuple[1]
         if "performance" in kwargs.keys():
             pass #ToDo: refactor above lines and repeat for performance and report
-        if "report" in kwargs.keys():
-            pass
+        if "reporting" in kwargs.keys():
+            str_ = kwargs['reporting']
+            reporting = TimeFrame(str_)
+            time_frames.update({'reporting': reporting})
+            min_date, max_date = reporting.tuple[0], reporting.tuple[1]
         if None in [min_date, max_date]:
             raise('No time frames passed. Need any of: baseline, performance, or report kwargs.')
         for key, value in time_frames.items():
@@ -183,6 +190,21 @@ class EnergyModelset():
                 msg = f'Cannot instantiate a {model_type} model for {entity_name} because that model type is not yet ' \
                       f'configured.'
                 raise Exception(msg)
+
+    def report(self, models):
+        time_frame = self.project.time_frames['reporting']
+        # self.get_data() #ToDo: this will be redundant
+        for model in models:
+            model.predict(time_frame)
+            model.reporting_metrics()
+            model.report.update({
+                'baseline period': str(self.project.time_frames['baseline'].tuple),
+                'reporting period': str(self.project.time_frames['report'].tuple),
+            })
+            print(model.report)
+            df = pd.DataFrame(model.report)
+            df.to_csv('report.csv')
+
 
 
 class GraphEntity():
