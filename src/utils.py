@@ -160,20 +160,21 @@ class EnergyModelset():
                 try:
                     entity = self.equipment[entity_name]
                 except KeyError:
-                    msg = f'Entity {entity_name} not found in systems attribute of EnergyModelset instance.'
+                    msg = f'Entity {entity_name} not found as a system or equipment attribute of EnergyModelset ' \
+                          f'instance.'
                     raise Exception(msg)
-            df = resample_and_join([entity.Y_data, self.project.weather_data])
+            df = resample_and_join([entity.Y_series, self.project.weather_data])
             if model_type == 'TOWT':
                 towt = TOWT(
                     df,
-                    Y_col=entity.Y_data.name,
+                    Y_col=entity.Y_series.name,
                 )
                 towt.add_TOWT_features(df, temp_col='temperature_2m')
                 entity.energy_models.update({'TOWT': towt})
             elif model_type == 'TODTweekend':
                 todtweekend = TODT(
                     df,
-                    Y_col=entity.Y_data.name,
+                    Y_col=entity.Y_series.name,
                     weekend=True
                 )
                 todtweekend.add_TODT_features(df, temp_col='temperature_2m')
@@ -199,7 +200,7 @@ class GraphEntity():
             # thru debugger and see what happens
         res = self.check_graph_for_entity(name) #todo: binds energy model to entity, correct?
         self.entity = res
-        self.Y_data = None
+        self.Y_series = None
         self.energy_models = {}
 
     def check_graph_for_entity(self, name=None, brick_class=None):
@@ -265,12 +266,12 @@ class GraphEntity():
                                 temps_df = pd.concat([temps_df, new_data], axis=1)
             pumps_total_df = pumps_df.sum(axis=1)
             dTemp_df = temps_df.sum(axis=1)
-            pseudo_Btus_df = pumps_total_df * dTemp_df
-            self.Y_data = pseudo_Btus_df
-            self.Y_data.name = 'pseudo_Btus'
+            pseudo_Btus_series = pumps_total_df * dTemp_df
+            self.Y_series = pseudo_Btus_series
+            self.Y_series.name = 'pseudo_Btus'
         elif self.name == 'chiller':
-            self.Y_data = self.dataframe
-            self.Y_data.name = 'chiller_power'
+            self.Y_series = self.dataframe.iloc[:, 0]
+            self.Y_series.name = 'chiller_power'
 
 
     def train(self):

@@ -45,7 +45,7 @@ modelset.set_models([
     ('heating_system', 'TODTweekend'),
     ('chiller', 'TOWT'),
     ('chiller', 'TODTweekend'),
-    ('sgndoigdsion', 'fsanio'),
+    # ('sgndoigdsion', 'fsanio'),
 ])
 modelset.systems['heating_system'].train()
 df = modelset.systems['heating_system'].energy_models['TODTweekend']
