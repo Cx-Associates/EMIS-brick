@@ -1,0 +1,9 @@
+,0
+y predicted,66127.51960338297
+Y actual,62632.33650798344
+reduction,-3495.1830953995304
+pct reduction,-0.05285519729702251
+trainset daily R-sq,0.7900949454859689
+trainset daily CVRMSE,0.1593274529672079
+baseline period,"('2023-11-08', '2023-12-09')"
+reporting period,"('2023-12-10', '2023-12-18')"

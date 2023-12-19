@@ -194,15 +194,19 @@ class EnergyModelset():
     def report(self, models):
         time_frame = self.project.time_frames['reporting']
         # self.get_data() #ToDo: this will be redundant
+        df = None
         for model in models:
             model.predict(time_frame)
             model.reporting_metrics()
             model.report.update({
                 'baseline period': str(self.project.time_frames['baseline'].tuple),
-                'reporting period': str(self.project.time_frames['report'].tuple),
+                'reporting period': str(self.project.time_frames['reporting'].tuple),
             })
             print(model.report)
-            df = pd.DataFrame(model.report)
+            if df is None:
+                pd.DataFrame.from_dict(model.report, orient='index')
+            else:
+                pass
             df.to_csv('report.csv')
 
 
