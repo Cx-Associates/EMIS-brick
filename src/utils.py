@@ -17,6 +17,7 @@ def resample_and_join(list_):
     df = pd.concat(resampled_list, axis=1).dropna()
     return df
 
+
 class TimeFrame():
     def __init__(self, arg):
         if isinstance(arg, tuple):
@@ -26,6 +27,7 @@ class TimeFrame():
             pass
             # ToDO: auto-parse to ensure this is API-friendly
             # ToDo: where should TZ localization take place? Project has coordinates ...
+
 
 class Project():
     """Project class.
@@ -115,6 +117,7 @@ class Project():
         start, end = self.time_frames['total'].tuple[0], self.time_frames['total'].tuple[1]
         s_temp = open_meteo_get((lat, long), (start, end), feature)
         self.weather_data = s_temp
+
 
 class EnergyModelset():
     """
@@ -298,7 +301,6 @@ class GraphEntity():
             self.Y_series = self.dataframe.iloc[:, 0]
             self.Y_series.name = 'chiller_power'
 
-
     def train(self):
         for model_name, model in self.energy_models.items():
             if not 'baseline' in model.time_frames.keys():
@@ -315,6 +317,7 @@ class System(GraphEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.system_entities = self.project.brick_graph.get_entities_of_system(self.name)
+
 
 class Equipment(GraphEntity):
     def __init__(self, *args, **kwargs):
