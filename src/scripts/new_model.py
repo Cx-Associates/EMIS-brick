@@ -15,7 +15,7 @@ project = Project(
 
 # set the project baseline period
 project.set_time_frames(
-    baseline=('2023-11-08', '2023-12-09'),
+    baseline=('2023-11-10', '2023-12-09'),
     reporting=('2023-12-10', '2023-12-18')
 )
 
