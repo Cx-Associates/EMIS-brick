@@ -2,9 +2,11 @@
 
 You've trained a baseline model, and now you're running the report.
 '''
-# load a prior project and modelset.
-project_filepath = None
-modelset_filepath = None
+from src.utils import load_modelset
+
+# load a prior modelset (which includes project as an attribute)
+modelset_filepath = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\exported modelsets\modelset_Main Street " \
+                    r"Landing--msl_heating-cooling.ttl--2023-12-22-07h41m45s.bin"
 
 # set filepath for single .csv report
 single_report_filepath = None
@@ -16,11 +18,10 @@ ledger_filepath = None
 reporting_period = ('2023-12-12', '2023-12-19')
 
 # load the project and the modelset based on specified filepaths above
-project = load_from_pickle()
-modelset = load_from_pickle()
+modelset = load_modelset(modelset_filepath)
 
 # prints useful modelset attributes
-modelset.hello()
+modelset.whosthere()
 
 # choose models to use for report
 model1 = modelset.systems['heating_system'].energy_models['TODTweekend']

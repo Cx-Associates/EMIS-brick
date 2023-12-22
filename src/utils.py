@@ -122,13 +122,13 @@ class Project():
         s_temp = open_meteo_get((lat, long), (start, end), feature)
         self.weather_data = s_temp
 
-def load_modelset(self, filepath):
+def load_modelset(filepath):
     '''Complement to export function; use pickle to load
 
     :param dir_:
     :return:
     '''
-    with open('modelset.bin', 'rb') as f:
+    with open(filepath, 'rb') as f:
         modelset_object = pickle.load(f)
 
         return modelset_object
@@ -217,6 +217,7 @@ class EnergyModelset():
         graph_name = self.project.graph_filepath.rsplit('/')[-1]
         now = dt.now().strftime(f'%Y-%m-%d-%H'+'h'+'%M'+'m'+'%S'+'s')
         filename = f'modelset_{project_name}--{graph_name}--{now}.bin'
+        #ToDO: '.ttl' in graph_name might throw off future functionality, see about replacing with underscore
         filepath = os.path.join(dir_, filename)
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
