@@ -1,7 +1,11 @@
 """
 
 """
+import os
+import pickle
+
 import pandas as pd
+from datetime import datetime as dt
 
 from subrepos.energy_models.src.utils import TOWT, TODT
 from subrepos.energy_models.src.apis.open_meteo import open_meteo_get
@@ -118,6 +122,16 @@ class Project():
         s_temp = open_meteo_get((lat, long), (start, end), feature)
         self.weather_data = s_temp
 
+def load_modelset(self, filepath):
+    '''Complement to export function; use pickle to load
+
+    :param dir_:
+    :return:
+    '''
+    with open('modelset.bin', 'rb') as f:
+        modelset_object = pickle.load(f)
+
+        return modelset_object
 
 class EnergyModelset():
     """
@@ -193,6 +207,19 @@ class EnergyModelset():
                 msg = f'Cannot instantiate a {model_type} model for {entity_name} because that model type is not yet ' \
                       f'configured.'
                 raise Exception(msg)
+
+    def export(self, dir_):
+        '''Uses pickle to write self object to local directory
+
+        :return:
+        '''
+        project_name = self.project.name
+        graph_name = self.project.graph_filepath.rsplit('/')[-1]
+        now = dt.now().strftime(f'%Y-%m-%d-%H'+'h'+'%M'+'m'+'%S'+'s')
+        filename = f'modelset_{project_name}--{graph_name}--{now}.bin'
+        filepath = os.path.join(dir_, filename)
+        with open(filepath, 'wb') as f:
+            pickle.dump(self, f)
 
     def report(self, models):
         time_frame = self.project.time_frames['reporting']
