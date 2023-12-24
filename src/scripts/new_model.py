@@ -3,7 +3,6 @@ project.
 
 """
 import os
-import pickle
 
 from src.utils import Project, EnergyModelset
 from config_MSL import config_dict, heating_system_Btus
@@ -70,7 +69,7 @@ for model in [model1, model2]:
 dir_modelset = os.path.join('F:', 'PROJECTS', '1715 Main Street Landing EMIS Pilot', 'code', 'exported modelsets')
 modelset.export(dir_modelset)
 
-#
+
 # modelset.report(
 #     models=[model1, model2]
 # )

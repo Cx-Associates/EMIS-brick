@@ -21,7 +21,6 @@ def resample_and_join(list_):
     df = pd.concat(resampled_list, axis=1).dropna()
     return df
 
-
 class TimeFrame():
     def __init__(self, arg):
         if isinstance(arg, tuple):
@@ -221,6 +220,7 @@ class EnergyModelset():
         filepath = os.path.join(dir_, filename)
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
+        print(f'Exported modelset to {filepath}.')
 
     def report(self, models):
         time_frame = self.project.time_frames['reporting']
@@ -239,6 +239,12 @@ class EnergyModelset():
             else:
                 pass
             df.to_csv('report.csv')
+
+    def whosthere(self):
+        my_tuple = self.equipment['chiller'].energy_models['TOWT'].time_frames['baseline'].tuple
+        start_date = my_tuple[0]
+        end_date = my_tuple[1]
+        print(f'model train start date: {start_date} \nmodel train end date: {end_date}')
 
 
 class GraphEntity():
