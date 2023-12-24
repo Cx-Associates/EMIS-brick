@@ -132,6 +132,10 @@ def load_modelset(filepath):
 
         return modelset_object
 
+def formatted_now():
+    now = dt.now().strftime(f'%Y-%m-%d-%H'+'h'+'%M'+'m'+'%S'+'s')
+    return now
+
 class EnergyModelset():
     """
 
@@ -214,7 +218,7 @@ class EnergyModelset():
         '''
         project_name = self.project.name
         graph_name = self.project.graph_filepath.rsplit('/')[-1]
-        now = dt.now().strftime(f'%Y-%m-%d-%H'+'h'+'%M'+'m'+'%S'+'s')
+        now = formatted_now()
         filename = f'modelset_{project_name}--{graph_name}--{now}.bin'
         #ToDO: '.ttl' in graph_name might throw off future functionality, see about replacing with underscore
         filepath = os.path.join(dir_, filename)
@@ -222,12 +226,22 @@ class EnergyModelset():
             pickle.dump(self, f)
         print(f'Exported modelset to {filepath}.')
 
-    def report(self, models):
-        time_frame = self.project.time_frames['reporting']
+    def report(self, dir, models='all', ledger_filepath=None):
+        try:
+            time_frame = self.project.time_frames['reporting']
+        except KeyError:
+            msg = 'Reporting period not found in project. Run set_time_frames on the project and set the baseline ' \
+                  'period.'
+            raise Exception(msg)
         # self.get_data() #ToDo: this will be redundant
+        project_name = self.project.name
+        graph_name = self.project.graph_filepath.rsplit('/')[-1]
         df = None
         for model in models:
-            model.predict(time_frame)
+            try:
+                model.predict(time_frame)
+            except AttributeError: #ToDo: the right error?
+                model.get_data #ToDo -- fill this out
             model.reporting_metrics()
             model.report.update({
                 'baseline period': str(self.project.time_frames['baseline'].tuple),
@@ -238,7 +252,11 @@ class EnergyModelset():
                 pd.DataFrame.from_dict(model.report, orient='index')
             else:
                 pass
-            df.to_csv('report.csv')
+
+            now = formatted_now()
+            filename = f'report_{project_name}--{graph_name}--{now}.csv'
+            filepath = os.path.join(dir, filename)
+            df.to_csv(filepath)
 
     def whosthere(self):
         my_tuple = self.equipment['chiller'].energy_models['TOWT'].time_frames['baseline'].tuple

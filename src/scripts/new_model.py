@@ -5,21 +5,23 @@ project.
 import os
 
 from src.utils import Project, EnergyModelset
-from config_MSL import config_dict, heating_system_Btus
 
-# create an instance of the project class, giving it a name and a location
+# import the configuration dictionary, which stores project-specific attributes
+from config_MSL import config_dict
+
+# create an instance of the project class, giving it a name and location coordinates
 project = Project(
     name=config_dict['name'],
     location=config_dict['location'],
 )
 
-# set the project baseline period
+# set time frames for the project. #ToDo: build the option for setting baselines for individual models
 project.set_time_frames(
     baseline=('2023-11-10', '2023-12-09'),
     # reporting=('2023-12-10', '2023-12-18')
 )
 
-# set filepath for brick model .ttl file, and load it into the project
+# give filepath for brick model .ttl file, and load it into the project
 graph_path = 'brick_models/msl_heating-cooling.ttl'
 project.load_graph(graph_path)
 
