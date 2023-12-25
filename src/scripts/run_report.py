@@ -19,7 +19,7 @@ filepath_ledger = r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\report_
 modelset = load_modelset(filepath_modelset)
 
 # set reporting period for this report
-reporting_period = ('2023-12-12', '2023-12-21')
+reporting_period = ('2023-12-14', '2023-12-24')
 modelset.project.set_time_frames(reporting=reporting_period)
 
 # prints useful modelset attributes

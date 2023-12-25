@@ -238,10 +238,12 @@ class EnergyModelset():
         graph_name = self.project.graph_filepath.rsplit('/')[-1]
         df = None
         for model in models:
-            try:
-                model.predict(time_frame)
-            except AttributeError: #ToDo: the right error?
-                model.get_data #ToDo -- fill this out
+            # first, make sure the model has the project's location, in case location is needed to request
+            # additional weather data for this prediction
+            if not model.location:
+                model.location = self.project.location
+            # now run the prediction. if the model is TODT or TOWT, it will ask for weather data it doesn't have.
+            model.predict(time_frame)
             model.reporting_metrics()
             model.report.update({
                 'baseline period': str(self.project.time_frames['baseline'].tuple),
