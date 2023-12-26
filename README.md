@@ -11,6 +11,7 @@ An instance of EnergyModelset is primarily a set of energy models, but it also p
 
 hard-coded aspects:
 * a `Modelset` object can store models within one of two attributes only: `equipment` or `systems`
+* UNIQUENESS.
 
 
 ## Time Frames

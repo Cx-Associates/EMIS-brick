@@ -9,7 +9,8 @@ from datetime import datetime as dt
 
 from subrepos.energy_models.src.utils import TOWT, TODT
 from subrepos.energy_models.src.apis.open_meteo import open_meteo_get
-from subrepos.brickwork.utils import BrickModel
+from subrepos.brickwork.utils import BrickModel, TimeseriesResponse
+
 
 def resample_and_join(list_):
     """ToDO: spruce up this function with some automated interval detection. For now it just resamples to hourly
@@ -190,6 +191,8 @@ class EnergyModelset():
                     msg = f'Entity {entity_name} not found as a system or equipment attribute of EnergyModelset ' \
                           f'instance.'
                     raise Exception(msg)
+            if self.project.weather_data is None:
+                self.project.get_weather_data()
             df = resample_and_join([entity.Y_series, self.project.weather_data])
             if model_type == 'TOWT':
                 towt = TOWT(
@@ -286,12 +289,12 @@ class GraphEntity():
         self.project = project
         if time_frames is None:
             self.time_frames = project.time_frames
-        res = self.check_graph_for_entity(name) #todo: binds energy model to entity, correct?
+        res = self.get_unique_entity_for_model(name) #todo: binds energy model to entity, correct?
         self.entity = res
         self.Y_series = None
         self.energy_models = {}
 
-    def check_graph_for_entity(self, name=None, brick_class=None):
+    def get_unique_entity_for_model(self, name=None, brick_class=None):
         brick_graph = self.project.brick_graph
         res = brick_graph.get_entities(name, brick_class)
         if len(res.entities_list) == 0:
@@ -303,41 +306,30 @@ class GraphEntity():
                    f"query based on more than simply the name of an equipment or system."
             raise Exception(str_)
         else:
-            print(f"Found entity named {name} in graph. \n")
+            print(f"Found unique entity named {name} in graph. \n")
 
-        return res
+        return res.entities_list[0]
 
-    def get_data(self, time_frame='total'):
-        """Get timeseries data for each system in the model.
-
-        :param project:
-        :return:
-        """
-        #ToDo: may, in this method, want to check if there are already specified time-series for model data,
-        # rather than returning all timeseries of a system (which is fine for now_
-        time_frame_ = self.project.time_frames[time_frame].tuple
-        df = self.project.brick_graph.get_system_timeseries(
-            self.name, time_frame_
-        )
-        self.dataframe = df
 
     def feature_engineering(self):
         """This method applies transformations to time-series data that are unique to particular entity types. The
         transformations apply to BMS data, and the end goal is to return a good Y series on which to train an energy
-        model.
+        model. Relies on hard-coded brick conventinos (e.g. brick class names, see ontology at BrickSchema.org)
 
         Theoretically, these feature engineering functions should not change building-to-building, but one-off
         customizations may be needed inevitably. Try to use conditionals, etc. to accommodate as many cases as
         possible. E.g., for heating and chiller systems, first check if there is a btu or power meter. If not,
         then ues the 'pseudo-Btu' approach. This could apply to any hot/cold water system.
 
-        :return:
+        The outcome of this function is to update Y_series with the newly feature-engineering timeseries data.
+
         """
         name = self.name
-        if name == 'heating_system':
+        brick_class = self.entity.brick_class
+        if brick_class == 'Hot_Water_System':
             pumps_df = None
             temps_df = None
-            for entity in self.project.brick_graph.systems['heating_system'].entities_list:
+            for entity in self.system_entities.entities_list:
                 if entity.brick_class == 'Pump':
                     for timeseries_response in entity.last_response.values():
                         if timeseries_response.brick_class == 'Speed_Sensor':
@@ -365,13 +357,17 @@ class GraphEntity():
             pseudo_Btus_series = pumps_total_df * dTemp_df
             self.Y_series = pseudo_Btus_series
             self.Y_series.name = 'pseudo_Btus'
-        elif name == 'chiller':
-            self.Y_series = self.dataframe.iloc[:, 0]
-            self.Y_series.name = 'chiller_power'
+        elif brick_class == 'Chiller':
+            for key, value in self.data.items():
+                if isinstance(value, TimeseriesResponse):
+                    if self.data[key].brick_class == 'Electric_Power_Sensor':
+                        self.Y_series = self.data[key].data.iloc[:, 0]
+                        self.Y_series.name = 'chiller_power'
+                        #ToDo: cleaning this up would require changing structure of timeseries responses/attributes
+                        # for equipment
         else:
-            msg = 'No feature engineering set up for entities of ty'
+            msg = f'No feature engineering set up for entities of type {type}'
             raise Exception(msg)
-
     def train(self):
         for model_name, model in self.energy_models.items():
             if not 'baseline' in model.time_frames.keys():
@@ -389,10 +385,38 @@ class System(GraphEntity):
         super().__init__(*args, **kwargs)
         self.system_entities = self.project.brick_graph.get_entities_of_system(self.name)
 
+    def get_data(self, time_frame='total'):
+        """Get timeseries data for each system in the model.
+
+        :param project:
+        :return:
+        """
+        #ToDo: may, in this method, want to check if there are already specified time-series for model data,
+        # rather than returning all timeseries of a system (which is fine for now_
+        time_frame_ = self.project.time_frames[time_frame].tuple
+        df = self.project.brick_graph.get_system_timeseries(
+            self.name, time_frame_
+        )
+        # now, unpack populated timeseries data from self.project.brick_graph.systems[name].entities_list and write
+        # them to system_entities.entities_list ... there is probably a cleaner way to have gone about this data request
+        self.system_entities.entities_list = self.project.brick_graph.systems[self.name].entities_list
+        self.dataframe = df
 
 class Equipment(GraphEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-#ToDo: make a new class called System??
+    def get_data(self, time_frame='total'):
+        """Get timeseries data for each system in the model.
+
+        :param project:
+        :return:
+        """
+        #ToDo: may, in this method, want to check if there are already specified time-series for model data,
+        # rather than returning all timeseries of a system (which is fine for now_
+        time_frame_ = self.project.time_frames[time_frame].tuple
+        res = self.entity.get_all_timeseries(
+            time_frame_
+        )
+        self.data = res  #ToDo: clean this up w/r/t System.get_data()
