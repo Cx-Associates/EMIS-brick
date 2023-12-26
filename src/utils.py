@@ -240,8 +240,12 @@ class EnergyModelset():
         self.get_data(time_frame='reporting')
         for name, object in self.systems.items():
             object.feature_engineering()
+            for model in object.energy_models.values():
+                model.Y.pred = object.Y_series
         for name, object in self.equipment.items():
             object.feature_engineering()
+            for model in object.energy_models.values():
+                model.Y.pred = object.Y_series
         project_name = self.project.name
         graph_name = self.project.graph_filepath.rsplit('/')[-1]
         df = None
@@ -252,8 +256,6 @@ class EnergyModelset():
                 model.location = self.project.location
             # now run the prediction. if the model is TODT or TOWT, it will ask for weather data it doesn't have.
             model.predict(time_frame)
-            Y_col = model.Y_col
-
             model.reporting_metrics()
             model.report.update({
                 'baseline period': str(self.project.time_frames['baseline'].tuple),
