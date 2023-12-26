@@ -44,7 +44,7 @@ class Project():
         self.time_frames = {}
         self.__dict__.update(kwargs.copy())
         if isinstance(self.location, str):
-            pass #ToDo: add code to resolve lat, long as a function of place, e.g. google geocode REST api
+            pass #ToDo: add code to resolve lat, long as a function of place, feature_engineering.g. google geocode REST api
 
     def load_graph(self, model_path):
         """
@@ -166,16 +166,16 @@ class EnergyModelset():
             self.equipment.update({equipment_name: model_instance})
 
 
-    def get_data(self):
+    def get_data(self, time_frame='total'):
         """For each system in the modelset (for each individual model), get timeseries data of all the entities in
         the system.
 
         :return:
         """
-        for name, energy_model_instance in self.systems.items():
-            energy_model_instance.get_data()
-        for name, energy_model_instance in self.equipment.items():
-            energy_model_instance.get_data()
+        for name, entity in self.systems.items():
+            entity.get_data(time_frame)
+        for name, entity in self.equipment.items():
+            entity.get_data(time_frame)
 
     def set_models(self, list_):
         entity = None
@@ -226,14 +226,19 @@ class EnergyModelset():
             pickle.dump(self, f)
         print(f'Exported modelset to {filepath}.')
 
-    def report(self, dir, models='all', ledger_filepath=None):
+    def report(self, dir, models, ledger_filepath=None):
         try:
             time_frame = self.project.time_frames['reporting']
         except KeyError:
-            msg = 'Reporting period not found in project. Run set_time_frames on the project and set the baseline ' \
-                  'period.'
+            msg = 'Reporting period designation not found in project. Run set_time_frames on the project and set the ' \
+                  'baseline period.'
             raise Exception(msg)
-        # self.get_data() #ToDo: this will be redundant
+        # get timeseries data from entities and run feature engineering
+        self.get_data(time_frame='reporting')
+        for name, object in self.systems.items():
+            object.feature_engineering()
+        for name, object in self.equipment.items():
+            object.feature_engineering()
         project_name = self.project.name
         graph_name = self.project.graph_filepath.rsplit('/')[-1]
         df = None
@@ -244,6 +249,8 @@ class EnergyModelset():
                 model.location = self.project.location
             # now run the prediction. if the model is TODT or TOWT, it will ask for weather data it doesn't have.
             model.predict(time_frame)
+            Y_col = model.Y_col
+
             model.reporting_metrics()
             model.report.update({
                 'baseline period': str(self.project.time_frames['baseline'].tuple),
@@ -278,8 +285,7 @@ class GraphEntity():
         self.name = name
         self.project = project
         if time_frames is None:
-            self.time_frames = project.time_frames #todo: time frames should be project property. change it and run
-            # thru debugger and see what happens
+            self.time_frames = project.time_frames
         res = self.check_graph_for_entity(name) #todo: binds energy model to entity, correct?
         self.entity = res
         self.Y_series = None
@@ -301,7 +307,7 @@ class GraphEntity():
 
         return res
 
-    def get_data(self):
+    def get_data(self, time_frame='total'):
         """Get timeseries data for each system in the model.
 
         :param project:
@@ -309,18 +315,26 @@ class GraphEntity():
         """
         #ToDo: may, in this method, want to check if there are already specified time-series for model data,
         # rather than returning all timeseries of a system (which is fine for now_
-        time_frame = self.project.time_frames['total'].tuple
+        time_frame_ = self.project.time_frames[time_frame].tuple
         df = self.project.brick_graph.get_system_timeseries(
-            self.name, time_frame
+            self.name, time_frame_
         )
         self.dataframe = df
 
-    def feature_enginering(self):
-        """
+    def feature_engineering(self):
+        """This method applies transformations to time-series data that are unique to particular entity types. The
+        transformations apply to BMS data, and the end goal is to return a good Y series on which to train an energy
+        model.
+
+        Theoretically, these feature engineering functions should not change building-to-building, but one-off
+        customizations may be needed inevitably. Try to use conditionals, etc. to accommodate as many cases as
+        possible. E.g., for heating and chiller systems, first check if there is a btu or power meter. If not,
+        then ues the 'pseudo-Btu' approach. This could apply to any hot/cold water system.
 
         :return:
         """
-        if self.name == 'heating_system':
+        name = self.name
+        if name == 'heating_system':
             pumps_df = None
             temps_df = None
             for entity in self.project.brick_graph.systems['heating_system'].entities_list:
@@ -351,9 +365,12 @@ class GraphEntity():
             pseudo_Btus_series = pumps_total_df * dTemp_df
             self.Y_series = pseudo_Btus_series
             self.Y_series.name = 'pseudo_Btus'
-        elif self.name == 'chiller':
+        elif name == 'chiller':
             self.Y_series = self.dataframe.iloc[:, 0]
             self.Y_series.name = 'chiller_power'
+        else:
+            msg = 'No feature engineering set up for entities of ty'
+            raise Exception(msg)
 
     def train(self):
         for model_name, model in self.energy_models.items():
@@ -376,17 +393,6 @@ class System(GraphEntity):
 class Equipment(GraphEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-    def get_data(self):
-        """
-
-        :return:
-        """
-        time_frame = self.project.time_frames['total'].tuple
-        entity = self.entity.entities_list[0]  #ToDo: change this attribute in the parent-child class framework. sloppy.
-        entity.get_all_timeseries(time_frame)
-        df = entity.join_last_response()
-        self.dataframe = df
 
 
 #ToDo: make a new class called System??
