@@ -1,4 +1,7 @@
 # EMIS-brick
+
+Welcome to EMIS-brick by Cx Associates. This is a Python code base for conducting energy-related analytics on time-series data from building automation systems (BMS/BAS). The code uses the Brick ... https://brickschema.org/
+
 CxA's EMIS for brick data models
 
 Typical workflow: you want to create, train, test, or run performance reports on a number of energy models

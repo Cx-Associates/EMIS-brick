@@ -370,6 +370,7 @@ class GraphEntity():
         else:
             msg = f'No feature engineering set up for entities of type {type}'
             raise Exception(msg)
+
     def train(self):
         for model_name, model in self.energy_models.items():
             if not 'baseline' in model.time_frames.keys():
