@@ -3,6 +3,7 @@
 """
 import os
 import pickle
+from pprint import pprint
 
 import pandas as pd
 from datetime import datetime as dt
@@ -56,10 +57,11 @@ class Project():
         self.brick_graph = BrickModel(model_path)
         self.graph_filepath = model_path
 
+
     def set_time_frames(self, **kwargs):
         """
 
-        :param kwargs:
+        :param kwargs: Must be one of the following: 'baseline', 'performance', 'reporting', or 'total'
         :return:
         """
         min_date, max_date = None, None
@@ -67,26 +69,24 @@ class Project():
             time_frames = self.time_frames
         else:
             time_frames = {}
-        if "baseline" in kwargs.keys():
-            str_ = kwargs['baseline']
-            baseline = TimeFrame(str_)
-            time_frames.update({'baseline': baseline})
-            min_date, max_date = baseline.tuple[0], baseline.tuple[1]
-        if "performance" in kwargs.keys():
-            pass #ToDo: refactor above lines and repeat for performance and report
-        if "reporting" in kwargs.keys():
-            str_ = kwargs['reporting']
-            reporting = TimeFrame(str_)
-            time_frames.update({'reporting': reporting})
-            min_date, max_date = reporting.tuple[0], reporting.tuple[1]
-        if None in [min_date, max_date]:
-            raise('No time frames passed. Need any of: baseline, performance, or report kwargs.')
+        for key in ['baseline', 'performance', 'reporting', 'total']:
+            if key in kwargs.keys():
+                str_ = kwargs[key]
+                tuple_ = TimeFrame(str_)
+                time_frames.update({key: tuple_})
         for key, value in time_frames.items():
             start, end = value.tuple[0], value.tuple[1]
-            if start < min_date:
+            if min_date is None:
                 min_date = start
-            if end > max_date:
+            elif start < min_date:
+                min_date = start
+            if max_date is None:
                 max_date = end
+            elif end > max_date:
+                max_date = end
+        if None in [min_date, max_date]:
+            msg = "No time frames passed. Need any of: 'baseline', 'performance', 'reporting', or 'total' in kwargs."
+            raise Exception(msg)
         total = TimeFrame((min_date, max_date))
         time_frames.update({'total': total})
         self.time_frames = time_frames
@@ -229,14 +229,21 @@ class EnergyModelset():
             pickle.dump(self, f)
         print(f'Exported modelset to {filepath}.')
 
-    def report(self, dir, models, ledger_filepath=None):
+    def report(self, export_dir, models, ledger_filepath=None):
+        """
+
+        :param export_dir: directory for report (.csv) file export
+        :param models: (list): must be instances of ModelPlus class.
+        :param ledger_filepath: filepath to a .csv file to which this report's metrics will be added as a new row.
+        :return:
+        """
         try:
             time_frame = self.project.time_frames['reporting']
         except KeyError:
             msg = 'Reporting period designation not found in project. Run set_time_frames on the project and set the ' \
                   'baseline period.'
             raise Exception(msg)
-        # get timeseries data from entities and run feature engineering
+        # get timeseries data from relevant entities and run feature engineering
         self.get_data(time_frame='reporting')
         for name, object in self.systems.items():
             object.feature_engineering()
@@ -258,10 +265,15 @@ class EnergyModelset():
             model.predict(time_frame)
             model.reporting_metrics()
             model.report.update({
-                'baseline period': str(self.project.time_frames['baseline'].tuple),
-                'reporting period': str(self.project.time_frames['reporting'].tuple),
+                'baseline_period': str(self.project.time_frames['baseline'].tuple),
+                'reporting_period': str(self.project.time_frames['reporting'].tuple),
+                'entity': model.entity,
+                'dependent_variable': model.Y_col,
+                'model_frequency': model.frequency,
+                'project_name': project_name,
+                'graph_name': graph_name,
             })
-            print(model.report)
+            pprint(model.report)
             if df is None:
                 pd.DataFrame.from_dict(model.report, orient='index')
             else:
@@ -269,7 +281,7 @@ class EnergyModelset():
 
             now = formatted_now()
             filename = f'report_{project_name}--{graph_name}--{now}.csv'
-            filepath = os.path.join(dir, filename)
+            filepath = os.path.join(export_dir, filename)
             df.to_csv(filepath)
 
     def whosthere(self):
@@ -314,9 +326,11 @@ class GraphEntity():
 
 
     def feature_engineering(self):
-        """This method applies transformations to time-series data that are unique to particular entity types. The
+        """
+
+        This method applies transformations to time-series data that are unique to particular entity types. The
         transformations apply to BMS data, and the end goal is to return a good Y series on which to train an energy
-        model. Relies on hard-coded brick conventinos (e.g. brick class names, see ontology at BrickSchema.org)
+        model. Relies on hard-coded brick conventions (e.g. brick class names, see ontology at BrickSchema.org)
 
         Theoretically, these feature engineering functions should not change building-to-building, but one-off
         customizations may be needed inevitably. Try to use conditionals, etc. to accommodate as many cases as
@@ -379,7 +393,6 @@ class GraphEntity():
                 model.time_frames.update({'baseline': self.project.time_frames['baseline']})
             model.train()
 
-
 class System(GraphEntity):
     """
 
@@ -423,3 +436,20 @@ class Equipment(GraphEntity):
             time_frame_
         )
         self.data = res  #ToDo: clean this up w/r/t System.get_data()
+
+class ModelPlus():
+    '''This class exists for the sole purpose of tacking on additional attributes to an imported model from the
+    energy_models subrepo. The attributes are related to the project, building, system, equipment etc that don't
+    really belong in the energy_models subrepo. These additional attributes can't be just added to TOWT or TODT in
+    energy_models because we don't want the subrepo to "know about" (contain any code for) this EMIS-brick repo.
+
+    '''
+    def __init__(self, instance, **kwargs):
+        '''Initialization. Copies all attributes from instance, then adds new attributes from keyword arguments.
+
+        :param instance: this argument can be any instance of a class, but it is designed to be an instance of TODT or
+        TOWT (or another child of the Model class).
+        '''
+        self.__dict__ = instance.__dict__.copy()
+        for key in kwargs:
+            self.__setattr__(key, kwargs[key])

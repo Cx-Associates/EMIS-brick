@@ -2,9 +2,9 @@
 
 You've trained a baseline model, and now you're running the report.
 '''
-from src.utils import load_modelset
+from src.utils import load_modelset, ModelPlus
 
-# load a prior modelset (which includes project as an attribute)
+# load a prior modelset (which includes a project as an attribute)
 # must be connected to CxA VPN to access this exported model. See 'new_model.py' to run/export you own model
 filepath_modelset = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\exported modelsets\modelset_Main Street " \
                     r"Landing--msl_heating-cooling.ttl--2023-12-26-14h03m05s.bin"
@@ -26,8 +26,19 @@ modelset.project.set_time_frames(reporting=reporting_period)
 modelset.whosthere()
 
 # choose models to use for report
-model1 = modelset.systems['heating_system'].energy_models['TODTweekend']
-model2 = modelset.equipment['chiller'].energy_models['TOWT']
+models = {}
+models['heating_system'] = modelset.systems['heating_system'].energy_models['TODTweekend']
+models['chiller'] = modelset.equipment['chiller'].energy_models['TOWT']
+
+# the easiest way to pass project-related parameters into the report function is by using this ModelPlus class
+for name, model in models.items():
+    new_model = ModelPlus(
+        model,
+        entity=name,
+
+    )
+
+
 
 modelset.report(
     dir=dir_single_report,
