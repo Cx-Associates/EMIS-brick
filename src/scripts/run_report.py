@@ -40,7 +40,7 @@ model2 = ModelPlus(
 
 # now, run the report function, passing in the ModelPlus objects we just instantiated
 modelset.report(
-    dir=dir_single_report,
+    export_dir=dir_single_report,
     models=[model1, model2],
     ledger_filepath=filepath_ledger
 )

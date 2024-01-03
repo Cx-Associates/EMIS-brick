@@ -256,7 +256,8 @@ class EnergyModelset():
         project_name = self.project.name
         graph_name = self.project.graph_filepath.rsplit('/')[-1]
         df = None
-        for model in models:
+        for model_plus in models:
+            model = model_plus.model
             # first, make sure the model has the project's location, in case location is needed to request
             # additional weather data for this prediction
             if not model.location:
@@ -465,10 +466,16 @@ class ModelPlus():
             raise Exception(msg)
         try:
             entity = instance.systems[entity_name]
-
         except KeyError:
             entity = instance.equipment[entity_name]
+        except KeyError:
+            msg = f'No system or equipment found in {instance} with name {entity_name}.'
+            raise Exception(msg)
+        try:
             model = entity.energy_models[model_name]
-
-        for key in kwargs:
-            self.__setattr__(key, kwargs[key])
+        except KeyError:
+            msg = f'In {instance}, no model found in {entity_name} named {model_name}.'
+            raise Exception(msg)
+        model.location = self.project.location
+        self.model = model
+        self.entity = entity
