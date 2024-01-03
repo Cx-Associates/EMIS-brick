@@ -25,21 +25,20 @@ modelset.project.set_time_frames(reporting=reporting_period)
 # prints useful modelset attributes
 modelset.whosthere()
 
-# choose models to use for report
-models = {}
-models['heating_system'] = modelset.systems['heating_system'].energy_models['TODTweekend']
-models['chiller'] = modelset.equipment['chiller'].energy_models['TOWT']
-
 # the easiest way to pass project-related parameters into the report function is by using this ModelPlus class
-for name, model in models.items():
-    new_model = ModelPlus(
-        model,
-        entity=name,
+# this is also where we select the models we want to see in the report
+model1 = ModelPlus(
+    modelset,
+    entity_name='heating_system',
+    model_name='TODTweekend'
+)
+model2 = ModelPlus(
+    modelset,
+    entity_name='chiller',
+    model_name='TOWT'
+)
 
-    )
-
-
-
+# now, run the report function, passing in the ModelPlus objects we just instantiated
 modelset.report(
     dir=dir_single_report,
     models=[model1, model2],

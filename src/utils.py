@@ -444,12 +444,31 @@ class ModelPlus():
     energy_models because we don't want the subrepo to "know about" (contain any code for) this EMIS-brick repo.
 
     '''
-    def __init__(self, instance, **kwargs):
-        '''Initialization. Copies all attributes from instance, then adds new attributes from keyword arguments.
+    def __init__(self, instance, entity_name=None, model_name=None, **kwargs):
+        '''Initialization. Copies selected attributes from the EnergyModelset instance.
 
-        :param instance: this argument can be any instance of a class, but it is designed to be an instance of TODT or
-        TOWT (or another child of the Model class).
+        :param instance: this needs to be an instance of the Modelset class
+        :param entity_name: (str) must match a name found either in the "systems" attribute or the "equipment"
+        attribute of the EnergyModelset instance.
+        :param model_name: (str) must match the name of a model found in the "energy_models" attribute of the specified
+        entity
+        :param kwargs:
         '''
-        self.__dict__ = instance.__dict__.copy()
+        self.project = instance.project
+        if entity_name is None:
+            msg = 'ModelPlus instance needs an entity_name argument. This needs to be either the name of a piece of ' \
+                  'equipment, or the name of a system.'
+            raise Exception(msg)
+        if model_name is None:
+            msg = 'ModelPlus instance needs a model_name argument, which must match the name of an energy model ' \
+                  'within the "energy_models" attribute of the entity (which is either a system or an equipment).'
+            raise Exception(msg)
+        try:
+            entity = instance.systems[entity_name]
+
+        except KeyError:
+            entity = instance.equipment[entity_name]
+            model = entity.energy_models[model_name]
+
         for key in kwargs:
             self.__setattr__(key, kwargs[key])
