@@ -7,6 +7,17 @@ config_dict = {
     'location': (44.48, -73.21),
 }
 
+
+exceptions = {
+    'chiller': {
+        'kW': {
+            ('2023-12-12', '2024-02-01'),
+            ('2024-02-6', ''),
+        }
+    }
+}
+
+
 # feature engineering parameters if needed
 def heating_system_Btus(df):
     '''

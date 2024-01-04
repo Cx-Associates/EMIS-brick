@@ -178,6 +178,11 @@ class EnergyModelset():
         for name, entity in self.equipment.items():
             entity.get_data(time_frame)
 
+
+    def clean_data(self):
+        get_exceptions_from_config
+        run exceptions
+
     def set_models(self, list_):
         entity = None
         for tuple in list_:

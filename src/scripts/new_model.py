@@ -42,6 +42,7 @@ modelset = EnergyModelset(
 # get weather data, then get relevant building timeseries data
 project.get_weather_data()
 modelset.get_data()
+modelset.clean_data()
 
 ## 'cast' models as any of TOWT, TODTweekend, TODT (for now)
 modelset.systems['heating_system'].feature_engineering()
