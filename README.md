@@ -1,6 +1,10 @@
 # EMIS-brick
 
-Welcome to EMIS-brick by Cx Associates. This is a Python code base for conducting energy-related analytics on time-series data from building automation systems (BMS/BAS). The code uses the Brick ... https://brickschema.org/
+Welcome to EMIS-brick by Cx Associates. This is a Python code base for conducting energy-related analytics on time-series data from building automation systems (BMS/BAS). The code relies on data models for BAS data as defined by the Brick Schema (https://brickschema.org/) and as implemented according to the `brickwork` subrepository (subrepo). The energy modeling is handled within the subrepo `energy_models`.
+
+## Quick Start
+1. To make a new model, run `src/scripts/new_model.py`, which will export a model as a pickle (.bin) 
+2. 
 
 CxA's EMIS for brick data models
 
@@ -8,7 +12,7 @@ Typical workflow: you want to create, train, test, or run performance reports on
 
 An instance of EnergyModelset is primarily a set of energy models, but it also provides context to store project-level objects such as a single performance period used to report across multiple models, the project instance itself (and therefore attributes such as lat, long location, which is used to retrieve weather data), and other useful objects that are used  . Its class is defined in the `EMIS-brick` code becaues it repurposes elements of both submodules (described below). The EnergyModelset class provides context to store project-level objects like 
 
-## The submodules: brickwork and energy_models
+## The subrepos: brickwork and energy_models
 * `brickwork` uses the Brick Schema to organize building metadata. In order to run code in `EMIS-brick`, you must have at least a rudimentary brick model in .ttl format. When you run a function like `energy_modelset.get_data()`, the code uses 
 * `energy_models` is a repository of analytics code used for energy modeling in the style of ASHRAE 14, U.S. Superior Energy Performance, "Strategic Energy Management" (ISO 500001), performance contracting, and other modeling initiatives that use the conventions of baseline and performance period to measure energy savings.
 

@@ -1,6 +1,8 @@
 """Modeling and reporting script, likely for a new project, or for a run for which you don't need to load a previous
 project.
 
+As a result, the model is exported as a .bin file (using Python pickle)
+
 """
 import os
 
