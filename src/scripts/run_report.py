@@ -8,7 +8,7 @@ from src.utils import load_modelset, ModelPlus
 # load a prior modelset (which includes a project as an attribute)
 # must be connected to CxA VPN to access this exported model. See 'new_model.py' to run/export you own model
 filepath_modelset = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\exported modelsets\modelset_Main Street " \
-                    r"Landing--msl_heating-cooling.ttl--2023-12-26-14h03m05s.bin"
+                    r"Landing--msl_heating-cooling.ttl--2024-01-04_08h36m20s.bin"
 
 # set filepath for single .csv report
 dir_single_report = r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\csv_reports'

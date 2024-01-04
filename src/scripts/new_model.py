@@ -17,8 +17,8 @@ project = Project(
 
 # set time frames for the project. #ToDo: build the option for setting baselines for individual models
 project.set_time_frames(
-    baseline=('2023-11-10', '2023-12-09'),
-    # reporting=('2023-12-10', '2023-12-18')
+    baseline=('2023-11-10', '2023-12-23'),
+    # reporting=('2023-12-26', '2024-01-03')
 )
 
 # give filepath for brick model .ttl file, and load it into the project

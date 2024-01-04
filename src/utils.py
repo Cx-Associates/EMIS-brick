@@ -227,7 +227,7 @@ class EnergyModelset():
         filepath = os.path.join(dir_, filename)
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
-        print(f'Exported modelset to {filepath}.')
+        print(f'\n Success! Exported modelset to {filepath}.')
 
     def report(self, export_dir, models, ledger_filepath=None):
         """
