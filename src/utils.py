@@ -305,7 +305,7 @@ class EnergyModelset():
             df_ledger = df
             df_ledger.insert(loc=0, column='report timestamp', value=now)
         df_ledger.to_csv(ledger_filepath, index=False)
-        print(f'\n ...success! Updated ledger file with new row at: \n {filepath}')
+        print(f'\n ...success! Updated ledger file with new row at: \n {ledger_filepath}')
 
     def whosthere(self):
         my_tuple = self.equipment['chiller'].energy_models['TOWT'].time_frames['baseline'].tuple
