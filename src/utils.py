@@ -199,7 +199,7 @@ class EnergyModelset():
                     df,
                     Y_col=entity.Y_series.name,
                 )
-                towt.add_TOWT_features(df, temp_col='temperature_2m')
+                towt.add_X_features(df, temp_col='temperature_2m')
                 entity.energy_models.update({'TOWT': towt})
             elif model_type == 'TODTweekend':
                 todtweekend = TODT(
@@ -207,7 +207,7 @@ class EnergyModelset():
                     Y_col=entity.Y_series.name,
                     weekend=True
                 )
-                todtweekend.add_TODT_features(df, temp_col='temperature_2m')
+                todtweekend.add_X_features(df, temp_col='temperature_2m')
                 entity.energy_models.update({'TODTweekend': todtweekend})
             else:
                 msg = f'Cannot instantiate a {model_type} model for {entity_name} because that model type is not yet ' \
@@ -256,34 +256,56 @@ class EnergyModelset():
         project_name = self.project.name
         graph_name = self.project.graph_filepath.rsplit('/')[-1]
         df = None
+        modelset_report = []
         for model_plus in models:
             model = model_plus.model
             # first, make sure the model has the project's location, in case location is needed to request
             # additional weather data for this prediction
             if not model.location:
                 model.location = self.project.location
-            # now run the prediction. if the model is TODT or TOWT, it will ask for weather data it doesn't have.
+            # now run the prediction. if the model is TODT or TOWT, it will get any weather data it doesn't have (
+            # based on time_frame).
             model.predict(time_frame)
             model.reporting_metrics()
             model.report.update({
                 'baseline_period': str(self.project.time_frames['baseline'].tuple),
                 'reporting_period': str(self.project.time_frames['reporting'].tuple),
-                'entity': model.entity,
-                'dependent_variable': model.Y_col,
-                'model_frequency': model.frequency,
+                'entity_name': model_plus.entity.name,
+                'dependent_var': model.Y_col,
+                'model_freq': model.frequency,
+                'model_type': model.type,
                 'project_name': project_name,
                 'graph_name': graph_name,
             })
+            print(f'Report for {model_plus.entity.name} - {model.type}, baseline: {model.report["baseline_period"]}:')
             pprint(model.report)
             if df is None:
-                pd.DataFrame.from_dict(model.report, orient='index')
+                df = pd.DataFrame.from_dict(model.report, orient='index')
             else:
-                pass
-
-            now = formatted_now()
-            filename = f'report_{project_name}--{graph_name}--{now}.csv'
-            filepath = os.path.join(export_dir, filename)
-            df.to_csv(filepath)
+                new_df = pd.DataFrame.from_dict(model.report, orient='index')
+                df = pd.concat([df, new_df], axis=1)
+            modelset_report.append(model.report)
+        now = formatted_now()
+        filename = f'report_{project_name}--{graph_name}--{now}.csv'
+        filepath = os.path.join(export_dir, filename)
+        df.to_csv(filepath)
+        print(f'\n Success! Exported modelset report to filepath: \n {filepath}')
+        print(f'Next, attempting to update ledger file...')
+        df = df.transpose()
+        try:
+            df_ledger = pd.read_csv(ledger_filepath)
+            df.insert(loc=0, column='report timestamp', value=now)
+            try:
+                df_ledger = pd.concat([df, df_ledger], axis=1)
+            except pd.errors.InvalidIndexError:
+                msg = 'Error writing new row to ledger. The ledger column names may not match those of the dataframe ' \
+                      'attempting to write to the ledger.'
+                raise Exception(msg)
+        except FileNotFoundError:
+            df_ledger = df
+            df_ledger.insert(loc=0, column='report timestamp', value=now)
+        df_ledger.to_csv(ledger_filepath, index=False)
+        print(f'\n ...success! Updated ledger file with new row at: \n {filepath}')
 
     def whosthere(self):
         my_tuple = self.equipment['chiller'].energy_models['TOWT'].time_frames['baseline'].tuple

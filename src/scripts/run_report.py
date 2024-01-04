@@ -1,6 +1,7 @@
 '''
 
-You've trained a baseline model, and now you're running the report.
+You've trained a baseline model, and now you're running the report. The result of the report is exported / updated
+.csv files with model data.
 '''
 from src.utils import load_modelset, ModelPlus
 
@@ -19,7 +20,7 @@ filepath_ledger = r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\report_
 modelset = load_modelset(filepath_modelset)
 
 # set reporting period for this report
-reporting_period = ('2023-12-14', '2023-12-24')
+reporting_period = ('2023-12-25', '2024-01-01')
 modelset.project.set_time_frames(reporting=reporting_period)
 
 # prints useful modelset attributes
