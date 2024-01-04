@@ -134,7 +134,7 @@ def load_modelset(filepath):
         return modelset_object
 
 def formatted_now():
-    now = dt.now().strftime(f'%Y-%m-%d-%H'+'h'+'%M'+'m'+'%S'+'s')
+    now = dt.now().strftime(f'%Y-%m-%d_%H'+'h'+'%M'+'m'+'%S'+'s')
     return now
 
 class EnergyModelset():
@@ -296,7 +296,7 @@ class EnergyModelset():
             df_ledger = pd.read_csv(ledger_filepath)
             df.insert(loc=0, column='report timestamp', value=now)
             try:
-                df_ledger = pd.concat([df, df_ledger], axis=1)
+                df_ledger = pd.concat([df_ledger, df], axis=0)
             except pd.errors.InvalidIndexError:
                 msg = 'Error writing new row to ledger. The ledger column names may not match those of the dataframe ' \
                       'attempting to write to the ledger.'
