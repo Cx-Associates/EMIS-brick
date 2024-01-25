@@ -17,22 +17,6 @@ def resample_and_join(list_):
     df = pd.concat(resampled_list, axis=1).dropna()
     return df
 
-def join_csv_data(df,csv_data_file):
-    """TODO: maybe only do this for benchmarking period?"""
-    #Read in data from a file with data collected via on-site monitoring
-    df_real = pd.read_csv(csv_data_file, skiprows=1, header=0)
-
-    #for dent data they have new lines in them sometimes, let's remove those
-    df_real.columns = df_real.columns.str.replace('\n', '')
-    df_real.columns = df_real.columns.str.replace('\r', '')
-
-    #create 'time' column
-    df_real['time'] = pd.to_datetime(df_real['Date '] + ' ' + df_real['End Time '])
-
-    #Combine with existing data frame
-    merged_df = pd.merge(df, df_real, on='time', how='outer')
-    return merged_df
-
 class TimeFrame():
     def __init__(self, arg):
         if isinstance(arg, tuple):
