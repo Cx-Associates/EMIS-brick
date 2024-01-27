@@ -7,7 +7,7 @@ config_dict = {
     'location': (44.48, -73.21),
 }
 
-# feature engineering if needed
+# feature engineering parameters if needed
 def heating_system_Btus(df):
     '''
 

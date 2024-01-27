@@ -1,25 +1,29 @@
 """Modeling and reporting script, likely for a new project, or for a run for which you don't need to load a previous
 project.
 
+As a result, the model is exported as a .bin file (using Python pickle)
+
 """
-import pickle
+import os
 
 from src.utils import Project, EnergyModelset
-from config_MSL import config_dict, heating_system_Btus
 
-# create an instance of the project class, giving it a name and a location
+# import the configuration dictionary, which stores project-specific attributes
+from config_MSL import config_dict
+
+# create an instance of the project class, giving it a name and location coordinates
 project = Project(
     name=config_dict['name'],
     location=config_dict['location'],
 )
 
-# set the project baseline period
+# set time frames for the project. #ToDo: build the option for setting baselines for individual models
 project.set_time_frames(
-    baseline=('2023-11-10', '2023-12-09'),
-    reporting=('2023-12-10', '2023-12-18')
+    baseline=('2023-11-10', '2023-12-23'),
+    # reporting=('2023-12-26', '2024-01-03')
 )
 
-# set filepath for brick model .ttl file, and load it into the project
+# give filepath for brick model .ttl file, and load it into the project
 graph_path = 'brick_models/msl_heating-cooling.ttl'
 project.load_graph(graph_path)
 
@@ -39,10 +43,9 @@ modelset = EnergyModelset(
 project.get_weather_data()
 modelset.get_data()
 
-# custom feature engineering for heating system
 ## 'cast' models as any of TOWT, TODTweekend, TODT (for now)
-modelset.systems['heating_system'].feature_enginering()
-modelset.equipment['chiller'].feature_enginering()
+modelset.systems['heating_system'].feature_engineering()
+modelset.equipment['chiller'].feature_engineering()
 modelset.set_models([
     ('heating_system', 'TOWT'),
     ('heating_system', 'TODTweekend'),
@@ -52,6 +55,7 @@ modelset.set_models([
 ])
 
 # train models within modelset
+# ToDo: modelset.systems.train_all()?
 modelset.systems['heating_system'].train()
 modelset.equipment['chiller'].train()
 
@@ -64,22 +68,13 @@ for model in [model1, model2]:
     # model.dayplot(weather_data=project.weather_data)
     model.dayplot()
 
-# # # pickling
-# with open('project.bin', 'wb') as f:
-#     pickle.dump(project, f)
-# with open('modelset.bin', 'wb') as f:
-#     pickle.dump(modelset, f)
-#
-# with open('project.bin', 'rb') as f:
-#     project = pickle.load(f)
-# with open('modelset.bin', 'rb') as f:
-#     modelset = pickle.load(f)
+# export modelset
+dir_modelset = os.path.join('F:', 'PROJECTS', '1715 Main Street Landing EMIS Pilot', 'code', 'exported modelsets')
+modelset.export(dir_modelset)
 
-model1 = modelset.systems['heating_system'].energy_models['TODTweekend']
-model2 = modelset.equipment['chiller'].energy_models['TOWT']
 
-modelset.report(
-    models=[model1, model2]
-)
+# modelset.report(
+#     models=[model1, model2]
+# )
 
 pass
