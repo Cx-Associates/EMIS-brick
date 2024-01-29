@@ -7,6 +7,7 @@ import os
 import requests
 import pandas as pd
 import yaml
+import matplotlib.pyplot as plt
 
 #Copied from new_model - sorting through it
 import pickle
@@ -30,9 +31,9 @@ def parse_response(response):
     return df
 
 #some places and specifics
-dentdatapath=[r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data\\E876C-01.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data//E876D-01.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data//E876F-01.csv"]
+dentdatapath=[r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876C-01.csv",
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876D-01.csv",
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876F-01.csv"]
 env_filename = 'api_keys.yml'
 f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
@@ -48,7 +49,8 @@ for path in dentdatapath:
     MSL_data1.columns = MSL_data1.columns.str.replace('\r', '')
 
     # create 'time' column
-    MSL_data1= pd.DataFrame(MSL_data1,index=pd.DatetimeIndex(MSL_data1['Date '] + ' ' + MSL_data1['End Time ']))
+    MSL_data1['CombinedDatetime']=pd.to_datetime(MSL_data1['Date '] + ' ' + MSL_data1['End Time '])
+    MSL_data1.set_index('CombinedDatetime', inplace=True)
     MSL_data1.index = MSL_data1.index.tz_localize('UTC').tz_convert(timezone)
     # Combine with existing data frame
     if 'MSL_data' in locals():
@@ -93,11 +95,11 @@ modelset.get_data()
 
 #end
 """
-str=[r'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time=2023-11-10&end_time=2023-12-18',
-r'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time=2023-11-10&end_time=2023-12-18',
-r'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time=2023-11-10&end_time=2023-12-18',
-r'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time=2023-11-10&end_time=2023-12-18',
-r'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time=2023-11-10&end_time=2023-12-18']
+str=[r'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time=2023-11-10&end_time=2023-12-31',
+r'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time=2023-11-10&end_time=2023-12-31',
+r'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time=2023-11-10&end_time=2023-12-31',
+r'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time=2023-11-10&end_time=2023-12-31',
+r'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time=2023-11-10&end_time=2023-12-31']
 
 #Lets try this instead?
 with open(env_filepath, 'r') as file:
@@ -121,11 +123,7 @@ with open(env_filepath, 'r') as file:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg)
 
-#    print('hello')
-#pull out data I want to compile
-#This is going to take some work, and probably needs to happen in the for loop above.
+i=1
+#MSL_data.plot(x=index, y=['value_x,Avg'. 'AmpL1 Phase_x'])
 
 
-
-#join_csv_data(modelset.systems.'heating_system'.dataframe,dentdatapath)
-i=1;
