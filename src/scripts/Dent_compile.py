@@ -15,9 +15,8 @@ import pickle
 from src.utils import Project, EnergyModelset
 from config_MSL import config_dict, heating_system_Btus
 
-def parse_response(response):
+def parse_response(response,columnname):
     """
-
     :param response:
     :return:
     """
@@ -26,7 +25,8 @@ def parse_response(response):
     df = pd.DataFrame(list_)
     df.index = pd.to_datetime(df.pop('time'))
     df.drop(columns='name', inplace=True)
-    df['value'] = pd.to_numeric(df['value'])
+    df[columnname] = pd.to_numeric(df['value'])
+    df=df.drop(columns='value')
 
     return df
 
@@ -95,17 +95,30 @@ modelset.get_data()
 
 #end
 """
-str=[r'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time=2023-11-10&end_time=2023-12-31',
-r'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time=2023-11-10&end_time=2023-12-31',
-r'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time=2023-11-10&end_time=2023-12-31',
-r'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time=2023-11-10&end_time=2023-12-31',
-r'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time=2023-11-10&end_time=2023-12-31']
+str=[r'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time=2023-11-10&end_time=2023-12-31', #Pump 4a VFD Output
+r'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time=2023-11-10&end_time=2023-12-31', #Pump 4b VFD Output
+r'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time=2023-11-10&end_time=2023-12-31', #Primary Hot Water Supply Temp_2
+r'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time=2023-11-10&end_time=2023-12-31', #Primary Hot Water Return Temp_2
+r'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time=2023-11-10&end_time=2023-12-31', #chilled water power meter
+r'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time=2023-11-10&end_time=2023-12-31', #pump 2a-b VFD output
+r'cxa/cxa_main_st_landing/2404:7-240407/binaryOutput/12/timeseries?start_time=2023-11-10&end_time=2023-12-31', #pump 2a active (binary)
+r'cxa/cxa_main_st_landing/2404:7-240407/binaryOutput/13/timeseries?start_time=2023-11-10&end_time=2023-12-31'] #pump 2b active (binary)
 
-#Lets try this instead?
+headers=['Pump 4a VFD Output',
+         'Pump 4b VFD Output',
+         'Primary Hot Water Supply Temp_2',
+         'Primary Hot Water Return Temp_2',
+         'chilled water power meter',
+         'pump 2a-b VFD output',
+         'pump 2a active',
+         'pump 2b active']
+
+#Lets try this
+#For each path for AceIoT data (listed above), get the data and put the data in the data frame
 with open(env_filepath, 'r') as file:
     config = yaml.safe_load(file)
     url = config['DATABASE_URL']
-    for str_ in str:
+    for str_, head in zip(str, headers):
         str_ = url + str_
         auth_token = config['API_KEY']
         headers = {
@@ -115,15 +128,19 @@ with open(env_filepath, 'r') as file:
         res = requests.get(str_, headers=headers)
         if res.status_code == 200:
             print(f'...Got data! From: \n {str_} \n')
-            df = parse_response(res)
+            # somehow add the column header to be useful!
+            df = parse_response(res, head)
             df.index = df.index.tz_localize('UTC').tz_convert(timezone)
-            #print('hello')
+
             MSL_data=pd.merge(df, MSL_data, left_index=True, right_index=True, how='outer')
         else:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg)
 
-i=1
-#MSL_data.plot(x=index, y=['value_x,Avg'. 'AmpL1 Phase_x'])
-
+MSL_data.plot(y=['pump 2a-b VFD output',
+         'pump 2a active',
+         'pump 2b active',
+         'Avg. AmpL1 Phase_x',
+         'Avg. AmpL2 Phase_x'])
+plt.show()
 
