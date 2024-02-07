@@ -106,7 +106,7 @@ r'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time=2023-1
 r'/cxa_main_st_landing/2404:7-240407/binaryOutput/12/timeseries?start_time=2023-11-10&end_time=2024-01-06', #pump 2a active (binary)
 r'/cxa_main_st_landing/2404:7-240407/binaryOutput/13/timeseries?start_time=2023-11-10&end_time=2024-01-06', #pump 2b active (binary)
 r'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time=2023-11-10&end_time=2024-01-06', #P1a Feedback
-r'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time=2023-11-10&end_time=2024-01-06', #HRU Supplyfan VFD output
+r'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time=2023-11-10&end_time=2024-01-06'] #HRU Supplyfan VFD output
 
 headers = ['Pump 4a VFD Output',
          'Pump 4b VFD Output',
@@ -116,7 +116,8 @@ headers = ['Pump 4a VFD Output',
          'pump 2a-b VFD output',
          'pump 2a active',
          'pump 2b active',
-         'pump 1a feedback']
+         'pump 1a feedback',
+         'HRU supply fan']
 
 #Lets try this
 #For each path for AceIoT data (listed above) and the description, get the data and put the data in the data frame with header listed above
@@ -165,6 +166,14 @@ plt.xlabel('BAS Pump 1a Feedback')
 plt.ylabel('Dent Power data for Pump 1')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Correlation.png')
 plt.close()
+
+plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL1 Phase'], marker='.', markersize=1)
+plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL2 Phase'], marker='*', markersize=1)
+plt.xlabel('HRU Supply fan')
+plt.ylabel('Dent Power data for HRU')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
+plt.close()
+
 
 MSL_data.plot(y=['pump 2a-b VFD output',
          'pump 2a active',
