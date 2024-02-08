@@ -53,7 +53,10 @@ for path in dentdatapath:
     #^for some reason that has us off by 4 hours?
     MSL_data1.set_index('CombinedDatetime', inplace=True)
     MSL_data1.index = MSL_data1.index.tz_localize('US/Eastern', ambiguous='NaT')
-#    MSL_data1.index = MSL_data1.index.tz_localize('UTC').tz_convert(timezone)
+    # Handle ambiguous time error by dropping rows with NaT values in the index
+    MSL_data1 = MSL_data1[MSL_data1.index.notnull()]
+#   MSL_data1.index = MSL_data1.index.tz_localize('UTC').tz_convert(timezone)
+
     # Combine with existing data frame
     if 'MSL_data' in locals():
         MSL_data = pd.merge(MSL_data, MSL_data1, left_index=True, right_index=True, how='outer')
@@ -70,33 +73,11 @@ project = Project(
 
 # set the project baseline period
 project.set_time_frames(
-    baseline=('2023-11-10', '2023-12-18'),
+    baseline=('2023-11-10', '2023-12-31'),
     #reporting=('2023-12-10', '2023-12-18')
 )
 
-"""
-# set filepath for brick model .ttl file, and load it into the project
-graph_path = 'brick_models/msl_heating-cooling.ttl'
-project.load_graph(graph_path)
-
-# create an instance of the energy modelset class and designate the systems for which to create individual energy models
-modelset = EnergyModelset(
-    project,
-    systems=[
-        'heating_system',
-        # 'chilled_water_system',
-    ],
-    equipment=[
-        'chiller'
-    ]
-)
-
-# get weather data, then get relevant building timeseries data
-#project.get_weather_data()
-modelset.get_data()
-
-#end
-"""
+#Ace Data locations
 str = [r'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Pump 4a VFD Output
 r'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Pump 4b VFD Output
 r'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Primary Hot Water Supply Temp_2
@@ -106,8 +87,10 @@ r'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time=2023-1
 r'/cxa_main_st_landing/2404:7-240407/binaryOutput/12/timeseries?start_time=2023-11-10&end_time=2024-01-06', #pump 2a active (binary)
 r'/cxa_main_st_landing/2404:7-240407/binaryOutput/13/timeseries?start_time=2023-11-10&end_time=2024-01-06', #pump 2b active (binary)
 r'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time=2023-11-10&end_time=2024-01-06', #P1a Feedback
-r'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time=2023-11-10&end_time=2024-01-06'] #HRU Supplyfan VFD output
+r'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time=2023-11-10&end_time=2024-01-06', #HRU Supplyfan VFD output
+r'/cxa_main_st_landing/2404:3-240403/analogOutput/3/timeseries?start_time=2023-11-10&end_time=2024-01-06'] #AHU19 Supply fan VFD
 
+#Ace Data descriptions
 headers = ['Pump 4a VFD Output',
          'Pump 4b VFD Output',
          'Primary Hot Water Supply Temp_2',
@@ -117,7 +100,8 @@ headers = ['Pump 4a VFD Output',
          'pump 2a active',
          'pump 2b active',
          'pump 1a feedback',
-         'HRU supply fan']
+         'HRU supply fan',
+         'AHU19 supply fan']
 
 #Lets try this
 #For each path for AceIoT data (listed above) and the description, get the data and put the data in the data frame with header listed above
@@ -149,36 +133,73 @@ MSL_data['pump2b'] = MSL_data['pump 2b active']*MSL_data['pump 2a-b VFD output']
 
 #Correlation time!
 #MSL_data.plot(x='pump2a', y='Avg. AmpL2 Phase_x')
-plt.plot(MSL_data['pump2a'], MSL_data['Avg. AmpL3 Phase_y'], marker='.', markersize=1)
+plt.plot(MSL_data['pump2a'], MSL_data['Avg. Amp Pump 2a'], marker='.', markersize=1)
 plt.xlabel('BAS VFD output')
 plt.ylabel('Dent Amp data for Pump 2a')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2aCorrelation.png')
 plt.close()
 
-plt.plot(MSL_data['pump2b'], MSL_data['Avg. AmpL2 Phase_y'], marker='.', markersize=1)
+plt.plot(MSL_data['pump2b'], MSL_data['Avg. Amp Pump 2b'], marker='.', markersize=1)
 plt.xlabel('BAS VFD output')
 plt.ylabel('Dent Power data for Pump 2b')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bCorrelation.png')
 plt.close()
 
-plt.plot(MSL_data['pump 1a feedback'], MSL_data['Avg. AmpL1 Phase_y'], marker='.', markersize=1)
+plt.plot(MSL_data['pump 1a feedback'], MSL_data['Avg. Amp Pump 1a'], marker='.', markersize=1)
 plt.xlabel('BAS Pump 1a Feedback')
 plt.ylabel('Dent Power data for Pump 1')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Correlation.png')
 plt.close()
 
-plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL1 Phase'], marker='.', markersize=1)
-plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL2 Phase'], marker='*', markersize=1)
+plt.plot(MSL_data['AHU19 supply fan'], MSL_data['Avg. Amp AHU19'], marker='.', markersize=1)
+plt.xlabel('BAS Pump 1a Feedback')
+plt.ylabel('Dent Power data for Pump 1')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
+plt.close()
+
+plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL1 HRU'], marker='.', markersize=1)
+plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL2 HRU'], marker='*', markersize=1)
 plt.xlabel('HRU Supply fan')
 plt.ylabel('Dent Power data for HRU')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
 plt.close()
 
 
+plt.plot(MSL_data.index,MSL_data['pump2a'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2a'],marker='.',markersize=1)
+plt.legend(['Ace Data','Dent Data'])
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2aTimeserries.png')
+plt.close()
+
+plt.plot(MSL_data.index,MSL_data['pump2b'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2b'],marker='.',markersize=1)
+plt.legend(['Ace Data','Dent Data'])
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bTimeserries.png')
+plt.close()
+
+plt.plot(MSL_data.index,MSL_data['pump 1a feedback'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 1a'],marker='.',markersize=1)
+plt.legend(['Ace Data (Pump 1a feedback)','Dent Data'])
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aTimeserries.png')
+plt.close()
+
+plt.plot(MSL_data.index,MSL_data['AHU19 supply fan'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['Avg. Amp AHU19'],marker='.',markersize=1)
+plt.legend(['Ace Data (AHU19 Supply Fan)','Dent Data (all AHU19)'])
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Timeserries.png')
+plt.close()
+
+plt.plot(MSL_data.index,MSL_data['HRU supply fan'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['Avg. AmpL1 HRU'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['Avg. AmpL2 HRU'],marker='.',markersize=1)
+plt.legend(['Ace Data (HRU Supply Fan)','Dent Data Phase 1','Dent Data Phase 2'])
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
+plt.close()
+
 MSL_data.plot(y=['pump 2a-b VFD output',
          'pump 2a active',
          'pump 2b active',
-         'Avg. AmpL1 Phase_x',
-         'Avg. AmpL2 Phase_x'])
+         'Avg. Amp Pump 2a',
+         'Avg. Amp Pump 2b'])
 plt.show()
 
