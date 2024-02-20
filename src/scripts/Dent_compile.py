@@ -10,6 +10,11 @@ import pandas as pd
 import yaml
 import matplotlib.pyplot as plt
 
+# Set default plot parameters
+plt.rcParams['lines.linestyle'] = ''
+plt.rcParams['lines.marker'] = '.'
+plt.rcParams['lines.markersize'] = 1
+
 #Copied from new_model - sorting through it
 import pickle
 
@@ -119,11 +124,13 @@ with open(env_filepath, 'r') as file:
         res = requests.get(str_, headers=headers)
         if res.status_code == 200:
             print(f'...Got data! From: \n {str_} \n')
-            # somehow add the column header to be useful!
+            #add the column header to be useful!
             df = parse_response(res, head)
             df.index = df.index.tz_localize('UTC').tz_convert(timezone)
+            #do 15-minute averages
+            df_15min = df[head].resample('15T').mean()
 
-            MSL_data=pd.merge(df, MSL_data, left_index=True, right_index=True, how='outer')
+            MSL_data=pd.merge(df_15min, MSL_data, left_index=True, right_index=True, how='outer')
         else:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg)
@@ -133,66 +140,65 @@ MSL_data['pump2a'] = MSL_data['pump 2a active']*MSL_data['pump 2a-b VFD output']
 MSL_data['pump2b'] = MSL_data['pump 2b active']*MSL_data['pump 2a-b VFD output'] #same for pump 2b
 
 #Correlation time!
-#MSL_data.plot(x='pump2a', y='Avg. AmpL2 Phase_x')
-plt.plot(MSL_data['pump2a'], MSL_data['Avg. Amp Pump 2a'], marker='.', markersize=1)
+plt.plot(MSL_data['pump2a'], MSL_data['Avg. Amp Pump 2a'])
 plt.xlabel('BAS VFD output')
 plt.ylabel('Dent Amp data for Pump 2a')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2aCorrelation.png')
 plt.close()
 
-plt.plot(MSL_data['pump2b'], MSL_data['Avg. Amp Pump 2b'], marker='.', markersize=1)
+plt.plot(MSL_data['pump2b'], MSL_data['Avg. Amp Pump 2b'])
 plt.xlabel('BAS VFD output')
 plt.ylabel('Dent Power data for Pump 2b')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bCorrelation.png')
 plt.close()
 
-plt.plot(MSL_data['pump 1a feedback'], MSL_data['Avg. Amp Pump 1a'], marker='.', markersize=1)
+plt.plot(MSL_data['pump 1a feedback'], MSL_data['Avg. Amp Pump 1a'])
 plt.xlabel('BAS Pump 1a Feedback')
 plt.ylabel('Dent Power data for Pump 1')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Correlation.png')
 plt.close()
 
-plt.plot(MSL_data['AHU19 supply fan'], MSL_data['Avg. Amp AHU19'], marker='.', markersize=1)
+plt.plot(MSL_data['AHU19 supply fan'], MSL_data['Avg. Amp AHU19'])
 plt.xlabel('BAS AHU19 Supply Fan')
 plt.ylabel('Dent Power data for AHU 19')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
 plt.close()
 
-plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL1 HRU'], marker='.', markersize=1)
-plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL2 HRU'], marker='*', markersize=1)
+plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL1 HRU'])
+plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL2 HRU'])
 plt.xlabel('HRU Supply fan')
 plt.ylabel('Dent Power data for HRU')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
 plt.close()
 
 
-plt.plot(MSL_data.index,MSL_data['pump2a'],marker='.',markersize=1)
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2a'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['pump2a'])
+plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2a'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2aTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['pump2b'],marker='.',markersize=1)
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2b'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['pump2b'])
+plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2b'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['pump 1a feedback'],marker='.',markersize=1)
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 1a'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['pump 1a feedback'])
+plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 1a'])
 plt.legend(['Ace Data (Pump 1a feedback)','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['AHU19 supply fan'],marker='.',markersize=1)
-plt.plot(MSL_data.index,MSL_data['Avg. Amp AHU19'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['AHU19 supply fan'])
+plt.plot(MSL_data.index,MSL_data['Avg. Amp AHU19'])
 plt.legend(['Ace Data (AHU19 Supply Fan)','Dent Data (all AHU19)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Timeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['HRU supply fan'],marker='.',markersize=1)
-plt.plot(MSL_data.index,MSL_data['Avg. AmpL1 HRU'],marker='.',markersize=1)
-plt.plot(MSL_data.index,MSL_data['Avg. AmpL2 HRU'],marker='.',markersize=1)
+plt.plot(MSL_data.index,MSL_data['HRU supply fan'])
+plt.plot(MSL_data.index,MSL_data['Avg. AmpL1 HRU'])
+plt.plot(MSL_data.index,MSL_data['Avg. AmpL2 HRU'])
 plt.legend(['Ace Data (HRU Supply Fan)','Dent Data Phase 1','Dent Data Phase 2'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
 plt.close()
