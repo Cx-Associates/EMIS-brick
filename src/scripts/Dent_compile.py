@@ -1,7 +1,8 @@
 """
 Get data from Ace and dents
 Combine data
-Be prepared to answer any questions that might come up from this
+Create some correlation plots
+Create some time series plots
 """
 import os
 import requests
@@ -152,8 +153,8 @@ plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Co
 plt.close()
 
 plt.plot(MSL_data['AHU19 supply fan'], MSL_data['Avg. Amp AHU19'], marker='.', markersize=1)
-plt.xlabel('BAS Pump 1a Feedback')
-plt.ylabel('Dent Power data for Pump 1')
+plt.xlabel('BAS AHU19 Supply Fan')
+plt.ylabel('Dent Power data for AHU 19')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
 plt.close()
 
