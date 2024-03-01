@@ -10,6 +10,9 @@ import requests
 import pandas as pd
 import yaml
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.linear_model import LinearRegression
+
 
 # Set default plot parameters
 plt.rcParams['lines.linestyle'] = ''
@@ -133,6 +136,10 @@ with open(env_filepath, 'r') as file:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg)
 
+#this is risky - drop rows with NaNs?
+MSL_data = MSL_data.dropna()
+
+
 #Lets do some math to prepare for correlations!
 MSL_data['pump2a'] = MSL_data['pump 2a active']*MSL_data['pump 2a-b VFD output'] #this should be the BAS pump 2a power (ish)
 MSL_data['pump2b'] = MSL_data['pump 2b active']*MSL_data['pump 2a-b VFD output'] #same for pump 2b
@@ -140,15 +147,15 @@ MSL_data['pump2b'] = MSL_data['pump 2b active']*MSL_data['pump 2a-b VFD output']
 #Calculate kW from dent data
 #Assume a PF of 0.8 for now:
 PF=0.8
-MSL_data['Avg. kW Boiler 1 Fan'] = MSL_data['Avg. Volt Boiler 1 Fan']*MSL_data['Avg. Amp Boiler 1 Fan']*3**.5*PF
-MSL_data['Avg. kW Boiler 2 Fan'] = MSL_data['Avg. Volt Boiler 2 Fan']*MSL_data['Avg. Amp Boiler 2 Fan']*3**.5*PF
-MSL_data['Avg. kW AHU19'] = MSL_data['Avg. Volt AHU19']*MSL_data['Avg. Amp AHU19']*3**.5*PF
-MSL_data['Avg. kW Pump 1a'] = MSL_data['Avg. Volt Pump 1a']*MSL_data['Avg. Amp Pump 1a']*3**.5*PF
-MSL_data['Avg. kW Pump 2b'] = MSL_data['Avg. Volt Pump 2b']*MSL_data['Avg. Amp Pump 2b']*3**.5*PF
-MSL_data['Avg. kW Pump 2a'] = MSL_data['Avg. Volt Pump 2a']*MSL_data['Avg. Amp Pump 2a']*3**.5*PF
-MSL_data['Avg. kW L1 HRU'] = MSL_data['Avg. VoltL1 HRU']*MSL_data['Avg. AmpL1 HRU']*3**.5*PF
-MSL_data['Avg. kW L2 HRU'] = MSL_data['Avg. VoltL2 HRU']*MSL_data['Avg. AmpL2 HRU']*3**.5*PF
-MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*3**.5*PF
+MSL_data['Avg. kW Boiler 1 Fan'] = MSL_data['Avg. Volt Boiler 1 Fan']*MSL_data['Avg. Amp Boiler 1 Fan']*3**.5*PF/1000
+MSL_data['Avg. kW Boiler 2 Fan'] = MSL_data['Avg. Volt Boiler 2 Fan']*MSL_data['Avg. Amp Boiler 2 Fan']*3**.5*PF/1000
+MSL_data['Avg. kW AHU19'] = MSL_data['Avg. Volt AHU19']*MSL_data['Avg. Amp AHU19']*3**.5*PF/1000
+MSL_data['Avg. kW Pump 1a'] = MSL_data['Avg. Volt Pump 1a']*MSL_data['Avg. Amp Pump 1a']*3**.5*PF/1000
+MSL_data['Avg. kW Pump 2b'] = MSL_data['Avg. Volt Pump 2b']*MSL_data['Avg. Amp Pump 2b']*3**.5*PF/1000
+MSL_data['Avg. kW Pump 2a'] = MSL_data['Avg. Volt Pump 2a']*MSL_data['Avg. Amp Pump 2a']*3**.5*PF/1000
+MSL_data['Avg. kW L1 HRU'] = MSL_data['Avg. VoltL1 HRU']*MSL_data['Avg. AmpL1 HRU']*3**.5*PF/1000
+MSL_data['Avg. kW L2 HRU'] = MSL_data['Avg. VoltL2 HRU']*MSL_data['Avg. AmpL2 HRU']*3**.5*PF/1000
+MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*3**.5*PF/1000
 
 #Correlation time!
 plt.plot(MSL_data['pump2a'], MSL_data['Avg. Amp Pump 2a'])
@@ -175,13 +182,18 @@ plt.ylabel('Dent Power data for AHU 19')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
 plt.close()
 
-plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL1 HRU'])
-plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. AmpL2 HRU'])
+HRUmodel = LinearRegression()
+HRUmodel = LinearRegression().fit(np.array(MSL_data['HRU supply fan']).reshape((-1,1)), np.array(MSL_data['Avg. kW L1 HRU']).reshape((-1,1)))
+x=np.array([min(MSL_data['HRU supply fan']), max(MSL_data['HRU supply fan'])])
+y=np.array(x*HRUmodel.coef_+HRUmodel.intercept_)
+
+plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L1 HRU'])
+plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L2 HRU'])
+plt.plot([0,85],[-245.607,5717.053], linestyle='solid',color="red",)
 plt.xlabel('HRU Supply fan')
 plt.ylabel('Dent Power data for HRU')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
 plt.close()
-
 
 plt.plot(MSL_data.index,MSL_data['pump2a'])
 plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2a'])
@@ -220,4 +232,3 @@ MSL_data.plot(y=['pump 2a-b VFD output',
          'Avg. Amp Pump 2a',
          'Avg. Amp Pump 2b'])
 plt.show()
-
