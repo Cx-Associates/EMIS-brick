@@ -1,9 +1,10 @@
 """
 Get data from Ace and dents
 Combine data
-Create some correlation plots
+Create some correlation plots and correlation values
 Create some time series plots
 """
+
 import os
 import requests
 import pandas as pd
@@ -61,15 +62,12 @@ for path in dentdatapath:
     MSL_data1.index = MSL_data1.index.tz_localize('US/Eastern', ambiguous='NaT')
     # Handle ambiguous time error by dropping rows with NaT values in the index
     MSL_data1 = MSL_data1[MSL_data1.index.notnull()]
-#   MSL_data1.index = MSL_data1.index.tz_localize('UTC').tz_convert(timezone)
 
     # Combine with existing data frame
     if 'MSL_data' in locals():
         MSL_data = pd.merge(MSL_data, MSL_data1, left_index=True, right_index=True, how='outer')
     else:
         MSL_data=MSL_data1
-
-
 
 # create an instance of the project class, giving it a name and a location
 project = Project(
@@ -138,6 +136,19 @@ with open(env_filepath, 'r') as file:
 #Lets do some math to prepare for correlations!
 MSL_data['pump2a'] = MSL_data['pump 2a active']*MSL_data['pump 2a-b VFD output'] #this should be the BAS pump 2a power (ish)
 MSL_data['pump2b'] = MSL_data['pump 2b active']*MSL_data['pump 2a-b VFD output'] #same for pump 2b
+
+#Calculate kW from dent data
+#Assume a PF of 0.8 for now:
+PF=0.8
+MSL_data['Avg. kW Boiler 1 Fan'] = MSL_data['Avg. Volt Boiler 1 Fan']*MSL_data['Avg. Amp Boiler 1 Fan']*3**.5*PF
+MSL_data['Avg. kW Boiler 2 Fan'] = MSL_data['Avg. Volt Boiler 2 Fan']*MSL_data['Avg. Amp Boiler 2 Fan']*3**.5*PF
+MSL_data['Avg. kW AHU19'] = MSL_data['Avg. Volt AHU19']*MSL_data['Avg. Amp AHU19']*3**.5*PF
+MSL_data['Avg. kW Pump 1a'] = MSL_data['Avg. Volt Pump 1a']*MSL_data['Avg. Amp Pump 1a']*3**.5*PF
+MSL_data['Avg. kW Pump 2b'] = MSL_data['Avg. Volt Pump 2b']*MSL_data['Avg. Amp Pump 2b']*3**.5*PF
+MSL_data['Avg. kW Pump 2a'] = MSL_data['Avg. Volt Pump 2a']*MSL_data['Avg. Amp Pump 2a']*3**.5*PF
+MSL_data['Avg. kW L1 HRU'] = MSL_data['Avg. VoltL1 HRU']*MSL_data['Avg. AmpL1 HRU']*3**.5*PF
+MSL_data['Avg. kW L2 HRU'] = MSL_data['Avg. VoltL2 HRU']*MSL_data['Avg. AmpL2 HRU']*3**.5*PF
+MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*3**.5*PF
 
 #Correlation time!
 plt.plot(MSL_data['pump2a'], MSL_data['Avg. Amp Pump 2a'])
