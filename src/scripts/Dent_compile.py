@@ -41,6 +41,12 @@ def parse_response(response,columnname):
 
     return df
 
+def get_hp(equipment_name, data):
+    index = data['Equipt'].index(equipment_name)  # Find index of equipment name
+    size = data['hp'][index]  # Retrieve corresponding size using index
+    return size
+
+
 #some places and specifics
 dentdatapath=[r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876C-01.csv",
               r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876D-01.csv",
@@ -50,7 +56,7 @@ f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
 
-
+#Get dent data into a dataframe lined up in time
 for path in dentdatapath:
     # Read in data from a file with data collected via on-site monitoring
     MSL_data1 = pd.read_csv(path, skiprows=1, header=0)
@@ -85,6 +91,11 @@ project.set_time_frames(
     #reporting=('2023-12-10', '2023-12-18')
 )
 
+#Pump/fan nameplates
+Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
+                        'AHU19SupplyFan', 'AHU19ReturnFan'], 'hp':[20, -99, -99, -99, 7.5, 7.5, 10, -99, 7.5, 10]}
+nameplate=pd.DataFrame(Nameplate)
+
 #Ace Data locations
 str = [r'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Pump 4a VFD Output
 r'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Pump 4b VFD Output
@@ -111,7 +122,6 @@ headers = ['Pump 4a VFD Output',
          'HRU supply fan',
          'AHU19 supply fan']
 
-#Lets try this
 #For each path for AceIoT data (listed above) and the description, get the data and put the data in the data frame with header listed above
 with open(env_filepath, 'r') as file:
     config = yaml.safe_load(file)
@@ -137,12 +147,11 @@ with open(env_filepath, 'r') as file:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg)
 
-#this is risky - drop rows with NaNs?
+#this is risky - drop rows with NaNs
 MSL_data = MSL_data.dropna()
 
-
 #Lets do some math to prepare for correlations!
-MSL_data['pump2a'] = MSL_data['pump 2a active']*MSL_data['pump 2a-b VFD output'] #this should be the BAS pump 2a power (ish)
+MSL_data['pump2a'] = MSL_data['pump 2a active']*MSL_data['pump 2a-b VFD output'] #this should be the BAS pump 2a VFD Output
 MSL_data['pump2b'] = MSL_data['pump 2b active']*MSL_data['pump 2a-b VFD output'] #same for pump 2b
 
 #Calculate kW from dent data
@@ -158,69 +167,77 @@ MSL_data['Avg. kW L1 HRU'] = MSL_data['Avg. VoltL1 HRU']*MSL_data['Avg. AmpL1 HR
 MSL_data['Avg. kW L2 HRU'] = MSL_data['Avg. VoltL2 HRU']*MSL_data['Avg. AmpL2 HRU']*3**.5*PF/1000
 MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*3**.5*PF/1000
 
+#Calculate expected power from AceData
+#=pump nameplate HP *0.745699872*%pump speed^2.5
+MSL_data['Ace kW Pump 4a']=get_hp('Pump4a',Nameplate)*0.745699872*(MSL_data['Pump 4a VFD Output']/100)**2.5
+MSL_data['Ace kW Pump 4b']=get_hp('Pump4b',Nameplate)*0.745699872*(MSL_data['Pump 4b VFD Output']/100)**2.5
+MSL_data['Ace kW Pump 1a']=get_hp('Pump1a',Nameplate)*0.745699872*(MSL_data['pump 1a feedback']/100)**2.5
+MSL_data['Ace kW Pump 2b']=get_hp('Pump2b',Nameplate)*0.745699872*(MSL_data['pump2b']/100)**2.5
+MSL_data['Ace kW Pump 2a']=(get_hp('Pump2a',Nameplate)*0.745699872*(MSL_data['pump2a']/100)**2.5)
+
 #Correlation time!
 P2amodel = LinearRegression()
-P2amodel = LinearRegression().fit(np.array(MSL_data['pump2a']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 2a']).reshape((-1,1)))
-x=np.array([min(MSL_data['pump2a']), max(MSL_data['pump2a'])])
+P2amodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 2a']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 2a']).reshape((-1,1)))
+x=np.array([min(MSL_data['Ace kW Pump 2a']), max(MSL_data['Ace kW Pump 2a'])])
 y=np.array(x*P2amodel.coef_+P2amodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['pump2a'], MSL_data['Avg. kW Pump 2a'])
+plt.plot(MSL_data['Ace kW Pump 2a'], MSL_data['Avg. kW Pump 2a'])
 plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS VFD output')
-plt.ylabel('Dent Amp data for Pump 2a')
+plt.xlabel('BAS kW estimate')
+plt.ylabel('Dent kW')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2aCorrelation.png')
 plt.close()
 
 P2bmodel = LinearRegression()
-P2bmodel = LinearRegression().fit(np.array(MSL_data['pump2b']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 2b']).reshape((-1,1)))
-x=np.array([min(MSL_data['pump2b']), max(MSL_data['pump2b'])])
+P2bmodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 2b']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 2b']).reshape((-1,1)))
+x=np.array([min(MSL_data['Ace kW Pump 2b']), max(MSL_data['Ace kW Pump 2b'])])
 y=np.array(x*P2bmodel.coef_+P2bmodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['pump2b'], MSL_data['Avg. kW Pump 2b'])
+plt.plot(MSL_data['Ace kW Pump 2b'], MSL_data['Avg. kW Pump 2b'])
 plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS VFD output')
-plt.ylabel('Dent Power data for Pump 2b')
+plt.xlabel('BAS kW estimate')
+plt.ylabel('Dent kW')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bCorrelation.png')
 plt.close()
 
 P4amodel = LinearRegression()
-P4amodel = LinearRegression().fit(np.array(MSL_data['Pump 4a VFD Output']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4a']).reshape((-1,1)))
-x=np.array([min(MSL_data['Pump 4a VFD Output']), max(MSL_data['Pump 4a VFD Output'])])
+P4amodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 4a']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4a']).reshape((-1,1)))
+x=np.array([min(MSL_data['Ace kW Pump 4a']), max(MSL_data['Ace kW Pump 4a'])])
 y=np.array(x*P4amodel.coef_+P4amodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['Pump 4a VFD Output'], MSL_data['Avg. kW Pump 4a'])
+plt.plot(MSL_data['Ace kW Pump 4a'], MSL_data['Avg. kW Pump 4a'])
 plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS VFD output')
-plt.ylabel('Dent Amp data for Pump 4a')
+plt.xlabel('BAS kW estimate')
+plt.ylabel('Dent kW for Pump 4a')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4aCorrelation.png')
 plt.close()
 
 P4bmodel = LinearRegression()
-P4bmodel = LinearRegression().fit(np.array(MSL_data['Pump 4b VFD Output']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4b']).reshape((-1,1)))
-x=np.array([min(MSL_data['Pump 4b VFD Output']), max(MSL_data['Pump 4b VFD Output'])])
+P4bmodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 4b']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4b']).reshape((-1,1)))
+x=np.array([min(MSL_data['Ace kW Pump 4b']), max(MSL_data['Ace kW Pump 4b'])])
 y=np.array(x*P4bmodel.coef_+P4bmodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['Pump 4b VFD Output'], MSL_data['Avg. Amp Pump 4b'])
-plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS VFD output')
-plt.ylabel('Dent Power data for Pump 4b')
+plt.plot(MSL_data['Ace kW Pump 4b'], MSL_data['Avg. kW Pump 4b'])
+plt.plot(x,y, linestyle='solid',color="black",markersize=0.5)
+plt.xlabel('BAS kW estimate')
+plt.ylabel('Dent kW for Pump 4b')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bCorrelation.png')
 plt.close()
 
 P1amodel = LinearRegression()
-P1amodel = LinearRegression().fit(np.array(MSL_data['pump 1a feedback']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 1a']).reshape((-1,1)))
-x=np.array([min(MSL_data['pump 1a feedback']), max(MSL_data['pump 1a feedback'])])
+P1amodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 1a']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 1a']).reshape((-1,1)))
+x=np.array([min(MSL_data['Ace kW Pump 1a']), max(MSL_data['Ace kW Pump 1a'])])
 y=np.array(x*P1amodel.coef_+P1amodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['pump 1a feedback'], MSL_data['Avg. kW Pump 1a'])
+plt.plot(MSL_data['Ace kW Pump 1a'], MSL_data['Avg. kW Pump 1a'])
 plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS Pump 1a Feedback')
-plt.ylabel('Dent Power data for Pump 1')
+plt.xlabel('BAS kW estimate')
+plt.ylabel('Dent kW for Pump 1')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Correlation.png')
 plt.close()
 
@@ -244,31 +261,31 @@ plt.ylabel('Dent Power data for HRU')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['pump2a'])
+plt.plot(MSL_data.index,MSL_data['Ace kW Pump 2a'])
 plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2a'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2aTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['pump2b'])
+plt.plot(MSL_data.index,MSL_data['Ace kW Pump 2b'])
 plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2b'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['Pump 4a VFD Output'])
+plt.plot(MSL_data.index,MSL_data['Ace kW Pump 4a'])
 plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 4a'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4aTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['Pump 4b VFD Output'])
+plt.plot(MSL_data.index,MSL_data['Ace kW Pump 4b'])
 plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 4b'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['pump 1a feedback'])
+plt.plot(MSL_data.index,MSL_data['Ace kW Pump 1a'])
 plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 1a'])
 plt.legend(['Ace Data (Pump 1a feedback)','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aTimeserries.png')
