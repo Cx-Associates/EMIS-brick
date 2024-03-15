@@ -1,8 +1,9 @@
 """
 Get data from Ace and dents
 Combine data
-Create some correlation plots and correlation values
-Create some time series plots
+Calculate estimated kW using proxy formulas
+Create some correlation plots and correlation values (and save)
+Create some time series plots (and save)
 """
 
 import os
@@ -185,12 +186,12 @@ plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bC
 plt.close()
 
 P4amodel = LinearRegression()
-P4amodel = LinearRegression().fit(np.array(MSL_data['Pump 4a VFD Output']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4b']).reshape((-1,1)))
+P4amodel = LinearRegression().fit(np.array(MSL_data['Pump 4a VFD Output']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4a']).reshape((-1,1)))
 x=np.array([min(MSL_data['Pump 4a VFD Output']), max(MSL_data['Pump 4a VFD Output'])])
 y=np.array(x*P4amodel.coef_+P4amodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['Pump 4a VFD Output'], MSL_data['Avg. kW Pump 4b'])
+plt.plot(MSL_data['Pump 4a VFD Output'], MSL_data['Avg. kW Pump 4a'])
 plt.plot(x,y, linestyle='solid',color="black",)
 plt.xlabel('BAS VFD output')
 plt.ylabel('Dent Amp data for Pump 4a')
@@ -198,12 +199,12 @@ plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4aC
 plt.close()
 
 P4bmodel = LinearRegression()
-P4bmodel = LinearRegression().fit(np.array(MSL_data['Pump 4b VFD Output']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4a']).reshape((-1,1)))
+P4bmodel = LinearRegression().fit(np.array(MSL_data['Pump 4b VFD Output']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4b']).reshape((-1,1)))
 x=np.array([min(MSL_data['Pump 4b VFD Output']), max(MSL_data['Pump 4b VFD Output'])])
 y=np.array(x*P4bmodel.coef_+P4bmodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['Pump 4b VFD Output'], MSL_data['Avg. Amp Pump 4a'])
+plt.plot(MSL_data['Pump 4b VFD Output'], MSL_data['Avg. Amp Pump 4b'])
 plt.plot(x,y, linestyle='solid',color="black",)
 plt.xlabel('BAS VFD output')
 plt.ylabel('Dent Power data for Pump 4b')
@@ -256,13 +257,13 @@ plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bT
 plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Pump 4a VFD Output'])
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 4b'])
+plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 4a'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4aTimeserries.png')
 plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Pump 4b VFD Output'])
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 4a'])
+plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 4b'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bTimeserries.png')
 plt.close()
