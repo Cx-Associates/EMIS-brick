@@ -176,6 +176,7 @@ MSL_data['Ace kW Pump 2b']=get_hp('Pump2b',Nameplate)*0.745699872*(MSL_data['pum
 MSL_data['Ace kW Pump 2a']=(get_hp('Pump2a',Nameplate)*0.745699872*(MSL_data['pump2a']/100)**2.5)
 
 #Correlation time!
+#and plots :-)
 P2amodel = LinearRegression()
 P2amodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 2a']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 2a']).reshape((-1,1)))
 x=np.array([min(MSL_data['Ace kW Pump 2a']), max(MSL_data['Ace kW Pump 2a'])])
@@ -257,37 +258,41 @@ plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L1 HRU'])
 plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L2 HRU'])
 plt.plot(x,y, linestyle='solid',color="red",)
 plt.xlabel('HRU Supply fan')
-plt.ylabel('Dent Power data for HRU')
+plt.ylabel('Dent Power data for HRU (kW)')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
 plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 2a'])
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2a'])
-plt.legend(['Ace Data','Dent Data'])
+plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 2a'])
+plt.ylabel('Power (kW)')
+plt.legend(['Ace Data kW estimate','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2aTimeserries.png')
 plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 2b'])
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 2b'])
-plt.legend(['Ace Data','Dent Data'])
+plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 2b'])
+plt.ylabel('Power (kW)')
+plt.legend(['Ace Data kW estimate','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bTimeserries.png')
 plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 4a'])
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 4a'])
-plt.legend(['Ace Data','Dent Data'])
+plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 4a'])
+plt.ylabel('Power (kW)')
+plt.legend(['Ace Data kW estimate','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4aTimeserries.png')
 plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 4b'])
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 4b'])
-plt.legend(['Ace Data','Dent Data'])
+plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 4b'])
+plt.ylabel('Power (kW)')
+plt.legend(['Ace Data kW estimate','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bTimeserries.png')
 plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 1a'])
-plt.plot(MSL_data.index,MSL_data['Avg. Amp Pump 1a'])
-plt.legend(['Ace Data (Pump 1a feedback)','Dent Data'])
+plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 1a'])
+plt.legend(['Ace Data (Pump 1a feedback)','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aTimeserries.png')
 plt.close()
 
@@ -303,10 +308,3 @@ plt.plot(MSL_data.index,MSL_data['Avg. AmpL2 HRU'])
 plt.legend(['Ace Data (HRU Supply Fan)','Dent Data Phase 1','Dent Data Phase 2'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
 plt.close()
-
-MSL_data.plot(y=['pump 2a-b VFD output',
-         'pump 2a active',
-         'pump 2b active',
-         'Avg. Amp Pump 2a',
-         'Avg. Amp Pump 2b'])
-plt.show()
