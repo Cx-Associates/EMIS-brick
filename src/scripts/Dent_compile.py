@@ -93,7 +93,7 @@ project.set_time_frames(
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
-                        'AHU19SupplyFan', 'AHU19ReturnFan'], 'hp':[20, -99, -99, -99, 7.5, 7.5, 10, -99, 7.5, 10]}
+                        'AHU19SupplyFan', 'AHU19ReturnFan'], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10]}
 nameplate=pd.DataFrame(Nameplate)
 
 #Ace Data locations
