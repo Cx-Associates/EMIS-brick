@@ -97,17 +97,23 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
 nameplate=pd.DataFrame(Nameplate)
 
 #Ace Data locations
-str = [r'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Pump 4a VFD Output
-r'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Pump 4b VFD Output
-r'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Primary Hot Water Supply Temp_2
-r'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time=2023-11-10&end_time=2024-01-06', #Primary Hot Water Return Temp_2
-r'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time=2023-11-10&end_time=2024-01-06', #chilled water power meter
-r'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time=2023-11-10&end_time=2024-01-06', #pump 2a-b VFD output
-r'/cxa_main_st_landing/2404:7-240407/binaryOutput/12/timeseries?start_time=2023-11-10&end_time=2024-01-06', #pump 2a active (binary)
-r'/cxa_main_st_landing/2404:7-240407/binaryOutput/13/timeseries?start_time=2023-11-10&end_time=2024-01-06', #pump 2b active (binary)
-r'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time=2023-11-10&end_time=2024-01-06', #P1a Feedback
-r'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time=2023-11-10&end_time=2024-01-06', #HRU Supplyfan VFD output
-r'/cxa_main_st_landing/2404:3-240403/analogOutput/3/timeseries?start_time=2023-11-10&end_time=2024-01-06'] #AHU19 Supply fan VFD
+str = [r'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time=2023-11-10&end_time=2024-04-06', #Pump 4a VFD Output
+r'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time=2023-11-10&end_time=2024-04-06', #Pump 4b VFD Output
+r'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time=2023-11-10&end_time=2024-04-06', #Primary Hot Water Supply Temp_2
+r'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time=2023-11-10&end_time=2024-04-06', #Primary Hot Water Return Temp_2
+r'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time=2023-11-10&end_time=2024-04-06', #chilled water power meter
+r'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time=2023-11-10&end_time=2024-04-06', #pump 2a-b VFD output
+r'/cxa_main_st_landing/2404:7-240407/binaryOutput/12/timeseries?start_time=2023-11-10&end_time=2024-04-06', #pump 2a s/s (binary)
+r'/cxa_main_st_landing/2404:7-240407/binaryOutput/13/timeseries?start_time=2023-11-10&end_time=2024-04-06', #pump 2b s/s (binary)
+r'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time=2023-11-10&end_time=2024-04-06', #P1a Feedback
+r'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time=2023-11-10&end_time=2024-04-06', #HRU Supplyfan VFD output
+r'/cxa_main_st_landing/2404:3-240403/analogOutput/3/timeseries?start_time=2023-11-10&end_time=2024-04-06', #AHU19 Supply fan VFD
+r'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time=2023-11-10&end_time=2024-04-06', #Pump 4a S/S
+r'/cxa_main_st_landing/2404:9-240409/binaryOutput/13/timeseries?start_time=2023-11-10&end_time=2024-04-06', #Pump 4b S/S
+r'/cxa_main_st_landing/2404:7-240407/binaryInput/18/timeseries?start_time=2023-11-10&end_time=2024-04-06', #Pump 2a Status
+r'/cxa_main_st_landing/2404:7-240407/binaryInput/19/timeseries?start_time=2023-11-10&end_time=2024-04-06' #Pump 2b Status
+
+]
 
 #Ace Data descriptions
 headers = ['Pump 4a VFD Output',
@@ -116,11 +122,15 @@ headers = ['Pump 4a VFD Output',
          'Primary Hot Water Return Temp_2',
          'chilled water power meter',
          'pump 2a-b VFD output',
-         'pump 2a active',
-         'pump 2b active',
+         'pump 2a s/s',
+         'pump 2b s/s',
          'pump 1a feedback',
          'HRU supply fan',
-         'AHU19 supply fan']
+         'AHU19 supply fan',
+         'Pump 4a s/s',
+         'Pump 4b s/s',
+         'Pump 2a status',
+         'Pump 2b status']
 
 #For each path for AceIoT data (listed above) and the description, get the data and put the data in the data frame with header listed above
 with open(env_filepath, 'r') as file:
@@ -148,11 +158,11 @@ with open(env_filepath, 'r') as file:
             #raise Exception(msg)
 
 #this is risky - drop rows with NaNs
-MSL_data = MSL_data.dropna()
+#MSL_data = MSL_data.dropna()
 
 #Lets do some math to prepare for correlations!
-MSL_data['pump2a'] = MSL_data['pump 2a active']*MSL_data['pump 2a-b VFD output'] #this should be the BAS pump 2a VFD Output
-MSL_data['pump2b'] = MSL_data['pump 2b active']*MSL_data['pump 2a-b VFD output'] #same for pump 2b
+MSL_data['pump2a'] = MSL_data['pump 2a s/s']*MSL_data['pump 2a-b VFD output']*MSL_data['Pump 2a status'] #this should be the BAS pump 2a VFD Output
+MSL_data['pump2b'] = MSL_data['pump 2b s/s']*MSL_data['pump 2a-b VFD output']*MSL_data['Pump 2b status'] #same for pump 2b
 
 #Calculate kW from dent data
 #Assume a PF of 0.8 for now:
@@ -169,8 +179,8 @@ MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*
 
 #Calculate expected power from AceData
 #=pump nameplate HP *0.745699872*%pump speed^2.5
-MSL_data['Ace kW Pump 4a']=get_hp('Pump4a',Nameplate)*0.745699872*(MSL_data['Pump 4a VFD Output']/100)**2.5
-MSL_data['Ace kW Pump 4b']=get_hp('Pump4b',Nameplate)*0.745699872*(MSL_data['Pump 4b VFD Output']/100)**2.5
+MSL_data['Ace kW Pump 4a']=get_hp('Pump4a',Nameplate)*0.745699872*(MSL_data['Pump 4a VFD Output']/100)**2.5*MSL_data['Pump 4a s/s']
+MSL_data['Ace kW Pump 4b']=get_hp('Pump4b',Nameplate)*0.745699872*(MSL_data['Pump 4b VFD Output']/100)**2.5*MSL_data['Pump 4b s/s']
 MSL_data['Ace kW Pump 1a']=get_hp('Pump1a',Nameplate)*0.745699872*(MSL_data['pump 1a feedback']/100)**2.5
 MSL_data['Ace kW Pump 2b']=get_hp('Pump2b',Nameplate)*0.745699872*(MSL_data['pump2b']/100)**2.5
 MSL_data['Ace kW Pump 2a']=(get_hp('Pump2a',Nameplate)*0.745699872*(MSL_data['pump2a']/100)**2.5)
