@@ -100,6 +100,7 @@ start = "2023-11-10"
 end = "2024-03-31"
 
 #Ace Data locations
+#Todo: make this a file you pull from instead of hard coded.
 str = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Pump 4b VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Supply Temp_2
@@ -239,7 +240,6 @@ MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*
 
 #Calculate expected power from AceData
 #=pump nameplate HP *0.745699872*%pump speed^2.5
-#ToDo: do this in 5-minute intervals.  Then do the 15 minute averaging and combine with dent data.
 Ace_data['Ace kW Pump 4a']=get_hp('Pump4a',Nameplate)*0.745699872*(Ace_data['Pump 4a VFD Output']/100)**2.5*Ace_data['Pump 4a s/s']
 Ace_data['Ace kW Pump 4b']=get_hp('Pump4b',Nameplate)*0.745699872*(Ace_data['Pump 4b VFD Output']/100)**2.5*Ace_data['Pump 4b s/s']
 Ace_data['Ace kW Pump 1a']=get_hp('Pump1a',Nameplate)*0.745699872*(Ace_data['Pump 1a feedback']/100)**2.5
