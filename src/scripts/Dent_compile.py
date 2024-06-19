@@ -87,7 +87,7 @@ project = Project(
 
 # set the project baseline period
 project.set_time_frames(
-    baseline=('2023-11-10', '2023-12-31'),
+    baseline=('2023-11-10', '2024-05-01'),
     #reporting=('2023-12-10', '2023-12-18')
 )
 
@@ -97,7 +97,7 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
 nameplate=pd.DataFrame(Nameplate)
 
 start = "2023-11-10"
-end = "2024-03-31"
+end = "2024-05-31"
 
 #Ace Data locations
 #Todo: make this a file you pull from instead of hard coded.
@@ -253,7 +253,7 @@ Ace_15min = Ace_data[head].resample('15T').mean()
 MSL_data = pd.merge(MSL_data, Ace_data, left_index=True, right_index=True, how='outer')
 
 #this is risky - drop rows with NaNs
-MSL_data = MSL_data.dropna()
+#MSL_data = MSL_data.dropna()
 
 #Correlation time!
 #and plots :-)
@@ -368,7 +368,7 @@ plt.close()
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 4b'])
 plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 4b'])
 plt.ylabel('Power (kW)')
-plt.legend(['Ace Data kW estimate','Dent Data (kW)'])
+plt.legend(['BAS kW estimate','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bTimeserries.png')
 plt.close()
 
