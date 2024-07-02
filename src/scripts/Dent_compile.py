@@ -87,7 +87,7 @@ project = Project(
 
 # set the project baseline period
 project.set_time_frames(
-    baseline=('2023-11-10', '2024-05-01'),
+    baseline=('2024-01-01', '2024-05-01'),
     #reporting=('2023-12-10', '2023-12-18')
 )
 
@@ -96,8 +96,8 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
                         'AHU19SupplyFan', 'AHU19ReturnFan'], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10]}
 nameplate=pd.DataFrame(Nameplate)
 
-start = "2023-11-10"
-end = "2024-05-31"
+start = "2024-01-01"
+end = "2024-06-21"
 
 #Ace Data locations
 #Todo: make this a file you pull from instead of hard coded.
@@ -253,7 +253,7 @@ Ace_15min = Ace_data[head].resample('15T').mean()
 MSL_data = pd.merge(MSL_data, Ace_data, left_index=True, right_index=True, how='outer')
 
 #this is risky - drop rows with NaNs
-#MSL_data = MSL_data.dropna()
+MSL_data = MSL_data.dropna()
 
 #Correlation time!
 #and plots :-)
@@ -302,6 +302,10 @@ x=np.array([min(MSL_data['Ace kW Pump 4b']), max(MSL_data['Ace kW Pump 4b'])])
 y=np.array(x*P4bmodel.coef_+P4bmodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
+#If you need the R-squared here is the code for that:
+#r2=P4bmodel.score(np.array(MSL_data['Ace kW Pump 4b']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4b']).reshape((-1,1)))
+#print(r2)
+
 plt.plot(MSL_data['Ace kW Pump 4b'], MSL_data['Avg. kW Pump 4b'])
 plt.plot(x,y, linestyle='solid',color="black",markersize=0.5)
 plt.xlabel('BAS kW estimate')
@@ -328,19 +332,19 @@ plt.ylabel('Dent Power data for AHU 19')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
 plt.close()
 
-HRUmodel = LinearRegression()
-HRUmodel = LinearRegression().fit(np.array(MSL_data['HRU supply fan']).reshape((-1,1)), np.array(MSL_data['Avg. kW L1 HRU']).reshape((-1,1)))
-x=np.array([min(MSL_data['HRU supply fan']), max(MSL_data['HRU supply fan'])])
-y=np.array(x*HRUmodel.coef_+HRUmodel.intercept_)
-y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
-
-plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L1 HRU'])
-plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L2 HRU'])
-plt.plot(x,y, linestyle='solid',color="red",)
-plt.xlabel('HRU Supply fan')
-plt.ylabel('Dent Power data for HRU (kW)')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
-plt.close()
+# HRUmodel = LinearRegression()
+# HRUmodel = LinearRegression().fit(np.array(MSL_data['HRU supply fan']).reshape((-1,1)), np.array(MSL_data['Avg. kW L1 HRU']).reshape((-1,1)))
+# x=np.array([min(MSL_data['HRU supply fan']), max(MSL_data['HRU supply fan'])])
+# y=np.array(x*HRUmodel.coef_+HRUmodel.intercept_)
+# y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
+#
+# plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L1 HRU'])
+# plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L2 HRU'])
+# plt.plot(x,y, linestyle='solid',color="red",)
+# plt.xlabel('HRU Supply fan')
+# plt.ylabel('Dent Power data for HRU (kW)')
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
+# plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 2a'])
 plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 2a'])
@@ -378,16 +382,16 @@ plt.legend(['Ace Data (Pump 1a feedback)','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['kW AHU19'])
-plt.plot(MSL_data.index,MSL_data['Avg. kW AHU19'])
-plt.ylabel('Power (kW)')
-plt.legend(['Ace Data (AHU19 Supply Fan)','Dent Data (all AHU19)'])
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Timeserries.png')
-plt.close()
+# plt.plot(MSL_data.index,MSL_data['kW AHU19'])
+# plt.plot(MSL_data.index,MSL_data['Avg. kW AHU19'])
+# plt.ylabel('Power (kW)')
+# plt.legend(['Ace Data (AHU19 Supply Fan)','Dent Data (all AHU19)'])
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Timeserries.png')
+# plt.close()
 
-plt.plot(MSL_data.index,MSL_data['HRU supply fan'])
-plt.plot(MSL_data.index,MSL_data['Avg. AmpL1 HRU'])
-plt.plot(MSL_data.index,MSL_data['Avg. AmpL2 HRU'])
-plt.legend(['Ace Data (HRU Supply Fan)','Dent Data Phase 1','Dent Data Phase 2'])
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
-plt.close()
+# plt.plot(MSL_data.index,MSL_data['HRU supply fan'])
+# plt.plot(MSL_data.index,MSL_data['Avg. AmpL1 HRU'])
+# plt.plot(MSL_data.index,MSL_data['Avg. AmpL2 HRU'])
+# plt.legend(['Ace Data (HRU Supply Fan)','Dent Data Phase 1','Dent Data Phase 2'])
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
+# plt.close()
