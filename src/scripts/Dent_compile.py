@@ -13,6 +13,7 @@ import yaml
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
+import csv
 
 
 # Set default plot parameters
@@ -87,7 +88,7 @@ project = Project(
 
 # set the project baseline period
 project.set_time_frames(
-    baseline=('2024-01-01', '2024-05-01'),
+    baseline=('2023-10-01', '2024-05-01'),
     #reporting=('2023-12-10', '2023-12-18')
 )
 
@@ -96,7 +97,7 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
                         'AHU19SupplyFan', 'AHU19ReturnFan'], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10]}
 nameplate=pd.DataFrame(Nameplate)
 
-start = "2024-01-01"
+start = "2023-10-01"
 end = "2024-06-21"
 
 #Ace Data locations
@@ -247,86 +248,109 @@ Ace_data['Ace kW Pump 2b']=get_hp('Pump2b',Nameplate)*0.745699872*(Ace_data['pum
 Ace_data['Ace kW Pump 2a']=(get_hp('Pump2a',Nameplate)*0.745699872*(Ace_data['pump2a']/100)**2.5)
 
 #15 minute Ace data averages
-Ace_15min = Ace_data[head].resample('15T').mean()
+Ace_15min = Ace_data.resample(rule='15Min').mean()
 
 #comine ace and Dent (MSL) data
-MSL_data = pd.merge(MSL_data, Ace_data, left_index=True, right_index=True, how='outer')
+MSL_data = pd.merge(MSL_data, Ace_15min, left_index=True, right_index=True, how='outer')
 
+#Todo: Remove this section and do this for each regression separately
 #this is risky - drop rows with NaNs
-MSL_data = MSL_data.dropna()
+#MSL_data = MSL_data.dropna()
 
 #Correlation time!
 #and plots :-)
-P2amodel = LinearRegression()
-P2amodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 2a']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 2a']).reshape((-1,1)))
-x=np.array([min(MSL_data['Ace kW Pump 2a']), max(MSL_data['Ace kW Pump 2a'])])
+
+#just Pump 2a data
+Pump2a = pd.merge(MSL_data['Ace kW Pump 2a'],MSL_data['Avg. kW Pump 2a'],left_index=True, right_index=True, how='outer')
+Pump2a=Pump2a.dropna() #drop nans from this set
+
+P2amodel = LinearRegression().fit(np.array(Pump2a['Ace kW Pump 2a']).reshape((-1,1)), np.array(Pump2a['Avg. kW Pump 2a']).reshape((-1,1)))
+x=np.array([min(Pump2a['Ace kW Pump 2a']), max(Pump2a['Ace kW Pump 2a'])])
 y=np.array(x*P2amodel.coef_+P2amodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['Ace kW Pump 2a'], MSL_data['Avg. kW Pump 2a'])
+plt.plot(Pump2a['Ace kW Pump 2a'], Pump2a['Avg. kW Pump 2a'])
 plt.plot(x,y, linestyle='solid',color="black",)
 plt.xlabel('BAS kW estimate')
 plt.ylabel('Dent kW')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2aCorrelation.png')
 plt.close()
 
-P2bmodel = LinearRegression()
-P2bmodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 2b']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 2b']).reshape((-1,1)))
-x=np.array([min(MSL_data['Ace kW Pump 2b']), max(MSL_data['Ace kW Pump 2b'])])
+#just Pump 2b data
+Pump2b = pd.merge(MSL_data['Ace kW Pump 2b'],MSL_data['Avg. kW Pump 2b'],left_index=True, right_index=True, how='outer')
+Pump2b=Pump2b.dropna() #drop nans from this set
+
+P2bmodel = LinearRegression().fit(np.array(Pump2b['Ace kW Pump 2b']).reshape((-1,1)), np.array(Pump2b['Avg. kW Pump 2b']).reshape((-1,1)))
+x=np.array([min(Pump2b['Ace kW Pump 2b']), max(Pump2b['Ace kW Pump 2b'])])
 y=np.array(x*P2bmodel.coef_+P2bmodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['Ace kW Pump 2b'], MSL_data['Avg. kW Pump 2b'])
+plt.plot(Pump2b['Ace kW Pump 2b'], Pump2b['Avg. kW Pump 2b'])
 plt.plot(x,y, linestyle='solid',color="black",)
 plt.xlabel('BAS kW estimate')
 plt.ylabel('Dent kW')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bCorrelation.png')
 plt.close()
 
-P4amodel = LinearRegression()
-P4amodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 4a']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4a']).reshape((-1,1)))
-x=np.array([min(MSL_data['Ace kW Pump 4a']), max(MSL_data['Ace kW Pump 4a'])])
+#just Pump 4a data
+Pump4a = pd.merge(MSL_data['Ace kW Pump 4a'],MSL_data['Avg. kW Pump 4a'],left_index=True, right_index=True, how='outer')
+Pump4a=Pump4a.dropna() #drop nans from this set
+
+P4amodel = LinearRegression().fit(np.array(Pump4a['Ace kW Pump 4a']).reshape((-1,1)), np.array(Pump4a['Avg. kW Pump 4a']).reshape((-1,1)))
+x=np.array([min(Pump4a['Ace kW Pump 4a']), max(Pump4a['Ace kW Pump 4a'])])
 y=np.array(x*P4amodel.coef_+P4amodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['Ace kW Pump 4a'], MSL_data['Avg. kW Pump 4a'])
+plt.plot(Pump4a['Ace kW Pump 4a'], Pump4a['Avg. kW Pump 4a'])
 plt.plot(x,y, linestyle='solid',color="black",)
 plt.xlabel('BAS kW estimate')
 plt.ylabel('Dent kW for Pump 4a')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4aCorrelation.png')
 plt.close()
 
+#just Pump 4b data
+Pump4b = pd.merge(MSL_data['Ace kW Pump 4b'],MSL_data['Avg. kW Pump 4b'],left_index=True, right_index=True, how='outer')
+Pump4b=Pump4b.dropna() #drop nans from this set
+
 P4bmodel = LinearRegression()
-P4bmodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 4b']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4b']).reshape((-1,1)))
-x=np.array([min(MSL_data['Ace kW Pump 4b']), max(MSL_data['Ace kW Pump 4b'])])
+P4bmodel = LinearRegression().fit(np.array(Pump4b['Ace kW Pump 4b']).reshape((-1,1)), np.array(Pump4b['Avg. kW Pump 4b']).reshape((-1,1)))
+x=np.array([min(Pump4b['Ace kW Pump 4b']), max(Pump4b['Ace kW Pump 4b'])])
 y=np.array(x*P4bmodel.coef_+P4bmodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
 #If you need the R-squared here is the code for that:
-#r2=P4bmodel.score(np.array(MSL_data['Ace kW Pump 4b']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 4b']).reshape((-1,1)))
+r2=P4amodel.score(np.array(Pump4a['Ace kW Pump 4a']).reshape((-1,1)), np.array(Pump4a['Avg. kW Pump 4a']).reshape((-1,1)))
 #print(r2)
 
-plt.plot(MSL_data['Ace kW Pump 4b'], MSL_data['Avg. kW Pump 4b'])
+plt.plot(Pump4b['Ace kW Pump 4b'], Pump4b['Avg. kW Pump 4b'])
 plt.plot(x,y, linestyle='solid',color="black",markersize=0.5)
 plt.xlabel('BAS kW estimate')
 plt.ylabel('Dent kW for Pump 4b')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bCorrelation.png')
 plt.close()
 
+#just Pump 1a data
+Pump1a = pd.merge(MSL_data['Ace kW Pump 1a'],MSL_data['Avg. kW Pump 1a'],left_index=True, right_index=True, how='outer')
+Pump1a=Pump1a.dropna() #drop nans from this set
+
 P1amodel = LinearRegression()
-P1amodel = LinearRegression().fit(np.array(MSL_data['Ace kW Pump 1a']).reshape((-1,1)), np.array(MSL_data['Avg. kW Pump 1a']).reshape((-1,1)))
-x=np.array([min(MSL_data['Ace kW Pump 1a']), max(MSL_data['Ace kW Pump 1a'])])
+P1amodel = LinearRegression().fit(np.array(Pump1a['Ace kW Pump 1a']).reshape((-1,1)), np.array(Pump1a['Avg. kW Pump 1a']).reshape((-1,1)))
+x=np.array([min(Pump1a['Ace kW Pump 1a']), max(Pump1a['Ace kW Pump 1a'])])
 y=np.array(x*P1amodel.coef_+P1amodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
-plt.plot(MSL_data['Ace kW Pump 1a'], MSL_data['Avg. kW Pump 1a'])
+plt.plot(Pump1a['Ace kW Pump 1a'], Pump1a['Avg. kW Pump 1a'])
 plt.plot(x,y, linestyle='solid',color="black",)
 plt.xlabel('BAS kW estimate')
 plt.ylabel('Dent kW for Pump 1')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Correlation.png')
 plt.close()
 
-plt.plot(MSL_data['AHU19 supply fan VFD output'], MSL_data['Avg. Amp AHU19'])
+#just AHU19 data
+AHU19 = pd.merge(MSL_data['AHU19 supply fan VFD output'],MSL_data['Avg. Amp AHU19'],left_index=True, right_index=True, how='outer')
+AHU19=AHU19.dropna() #drop nans from this set
+
+plt.plot(AHU19['AHU19 supply fan VFD output'], AHU19['Avg. Amp AHU19'])
 plt.xlabel('BAS AHU19 Supply Fan')
 plt.ylabel('Dent Power data for AHU 19')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
@@ -395,3 +419,22 @@ plt.close()
 # plt.legend(['Ace Data (HRU Supply Fan)','Dent Data Phase 1','Dent Data Phase 2'])
 # plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
 # plt.close()
+
+
+#Export Linear Regressions!
+#Format: Equipment name, slope, intercept, rsquared
+
+#Save in a .csv
+with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParameters.csv', 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Equipment name', 'slope', 'intercept', 'rsquared'])
+    writer.writerow(['Pump4a',float(P4amodel.coef_),float(P4amodel.intercept_),P4amodel.score(np.array(Pump4a['Ace kW Pump 4a']).reshape((-1,1)),
+                                                                                 np.array(Pump4a['Avg. kW Pump 4a']).reshape((-1,1)))])
+    writer.writerow(['Pump4b', float(P4bmodel.coef_),float(P4bmodel.intercept_),P4bmodel.score(np.array(Pump4b['Ace kW Pump 4b']).reshape((-1,1)),
+                                                                                np.array(Pump4b['Avg. kW Pump 4b']).reshape((-1,1)))])
+    writer.writerow(['Pump1a', float(P1amodel.coef_), float(P1amodel.intercept_), P1amodel.score(np.array(Pump1a['Ace kW Pump 1a']).reshape((-1, 1)),
+                                                                                  np.array(Pump1a['Avg. kW Pump 1a']).reshape((-1, 1)))])
+    writer.writerow(['Pump2a', float(P2amodel.coef_), float(P2amodel.intercept_), P2amodel.score(np.array(Pump2a['Ace kW Pump 2a']).reshape((-1, 1)),
+                                                              np.array(Pump2a['Avg. kW Pump 2a']).reshape((-1, 1)))])
+    writer.writerow(['Pump2b', float(P4bmodel.coef_), float(P4bmodel.intercept_), P2bmodel.score(np.array(Pump2b['Ace kW Pump 2b']).reshape((-1, 1)),
+                                                              np.array(Pump2b['Avg. kW Pump 2b']).reshape((-1, 1)))])
