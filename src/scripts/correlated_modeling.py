@@ -77,8 +77,10 @@ fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={star
 fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel Status
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/9/timeseries?start_time={start}&end_time={end}', #Exhaust fan CFM
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/16/timeseries?start_time={start}&end_time={end}', #Total Cool Request from Zones
-fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start}&end_time={end}'] #Total Heat Request from Zones
-
+fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start}&end_time={end}', #Total Heat Request from Zones
+fr'/cxa_main_st_landing/2404:9-240409/binaryInput/19/timeseries?start_time={start}&end_time={end}', #P4B Status
+fr'/cxa_main_st_landing/2404:9-240409/binaryInput/18/timeseries?start_time={start}&end_time={end}', #P4A Status
+fr'/cxa_main_st_landing/2404:3-240403/binaryInput/3/timeseries?start_time={start}&end_time={end}'] #AHU19 Supply Fan Status
 
 #Ace Data descriptions #Todo: Add statuses when available
 headers = ['Pump 4a VFD Output',
@@ -121,7 +123,10 @@ headers = ['Pump 4a VFD Output',
          'AHU19 Heat Recovery Wheel Status',
          'AHU19 Exhaust fan CFM',
          'Total Cool Request from Zones',
-         'Total Heat Request from Zones']
+         'Total Heat Request from Zones',
+         'Pump 4b Status',
+         'Pump 4a Status'
+         'AHU19 Supply Fan Status']
 
 #For each path for AceIoT data (listed above) and the description, get the data and put the data in the data frame with header listed above
 with open(env_filepath, 'r') as file:
