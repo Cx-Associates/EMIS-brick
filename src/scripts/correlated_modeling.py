@@ -4,6 +4,7 @@ import os
 import requests
 import pandas as pd
 import yaml
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 #from sklearn.linear_model import LinearRegression
@@ -11,7 +12,7 @@ import numpy as np
 #from src.utils import Project
 #from config_MSL import config_dict
 
-from Dent_compile import P2amodel, P2bmodel, P4amodel, P4bmodel, P1amodel, HRUmodel, MSL_data, get_hp
+from Dent_compile import P2amodel, P2bmodel, P4amodel, P4bmodel, P1amodel, MSL_data, get_hp #HRUmodel
 
 def parse_response(response,columnname):
     """
@@ -33,7 +34,7 @@ f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
 start = "2023-11-10"
-end = "2024-03-31"
+end = "2024-07-25"
 ACE_data = pd.DataFrame()
 
 #Ace Data locations #Todo: Add statuses when available
@@ -162,8 +163,8 @@ nameplate=pd.DataFrame(Nameplate)
 #Calculating kW from BMS information
 
 #Heating system
-ACE_data['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(ACE_data['Pump 4a VFD Output']/100)**2.5 #Todo: Add status when available
-ACE_data['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(ACE_data['Pump 4b VFD Output']/100)**2.5 #Todo: Add status when available
+ACE_data['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(ACE_data['Pump 4a VFD Output']/100)**2.5*math.ceil(ACE_data['Pump 4a Status']) #Todo: Add status when available
+ACE_data['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(ACE_data['Pump 4b VFD Output']/100)**2.5*math.ceil(ACE_data['Pump 4b Status']) #Todo: Add status when available
 
 #Chilled water system
 ACE_data['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(MSL_data['Pump 1a feedback']/100)**2.5 #Todo: Add status when available

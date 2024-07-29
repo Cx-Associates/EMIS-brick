@@ -97,7 +97,7 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
                         'AHU19SupplyFan', 'AHU19ReturnFan'], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10]}
 nameplate=pd.DataFrame(Nameplate)
 
-start = "2024-07-01"
+start = "2023-07-01"
 end = "2024-07-21"
 
 #Ace Data locations
