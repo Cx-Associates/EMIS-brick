@@ -33,7 +33,7 @@ env_filename = 'api_keys.yml'
 f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
-start = "2023-11-10"
+start = "2023-07-01"
 end = "2024-07-25"
 ACE_data = pd.DataFrame()
 
@@ -126,7 +126,7 @@ headers = ['Pump 4a VFD Output',
          'Total Cool Request from Zones',
          'Total Heat Request from Zones',
          'Pump 4b Status',
-         'Pump 4a Status'
+         'Pump 4a Status',
          'AHU19 Supply Fan Status']
 
 #For each path for AceIoT data (listed above) and the description, get the data and put the data in the data frame with header listed above
@@ -163,8 +163,8 @@ nameplate=pd.DataFrame(Nameplate)
 #Calculating kW from BMS information
 
 #Heating system
-ACE_data['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(ACE_data['Pump 4a VFD Output']/100)**2.5*math.ceil(ACE_data['Pump 4a Status']) #Todo: Add status when available
-ACE_data['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(ACE_data['Pump 4b VFD Output']/100)**2.5*math.ceil(ACE_data['Pump 4b Status']) #Todo: Add status when available
+ACE_data['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(ACE_data['Pump 4a VFD Output']/100)**2.5*ACE_data['Pump 4a Status'] #Todo: Do only 1 or 0 for Status
+ACE_data['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(ACE_data['Pump 4b VFD Output']/100)**2.5*ACE_data['Pump 4b Status'] #Todo: Do only 1 or 0 for Status
 
 #Chilled water system
 ACE_data['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(MSL_data['Pump 1a feedback']/100)**2.5 #Todo: Add status when available
