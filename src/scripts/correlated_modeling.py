@@ -15,8 +15,8 @@ import numpy as np
 from Dent_compile import P2amodel, P2bmodel, P4amodel, P4bmodel, P1amodel, MSL_data, get_hp #HRUmodel
 
 #Import Correlation Parameters
-corr_path = ["F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/RegressionParameters.csv"]
-Corr_param_df = pd.read_csv(corr_path)
+corr_path = "F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/RegressionParameters.csv"
+Corr_param_df = pd.DataFrame(pd.read_csv(corr_path))
 
 def parse_response(response,columnname):
     """
@@ -47,7 +47,7 @@ def get_value(equipment_name, data):
     return size
 
 
-#Ace Data locations #Todo: Add statuses when available
+#Ace Data locations
 str = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Pump 4b VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time={start}&end_time={end}', #Pump 4a Status
@@ -181,10 +181,11 @@ Boiler_Nameplate = {'Equipt':['Boiler1_capacity', 'Boiler2_capacity', 'Boiler1_E
 Boiler_Nameplate=pd.DataFrame(Boiler_Nameplate)
 
 Report_df = pd.DataFrame() #Dataframe which will store all calcualted energy consumption and any data needed for reporting
+ACE_15min = ACE_data[head].resample('15T').mean() #Averaging out the data in order to use the correlation factors
 
 #Create system level dataframes
-Heating_df = ACE_data['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']
-
+Heating_df = ACE_15min['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']
+#todo: add celeing or floor for status. Better idea would be to do all the calcs first and then do the 15 min average. START HERE
 
 
 #Calculating kW from BMS information #Todo: All dataframes below need to be updated to system level dataframes
@@ -197,6 +198,8 @@ Heating_df['Boiler 2 MBtu'] = get_value('Boiler2_capacity', Boiler_Nameplate)*He
 
 #Adding heating system reporting variables to dataframe
 Report_df['Total Boiler NG Consumption (MBtu)'] = Heating_df['Boiler 1 MBtu'] + Heating_df['Boiler 2 MBtu']
+Report_df['Pump 4a kW (Correlated)'] =
+
 #Todo: Add pump calcs with corr parameters
 
 #Chilled water system
