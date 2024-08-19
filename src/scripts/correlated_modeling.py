@@ -37,8 +37,8 @@ env_filename = 'api_keys.yml'
 f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
-start = "2023-07-01"
-end = "2024-07-25"
+start = "2023-06-01"
+end = "2024-08-15"
 ACE_data = pd.DataFrame()
 
 def get_value(equipment_name, data):
@@ -50,8 +50,8 @@ def get_value(equipment_name, data):
 #Ace Data locations
 str = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Pump 4b VFD Output
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time={start}&end_time={end}', #Pump 4a Status
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/13/timeseries?start_time={start}&end_time={end}', #Pump 4b Status
+fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time={start}&end_time={end}', #Pump 4a s/s
+fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/13/timeseries?start_time={start}&end_time={end}', #Pump 4b s/s
 fr'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Supply Temp_2
 fr'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Return Temp_2
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/3/timeseries?start_time={start}&end_time={end}', #Boiler 1% signal
@@ -93,14 +93,14 @@ fr'/cxa_main_st_landing/2404:3-240403/analogValue/9/timeseries?start_time={start
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/16/timeseries?start_time={start}&end_time={end}', #Total Cool Request from Zones
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start}&end_time={end}', #Total Heat Request from Zones
 fr'/cxa_main_st_landing/2404:9-240409/binaryInput/19/timeseries?start_time={start}&end_time={end}', #P4B Status
-fr'/cxa_main_st_landing/2404:9-240409/binaryInput/18/timeseries?start_time={start}&end_time={end}', #P4A Status
-fr'/cxa_main_st_landing/2404:3-240403/binaryInput/3/timeseries?start_time={start}&end_time={end}'] #AHU19 Supply Fan Status
+fr'/cxa_main_st_landing/2404:9-240409/binaryInput/18/timeseries?start_time={start}&end_time={end}'] #P4A Status
+
 
 #Ace Data descriptions
 headers = ['Pump 4a VFD Output',
          'Pump 4b VFD Output',
-         'Pump 4a Status',
-         'Pump 4b Status',
+         'Pump 4a s/s',
+         'Pump 4b s/s',
          'Primary Hot Water Supply Temp_2',
          'Primary Hot Water Return Temp_2',
          'Boiler 1% signal',
@@ -142,8 +142,7 @@ headers = ['Pump 4a VFD Output',
          'Total Cool Request from Zones',
          'Total Heat Request from Zones',
          'Pump 4b Status',
-         'Pump 4a Status',
-         'AHU19 Supply Fan Status']
+         'Pump 4a Status']
 
 #For each path for AceIoT data (listed above) and the description, get the data and put the data in the data frame with header listed above
 with open(env_filepath, 'r') as file:
@@ -178,56 +177,63 @@ nameplate=pd.DataFrame(Nameplate)
 
 #Boiler Nameplate
 Boiler_Nameplate = {'Equipt':['Boiler1_capacity', 'Boiler2_capacity', 'Boiler1_Eff', 'Boiler2_Eff'], 'value':[2047, 2081, 0.878, 0.891]}
-Boiler_Nameplate=pd.DataFrame(Boiler_Nameplate)
+#Boiler_Nameplate=pd.DataFrame(Boiler_Nameplate) #Not needed Todo: Consider removing
 
-Report_df = pd.DataFrame() #Dataframe which will store all calcualted energy consumption and any data needed for reporting
-ACE_15min = ACE_data[head].resample('15T').mean() #Averaging out the data in order to use the correlation factors
+Report_df = pd.DataFrame() #Dataframe which will store all calculated energy consumption and any data needed for reporting
 
+##HEATING SYSTEM CALCS
 #Create system level dataframes
-Heating_df = ACE_15min['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']
-#todo: add celeing or floor for status. Better idea would be to do all the calcs first and then do the 15 min average. START HERE
+Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']]#Always use double [] brackets for picking the data you need
+#Heating_df.to_csv('Heating_df.csv') #Todo:Uncomment for troubleshooting
 
-
-#Calculating kW from BMS information #Todo: All dataframes below need to be updated to system level dataframes
-
-#Heating system
+#Calculating kW from BMS information
 Heating_df['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(Heating_df['Pump 4a VFD Output']/100)**2.5*Heating_df['Pump 4a Status']
 Heating_df['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(Heating_df['Pump 4b VFD Output']/100)**2.5*Heating_df['Pump 4b Status']
 Heating_df['Boiler 1 MBtu'] = get_value('Boiler1_capacity', Boiler_Nameplate)*Heating_df['Boiler 1 status']*Heating_df['Boiler 1% signal']/(100*get_value('Boiler1_Eff', Boiler_Nameplate)) #The 100 in the denominator is to convert the % signal value
 Heating_df['Boiler 2 MBtu'] = get_value('Boiler2_capacity', Boiler_Nameplate)*Heating_df['Boiler 2 status']*Heating_df['Boiler 2% signal']/(100*get_value('Boiler2_Eff', Boiler_Nameplate))
+Heating_df.to_csv('Heating_df.csv') #Todo:Uncomment for troubleshooting
+Heating_df_15min = Heating_df.resample(rule='15Min').mean() #Averaging for 15 min in order to use the correlation factors later
+#Heating_df_15min.to_csv('Heating_df_15min.csv') #Todo:Uncomment for troubleshooting
 
-#Adding heating system reporting variables to dataframe
-Report_df['Total Boiler NG Consumption (MBtu)'] = Heating_df['Boiler 1 MBtu'] + Heating_df['Boiler 2 MBtu']
-Report_df['Pump 4a kW (Correlated)'] =
+#Calculating and adding reporting variables to dataframe
+Report_df['Total Boiler NG Consumption (MBtu)'] = Heating_df_15min['Boiler 1 MBtu'] + Heating_df_15min['Boiler 2 MBtu']
+Report_df['Pump 4a kW (Correlated)'] = Heating_df_15min['Pump 4a kW (Formula Based)'] * Corr_param_df['slope'][0] + Corr_param_df['intercept'][0]
+Report_df['Pump 4b kW (Correlated)'] = Heating_df_15min['Pump 4b kW (Formula Based)'] * Corr_param_df['slope'][1] + Corr_param_df['intercept'][1]
+Report_df['Heating System kW'] = Report_df['Pump 4a kW (Correlated)'] + Report_df['Pump 4b kW (Correlated)']
+#Report_df.to_csv('Report_df.csv') #Todo:Uncomment for troubleshooting
 
-#Todo: Add pump calcs with corr parameters
+##AHU-19 CALCS
+AHU_df = ACE_data[['AHU19 supply fan VFD output', 'AHU19 Supply fan Status', 'AHU19 Exhaust fan 1 VFD speed', 'AHU19 Exhaust fan 2 VFD speed', 'AHU19 Heat Recovery Wheel VFD', 'AHU19 Heat Recovery Wheel Status', 'AHU19 Exhaust fan CFM']]
+
+#Calculating kW from BMS information
+AHU_df['AHU 19 EF1 kW (Formula Based)'] = (get_hp('AHU19EF1', Nameplate))*0.745699872*(AHU_df['AHU19 Exhaust fan 1 VFD speed']/100)**2.5 #No status exists
+AHU_df['AHU 19 EF2 kW (Formula Based)'] = (get_hp('AHU19EF2', Nameplate))*0.745699872*(AHU_df['AHU19 Exhaust fan 2 VFD speed']/100)**2.5 #No status exists
+AHU_df['AHU 19 SF kW (Formula Based)'] = AHU_df['AHU19 Supply fan Status']*(get_hp('AHU19SF', Nameplate))*0.745699872*(AHU_df['AHU19 supply fan VFD output']/100)**2.5
+AHU_df['AHU 19 HRW kW (Formula Based)'] = AHU_df['AHU19 Heat Recovery Wheel Status']*(get_hp('AHU19HRW', Nameplate))*0.745699872*(AHU_df['AHU19 Heat Recovery Wheel VFD']/100)**2.5
+#AHU_df.to_csv('AHU_df.csv)
+
 
 #Chilled water system
-ACE_data['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(ACE_data['Pump 1a feedback']/100)**2.5 #Todo: Add status when available
-ACE_data['Pump 1b kW (Formula Based)'] = get_hp('Pump1b', Nameplate)*0.745699872*(ACE_data['Pump 1b feedback']/100)**2.5 #Todo: Add status when available
-ACE_data['Pump 2b kW (Formula Based)'] = ACE_data['Pump 2b activity']*get_hp('Pump2b',Nameplate)*0.745699872*(ACE_data['Pump 2a-b VFD output']/100)**2.5
-ACE_data['Pump 2a kW (Formula Based)'] = ACE_data['Pump 2a activity']*(get_hp('Pump2a',Nameplate)*0.745699872*(ACE_data['Pump 2a-b VFD output']/100)**2.5)
-ACE_data['Pump 3a kW (Formula Based)'] = ACE_data['Pump 3a status']*(get_hp('Pump3a', Nameplate))*0.745699872
-ACE_data['Pump 3b kW (Formula Based)'] = ACE_data['Pump 3b status']*(get_hp('Pump3a', Nameplate))*0.745699872
-ACE_data['Tower Fan 1 kW (Formula Based)'] = ACE_data['Cooling tower Fan 1 Status']*(get_hp('CTFan1', Nameplate))*0.745699872*(ACE_data['Cooling tower fan %speed']/100)**2.5
-ACE_data['Tower Fan 2 kW (Formula Based)'] = ACE_data['Cooling tower Fan 2 Status']*(get_hp('CTFan2', Nameplate))*0.745699872*(ACE_data['Cooling tower fan %speed']/100)**2.5
-ACE_data['Chiller kW'] = ACE_data['Chiller status'] * ACE_data['Chilled water power meter']
+#ACE_data['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(ACE_data['Pump 1a feedback']/100)**2.5 #Todo: Add status when available
+#ACE_data['Pump 1b kW (Formula Based)'] = get_hp('Pump1b', Nameplate)*0.745699872*(ACE_data['Pump 1b feedback']/100)**2.5 #Todo: Add status when available
+#ACE_data['Pump 2b kW (Formula Based)'] = ACE_data['Pump 2b activity']*get_hp('Pump2b',Nameplate)*0.745699872*(ACE_data['Pump 2a-b VFD output']/100)**2.5
+#ACE_data['Pump 2a kW (Formula Based)'] = ACE_data['Pump 2a activity']*(get_hp('Pump2a',Nameplate)*0.745699872*(ACE_data['Pump 2a-b VFD output']/100)**2.5)
+#ACE_data['Pump 3a kW (Formula Based)'] = ACE_data['Pump 3a status']*(get_hp('Pump3a', Nameplate))*0.745699872
+#ACE_data['Pump 3b kW (Formula Based)'] = ACE_data['Pump 3b status']*(get_hp('Pump3a', Nameplate))*0.745699872
+#ACE_data['Tower Fan 1 kW (Formula Based)'] = ACE_data['Cooling tower Fan 1 Status']*(get_hp('CTFan1', Nameplate))*0.745699872*(ACE_data['Cooling tower fan %speed']/100)**2.5
+#ACE_data['Tower Fan 2 kW (Formula Based)'] = ACE_data['Cooling tower Fan 2 Status']*(get_hp('CTFan2', Nameplate))*0.745699872*(ACE_data['Cooling tower fan %speed']/100)**2.5
+#ACE_data['Chiller kW'] = ACE_data['Chiller status'] * ACE_data['Chilled water power meter']
 
 #HRU
-ACE_data['HRU Supply Fan kW (Formula Based)'] = ACE_data['HRU Supply Fan Status']*(get_hp('HRUSupplyFan',Nameplate))*0.745699872*(ACE_data['HRU supply fan VFD output']/100)**2.5
-ACE_data['HRU Exhaust Fan kW (Formula Based)'] = ACE_data['HRU Exhaust Fan Status']*(get_hp('HRUReturnFan',Nameplate))*0.745699872*(ACE_data['HRU Exhaust fan VFD output']/100)**2.5
-ACE_data['HRU Total kW (Formula Based)'] = ACE_data['HRU Exhaust Fan kW (Formula Based)'] + ACE_data['HRU Supply Fan kW (Formula Based)']
+#ACE_data['HRU Supply Fan kW (Formula Based)'] = ACE_data['HRU Supply Fan Status']*(get_hp('HRUSupplyFan',Nameplate))*0.745699872*(ACE_data['HRU supply fan VFD output']/100)**2.5
+#ACE_data['HRU Exhaust Fan kW (Formula Based)'] = ACE_data['HRU Exhaust Fan Status']*(get_hp('HRUReturnFan',Nameplate))*0.745699872*(ACE_data['HRU Exhaust fan VFD output']/100)**2.5
+#ACE_data['HRU Total kW (Formula Based)'] = ACE_data['HRU Exhaust Fan kW (Formula Based)'] + ACE_data['HRU Supply Fan kW (Formula Based)']
 
 #AHU19
-#ACE_data['AHU 19 EF1 kW (Formula Based)'] = ACE_data['AHU 19 EF1 Status']*(get_hp('AHU19EF1', Nameplate))*0.745699872*(ACE_data['AHU19 Exhaust fan 1 VFD speed']/100)**2.5
-#ACE_data['AHU 19 EF2 kW (Formula Based)'] = ACE_data['AHU 19 EF2 Status']*(get_hp('AHU19EF2', Nameplate))*0.745699872*(ACE_data['AHU19 Exhaust fan 2 VFD speed']/100)**2.5
-#ACE_data['AHU 19 SF kW (Formula Based)'] = ACE_data['AHU 19 SF Status']*(get_hp('AHU19SF', Nameplate))*0.745699872*(ACE_data['AHU19 supply fan VFD output']/100)**2.5
-#ACE_data['AHU 19 HRW kW (Formula Based)'] = ACE_data['AHU19 Heat Recovery Wheel Status']*(get_hp('AHU19HRW', Nameplate))*0.745699872*(ACE_data['AHU19 Heat Recovery Wheel VFD']/100)**2.5
+
 
 
 #Calculating the Dent correlated kW consumption #Todo: Uncomment this out and use 15 min average data for correlation and then calculate total power consumption for each system ("ACE_data" df is currently in 5 min intervals)
-#ACE_data['Pump 4a kW (Dent Correlated)'] = (ACE_data['Pump 4a kW (Formula Based)']*P4amodel.coef_) + P4amodel.intercept_
-#ACE_data['Pump 4b kW (Dent Correlated)'] = (ACE_data['Pump 4b kW (Formula Based)']*P4bmodel.coef_) + P4bmodel.intercept_
 #ACE_data['Pump 1a kW (Dent Correlated)'] = (ACE_data['Pump 1a kW (Formula Based)']*P1amodel.coef_) + P1amodel.intercept_
 #ACE_data['Pump 2a kW (Dent Correlated)'] = (ACE_data['Pump 2a kW (Formula Based)']*P2amodel.coef_) + P2amodel.intercept_
 #ACE_data['Pump 2b kW (Dent Correlated)'] = (ACE_data['Pump 2b kW (Formula Based)']*P2bmodel.coef_) + P2bmodel.intercept_
