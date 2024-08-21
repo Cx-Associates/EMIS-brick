@@ -12,7 +12,7 @@ import numpy as np
 #from src.utils import Project
 #from config_MSL import config_dict
 
-from Dent_compile import P2amodel, P2bmodel, P4amodel, P4bmodel, P1amodel, MSL_data, get_hp #HRUmodel
+from Dent_compile import get_hp
 
 #Import Correlation Parameters
 corr_path = "F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/RegressionParameters.csv"
@@ -166,9 +166,9 @@ with open(env_filepath, 'r') as file:
             ACE_data = pd.DataFrame.merge(ACE_data, df, left_index=True, right_index=True, how='outer')
         else:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
-            #raise Exception(msg)
+            #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
 
-#ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
+ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
@@ -233,23 +233,32 @@ HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 Report_df['HRU Supply Fan kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
 
 #CHILLED WATER SYSTEM CALCS
-CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling Tower Free Cool Status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status',]]
-#ACE_data['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(ACE_data['Pump 1a feedback']/100)**2.5 #Todo: Add status when available
-#ACE_data['Pump 1b kW (Formula Based)'] = get_hp('Pump1b', Nameplate)*0.745699872*(ACE_data['Pump 1b feedback']/100)**2.5 #Todo: Add status when available
-#ACE_data['Pump 2b kW (Formula Based)'] = ACE_data['Pump 2b activity']*get_hp('Pump2b',Nameplate)*0.745699872*(ACE_data['Pump 2a-b VFD output']/100)**2.5
-#ACE_data['Pump 2a kW (Formula Based)'] = ACE_data['Pump 2a activity']*(get_hp('Pump2a',Nameplate)*0.745699872*(ACE_data['Pump 2a-b VFD output']/100)**2.5)
-#ACE_data['Pump 3a kW (Formula Based)'] = ACE_data['Pump 3a status']*(get_hp('Pump3a', Nameplate))*0.745699872
-#ACE_data['Pump 3b kW (Formula Based)'] = ACE_data['Pump 3b status']*(get_hp('Pump3a', Nameplate))*0.745699872
-#ACE_data['Tower Fan 1 kW (Formula Based)'] = ACE_data['Cooling tower Fan 1 Status']*(get_hp('CTFan1', Nameplate))*0.745699872*(ACE_data['Cooling tower fan %speed']/100)**2.5
-#ACE_data['Tower Fan 2 kW (Formula Based)'] = ACE_data['Cooling tower Fan 2 Status']*(get_hp('CTFan2', Nameplate))*0.745699872*(ACE_data['Cooling tower fan %speed']/100)**2.5
-#ACE_data['Chiller kW'] = ACE_data['Chiller status'] * ACE_data['Chilled water power meter']
+CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling Tower Free Cool Status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
+
+#Calculating kW from BMS information
+CHW_df['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists
+CHW_df['Pump 1b kW (Formula Based)'] = get_hp('Pump1b', Nameplate)*0.745699872*(CHW_df['Pump 1b feedback']/100)**2.5 #No status exists and does not need correlation
+CHW_df['Pump 2b kW (Formula Based)'] = CHW_df['Pump 2b status']*get_hp('Pump2b',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5
+CHW_df['Pump 2a kW (Formula Based)'] = CHW_df['Pump 2a status']*(get_hp('Pump2a',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5)
+CHW_df['Pump 3a kW (Formula Based)'] = CHW_df['Pump 3a status']*(get_hp('Pump3a', Nameplate))*0.745699872
+CHW_df['Pump 3b kW (Formula Based)'] = CHW_df['Pump 3b status']*(get_hp('Pump3a', Nameplate))*0.745699872
+CHW_df['Tower Fan 1 kW (Formula Based)'] = CHW_df['Cooling tower Fan 1 Status']*(get_hp('CTFan1', Nameplate))*0.745699872*(CHW_df['Cooling tower fan %speed']/100)**2.5
+CHW_df['Tower Fan 2 kW (Formula Based)'] = CHW_df['Cooling tower Fan 2 Status']*(get_hp('CTFan2', Nameplate))*0.745699872*(CHW_df['Cooling tower fan %speed']/100)**2.5
+CHW_df['Chiller kW'] = CHW_df['Chiller status'] * CHW_df['Chilled water power meter']
+CHW_df_15min = CHW_df.resample(rule='15Min').mean()
+
+#Calculating correlated values and adding reporting variables to dataframe
+Report_df['Pump 1a kW (Correlated)'] = CHW_df_15min['Pump 1a kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Pump 1b kW (Formula Based)'] = CHW_df_15min['Pump 1b kW (Formula Based)']
+Report_df['Pump 2a kW (Correlated)'] = CHW_df_15min['Pump 2a kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Pump 2b kW (Correlated)'] = CHW_df_15min['Pump 2b kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Pump 3a kW (Formula Based)'] = CHW_df_15min['Pump 3a kW (Formula Based)']
+Report_df['Pump 3b kW (Formula Based)'] = CHW_df_15min['Pump 3b kW (Formula Based)']
+Report_df['Tower Fan 1 kW (Correlated)'] = CHW_df_15min['Tower Fan 1 kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 
 
-#Calculating the Dent correlated kW consumption #Todo: Uncomment this out and use 15 min average data for correlation and then calculate total power consumption for each system ("ACE_data" df is currently in 5 min intervals)
-#ACE_data['Pump 1a kW (Dent Correlated)'] = (ACE_data['Pump 1a kW (Formula Based)']*P1amodel.coef_) + P1amodel.intercept_
-#ACE_data['Pump 2a kW (Dent Correlated)'] = (ACE_data['Pump 2a kW (Formula Based)']*P2amodel.coef_) + P2amodel.intercept_
-#ACE_data['Pump 2b kW (Dent Correlated)'] = (ACE_data['Pump 2b kW (Formula Based)']*P2bmodel.coef_) + P2bmodel.intercept_
-#ACE_data['HRU Exhaust Fan kW (Dent Correlated)'] = (ACE_data['HRU Total kW (Formula Based)']*HRUmodel.coef_) + HRUmodel.intercept_
 
-#Todo: Add remaining DENT correlation when data is available
+
 
