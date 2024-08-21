@@ -183,16 +183,16 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 ##HEATING SYSTEM CALCS
 #Create system level dataframes
 Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']]#Always use double [] brackets for picking the data you need
-#Heating_df.to_csv('Heating_df.csv') #Todo:Uncomment for troubleshooting
+#Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
 #Calculating kW from BMS information
 Heating_df['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(Heating_df['Pump 4a VFD Output']/100)**2.5*Heating_df['Pump 4a Status']
 Heating_df['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(Heating_df['Pump 4b VFD Output']/100)**2.5*Heating_df['Pump 4b Status']
 Heating_df['Boiler 1 MBtu'] = get_value('Boiler1_capacity', Boiler_Nameplate)*Heating_df['Boiler 1 status']*Heating_df['Boiler 1% signal']/(100*get_value('Boiler1_Eff', Boiler_Nameplate)) #The 100 in the denominator is to convert the % signal value
 Heating_df['Boiler 2 MBtu'] = get_value('Boiler2_capacity', Boiler_Nameplate)*Heating_df['Boiler 2 status']*Heating_df['Boiler 2% signal']/(100*get_value('Boiler2_Eff', Boiler_Nameplate))
-#Heating_df.to_csv('Heating_df.csv') #Todo:Uncomment for troubleshooting
+#Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 Heating_df_15min = Heating_df.resample(rule='15Min').mean() #Averaging for 15 min in order to use the correlation factors
-#Heating_df_15min.to_csv('Heating_df_15min.csv') #Todo:Uncomment for troubleshooting
+#Heating_df_15min.to_csv('Heating_df_15min.csv') #Uncomment for troubleshooting
 
 #Calculating correlated values and adding reporting variables to dataframe
 Report_df['Boiler 1 MBtu'] = Heating_df_15min['Boiler 1 MBtu']
@@ -201,7 +201,7 @@ Report_df['Total Boiler NG Consumption (MBtu)'] = Heating_df_15min['Boiler 1 MBt
 Report_df['Pump 4a kW (Correlated)'] = Heating_df_15min['Pump 4a kW (Formula Based)'] * Corr_param_df['slope'][0] + Corr_param_df['intercept'][0]
 Report_df['Pump 4b kW (Correlated)'] = Heating_df_15min['Pump 4b kW (Formula Based)'] * Corr_param_df['slope'][1] + Corr_param_df['intercept'][1]
 Report_df['Heating System kW'] = Report_df['Pump 4a kW (Correlated)'] + Report_df['Pump 4b kW (Correlated)']
-#Report_df.to_csv('Report_df.csv') #Todo:Uncomment for troubleshooting
+#Report_df.to_csv('Report_df.csv') #Uncomment for troubleshooting
 
 ##AHU-19 CALCS
 AHU_df = ACE_data[['AHU19 supply fan VFD output', 'AHU19 Supply fan Status', 'AHU19 Exhaust fan 1 VFD speed', 'AHU19 Exhaust fan 2 VFD speed', 'AHU19 Heat Recovery Wheel VFD', 'AHU19 Heat Recovery Wheel Status', 'AHU19 Exhaust fan CFM']]
@@ -212,7 +212,7 @@ AHU_df['AHU 19 EF2 kW (Formula Based)'] = (get_hp('AHU19EF2', Nameplate))*0.7456
 AHU_df['AHU 19 SF kW (Formula Based)'] = AHU_df['AHU19 Supply fan Status']*(get_hp('AHU19SF', Nameplate))*0.745699872*(AHU_df['AHU19 supply fan VFD output']/100)**2.5
 AHU_df['AHU 19 HRW kW (Formula Based)'] = AHU_df['AHU19 Heat Recovery Wheel Status']*(get_hp('AHU19HRW', Nameplate))*0.745699872*(AHU_df['AHU19 Heat Recovery Wheel VFD']/100)**2.5
 AHU_df_15min = AHU_df.resample(rule='15Min').mean()
-#AHU_df.to_csv('AHU_df.csv) #Todo:Uncomment for troubleshooting
+#AHU_df.to_csv('AHU_df.csv) #Uncomment for troubleshooting
 
 #Calculating correlated values and adding reporting variables to dataframe #Todo: If all of AHU is on one DENT then correlation will have to be after summing in the AHU df
 Report_df['AHU 19 EF1 kW (Correlated)'] = AHU_df_15min['AHU 19 EF1 kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
