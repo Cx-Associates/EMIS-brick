@@ -12,8 +12,6 @@ import numpy as np
 #from src.utils import Project
 #from config_MSL import config_dict
 
-from Dent_compile import get_hp
-
 #Import Correlation Parameters
 corr_path = "F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/RegressionParameters.csv"
 Corr_param_df = pd.DataFrame(pd.read_csv(corr_path))
@@ -41,11 +39,15 @@ start = "2023-06-01"
 end = "2024-08-15"
 ACE_data = pd.DataFrame()
 
-def get_value(equipment_name, data):
+def get_value(equipment_name, data): #Todo: For next project it will be good to define al functions in the utils.py
     index = data['Equipt'].index(equipment_name)  # Find index of equipment name
     size = data['value'][index]  # Retrieve corresponding size using index
     return size
 
+def get_hp(equipment_name, data):
+    index = data['Equipt'].index(equipment_name)  # Find index of equipment name
+    size = data['hp'][index]  # Retrieve corresponding size using index
+    return size
 
 #Ace Data locations
 str = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
@@ -180,6 +182,9 @@ Boiler_Nameplate = {'Equipt':['Boiler1_capacity', 'Boiler2_capacity', 'Boiler1_E
 
 Report_df = pd.DataFrame() #Dataframe which will store all calculated energy consumption and any data needed for reporting
 
+#Todo: For future projects, will be good if we do system level correlations instead of doing equipment level, will reduce steps and problems with loss of data
+#Todo: For future projects, we should have different files for each system so that if data is missing for certain points, it doesn't break the whole code. Also easier troubleshooting.
+
 ##HEATING SYSTEM CALCS
 #Create system level dataframes
 Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']]#Always use double [] brackets for picking the data you need
@@ -230,7 +235,7 @@ HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 #HRU_df_15min.to_csv('HRU_df_15min.csv')
 
 #Calculating correlated values and adding reporting variables to dataframe
-Report_df['HRU Supply Fan kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
 
 #CHILLED WATER SYSTEM CALCS
 CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling Tower Free Cool Status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
@@ -254,10 +259,10 @@ Report_df['Pump 2a kW (Correlated)'] = CHW_df_15min['Pump 2a kW (Formula Based)'
 Report_df['Pump 2b kW (Correlated)'] = CHW_df_15min['Pump 2b kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
 Report_df['Pump 3a kW (Formula Based)'] = CHW_df_15min['Pump 3a kW (Formula Based)']
 Report_df['Pump 3b kW (Formula Based)'] = CHW_df_15min['Pump 3b kW (Formula Based)']
-Report_df['Tower Fan 1 kW (Correlated)'] = CHW_df_15min['Tower Fan 1 kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Tower Fan 1 kW (Correlated)'] = CHW_df_15min['Tower Fan 1 kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available, the only electricty consuming equipment in the CTs are the fan assemblies
 Report_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
 Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
-
+Report_df['Total CHW kW'] = Report_df['Pump 1a kW (Correlated)']+Report_df['Pump 1b kW (Formula Based)']+Report_df['Pump 2a kW (Correlated)']+Report_df['Pump 2b kW (Correlated)']+Report_df['Pump 3a kW (Formula Based)']+Report_df['Pump 3b kW (Formula Based)']+Report_df['Tower Fan 1 kW (Correlated)']+Report_df['Tower Fan 2 kW (Correlated)']+Report_df['Chiller kW']
 
 
 

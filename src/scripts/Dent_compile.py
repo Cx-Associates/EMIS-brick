@@ -48,10 +48,18 @@ def get_hp(equipment_name, data):
     return size
 
 
-#some places and specifics
+#some places and specifics #todo: update paths for new data, for future it would be good to update the DENT data headers in code rather than manually in the excel file
 dentdatapath=[r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876C-01.csv",
               r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876D-01.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876F-01.csv"]
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876F-01.csv",
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull 2024-03-06/E876C-01_2.csv",
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/E876C-01_AHU&Boiler.csv",
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/E876D-01_CHWP.csv",
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/E876F-01_HRU.csv",
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/XC1409243-01_CT.csv"]
+
+#Ace gateway data is missing between "2024-04-24 22:10:00-04:00" and "2024-07-15 14:15:00-04:00" (additional points were added a few days later sos ome points missing here and there)
+
 env_filename = 'api_keys.yml'
 f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
@@ -65,12 +73,13 @@ for path in dentdatapath:
     # for dent data they have new lines in them sometimes, let's remove those
     MSL_data1.columns = MSL_data1.columns.str.replace('\n', '')
     MSL_data1.columns = MSL_data1.columns.str.replace('\r', '')
+    MSL_data1.columns = MSL_data1.columns.str.strip() #Was getting a key error 'Date ', this resolved the issue so most likely it was to do with blank spaces.
 
     # create 'time' column
-    MSL_data1['CombinedDatetime']=pd.to_datetime(MSL_data1['Date '] + ' ' + MSL_data1['End Time '])
+    MSL_data1['CombinedDatetime']=pd.to_datetime(MSL_data1['Date'] + ' ' + MSL_data1['End Time'])
     #^for some reason that has us off by 4 hours?
     MSL_data1.set_index('CombinedDatetime', inplace=True)
-    MSL_data1.index = MSL_data1.index.tz_localize('US/Eastern', ambiguous='NaT')
+    MSL_data1.index = MSL_data1.index.tz_localize('US/Eastern', ambiguous='NaT', nonexistent='shift_forward') #Non-existent deals with daylight savings
     # Handle ambiguous time error by dropping rows with NaT values in the index
     MSL_data1 = MSL_data1[MSL_data1.index.notnull()]
 
@@ -85,20 +94,26 @@ project = Project(
     name=config_dict['name'],
     location=config_dict['location'],
 )
+# Define the gateway down and back up timeframes, dates were determined from ACE_data_5
+gateway_down = pd.Timestamp("2024-04-24 22:10:00-04:00", tz='US/Eastern')
+gateway_up = pd.Timestamp("2024-07-15 14:15:00-04:00", tz='US/Eastern')
 
-# set the project baseline period
-project.set_time_frames(
-    baseline=('2023-10-01', '2024-05-01'),
-    #reporting=('2023-12-10', '2023-12-18')
-)
+# Filter out the rows between gateway_down and gateway_up
+MSL_data = MSL_data[(MSL_data.index < gateway_down) | (MSL_data.index > gateway_up)]
+
+MSL_data.to_csv('MSL_data.csv')
+# set the project baseline period #todo:maybe delete?
+#project.set_time_frames(
+  #  baseline=('2023-10-01', '2024-05-01'),
+ #   #reporting=('2023-12-10', '2023-12-18')
+#)
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
-                        'AHU19SupplyFan', 'AHU19ReturnFan'], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10]}
-nameplate=pd.DataFrame(Nameplate)
+                        'AHU19SupplyFan', 'AHU19ReturnFan', 'Pump3a', 'Pump3b', "CTFan1", "CTFan2", "AHU19EF1", "AHU19EF2","AHU19SF", "AHU19HRW"], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10, 7.5, 7.5, 15, 15, 10, 10, 7.5, 0.1]}
 
-start = "2023-07-01"
-end = "2024-07-21"
+start = "2023-09-20"
+end = "2024-08-26"
 
 #Ace Data locations
 #Todo: make this a file you pull from instead of hard coded.
@@ -438,3 +453,4 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParam
                                                               np.array(Pump2a['Avg. kW Pump 2a']).reshape((-1, 1)))])
     writer.writerow(['Pump2b', float(P4bmodel.coef_), float(P4bmodel.intercept_), P2bmodel.score(np.array(Pump2b['Ace kW Pump 2b']).reshape((-1, 1)),
                                                               np.array(Pump2b['Avg. kW Pump 2b']).reshape((-1, 1)))])
+"""
