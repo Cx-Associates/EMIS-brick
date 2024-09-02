@@ -48,17 +48,13 @@ def get_hp(equipment_name, data):
     return size
 
 
-#some places and specifics #todo: update paths for new data, for future it would be good to update the DENT data headers in code rather than manually in the excel file
+#some places and specifics #todo: This data is all compiled from multiple data pulls, pd.merge doesn't do well with similar column headers. Future work to update code to accept similar column headers over multiple time periods
 dentdatapath=[r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876C-01.csv",
               r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876D-01.csv",
               r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876F-01.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull 2024-03-06/E876C-01_2.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/E876C-01_AHU&Boiler.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/E876D-01_CHWP.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/E876F-01_HRU.csv",
               r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/XC1409243-01_CT.csv"]
 
-#Ace gateway data is missing between "2024-04-24 22:10:00-04:00" and "2024-07-15 14:15:00-04:00" (additional points were added a few days later sos ome points missing here and there)
+#Ace gateway data is missing between "2024-04-24 22:10:00-04:00" and "2024-07-15 14:15:00-04:00" (additional points were added a few days later so some points missing here and there)
 
 env_filename = 'api_keys.yml'
 f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
@@ -86,6 +82,7 @@ for path in dentdatapath:
     # Combine with existing data frame
     if 'MSL_data' in locals():
         MSL_data = pd.merge(MSL_data, MSL_data1, left_index=True, right_index=True, how='outer')
+        #MSL_data = pd.join(MSL_data, MSL_data1)
     else:
         MSL_data=MSL_data1
 
@@ -95,11 +92,11 @@ project = Project(
     location=config_dict['location'],
 )
 # Define the gateway down and back up timeframes, dates were determined from ACE_data_5
-gateway_down = pd.Timestamp("2024-04-24 22:10:00-04:00", tz='US/Eastern')
-gateway_up = pd.Timestamp("2024-07-15 14:15:00-04:00", tz='US/Eastern')
+#gateway_down = pd.Timestamp("2024-04-24 22:10:00-04:00", tz='US/Eastern')
+#gateway_up = pd.Timestamp("2024-07-15 14:15:00-04:00", tz='US/Eastern')
 
 # Filter out the rows between gateway_down and gateway_up
-MSL_data = MSL_data[(MSL_data.index < gateway_down) | (MSL_data.index > gateway_up)]
+#MSL_data = MSL_data[(MSL_data.index < gateway_down) | (MSL_data.index > gateway_up)]
 
 #MSL_data.to_csv('MSL_data.csv') #todo: There are x and y components for a bunch of points in MSL ataframe which have x and y components so same points are being written into the df. Need to figure out why.
 # set the project baseline period #todo:maybe delete?
@@ -113,7 +110,7 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
                         'AHU19SupplyFan', 'AHU19ReturnFan', 'Pump3a', 'Pump3b', "CTFan1", "CTFan2", "AHU19EF1", "AHU19EF2","AHU19SF", "AHU19HRW"], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10, 7.5, 7.5, 15, 15, 10, 10, 7.5, 0.1]}
 
 start = "2023-09-20"
-end = "2024-08-21"
+end = "2024-09-01"
 
 #Ace Data locations
 #Todo: make this a file you pull from instead of hard coded.
@@ -131,7 +128,7 @@ fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/12/timeseries?start_time={sta
 fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/13/timeseries?start_time={start}&end_time={end}', #pump 2b activity (binary)
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time={start}&end_time={end}', #P1a Feedback
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/11/timeseries?start_time={start}&end_time={end}', #P1b Feedback
-fr'/cxa_main_st_landing/2404:2-240402/analogOutput/3/timeseries?start_time={start}&end_time={end}', #P1 VFD Signal
+fr'/cxa_main_st_landing/2404:2-240402/analogOutput/3/timeseries?start_time={start}&end_time={end}', #P1 VFD Signal - THIS ONE DOESN'T COME THROUGH
 fr'/cxa_main_st_landing/2404:7-240407/binaryInput/9/timeseries?start_time={start}&end_time={end}', #Pump 3a status (binary)
 fr'/cxa_main_st_landing/2404:7-240407/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Pump 3b status (binary)
 fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/5/timeseries?start_time={start}&end_time={end}', #Chiller Status (binary)
@@ -140,21 +137,21 @@ fr'/cxa_main_st_landing/2404:7-240407/analogInput/21/timeseries?start_time={star
 fr'/cxa_main_st_landing/2404:7-240407/analogInput/20/timeseries?start_time={start}&end_time={end}', #Chilled water return temp (F)
 fr'/cxa_main_st_landing/2404:7-240407/analogInput/17/timeseries?start_time={start}&end_time={end}', #Condenser Water Supply Temperature (F)
 fr'/cxa_main_st_landing/2404:7-240407/analogInput/13/timeseries?start_time={start}&end_time={end}', #Condenser Water Return Temperature (F)
-fr'/cxa_main_st_landing/2404:2-240402/analogInput/7/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp In (F)
+fr'/cxa_main_st_landing/2404:2-240402/analogInput/7/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp In (F) #THIS ONE DOESN't COME THROUGH
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/8/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp Out (F)
 fr'/cxa_main_st_landing/2404:7-240407/binaryValue/11/timeseries?start_time={start}&end_time={end}', #Cooling Tower Free Cool Status (binary)
-fr'/cxa_main_st_landing/2404:2-240402/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Cooling tower fan %speed
+fr'/cxa_main_st_landing/2404:2-240402/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Cooling tower fan %speed #THIS ONE DOESN't COME THROUGH
 fr'/cxa_main_st_landing/2404:2-240402/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Cooling tower Fan1 Status
 fr'/cxa_main_st_landing/2404:2-240402/binaryInput/11/timeseries?start_time={start}&end_time={end}', #Cooling tower Fan2 Status
 fr'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time={start}&end_time={end}', #HRU Supplyfan VFD output
-fr'/cxa_main_st_landing/2404:10-240410/analogOutput/2/timeseries?start_time={start}&end_time={end}', #HRU Exhaust Fan VFD speed
+fr'/cxa_main_st_landing/2404:10-240410/analogOutput/2/timeseries?start_time={start}&end_time={end}', #HRU Exhaust Fan VFD speed #THIS ONE DOESN't COME THROUGH
 fr'/cxa_main_st_landing/2404:10-240410/binaryInput/1/timeseries?start_time={start}&end_time={end}', #HRU Exhaust Fan Status
 fr'/cxa_main_st_landing/2404:10-240410/binaryInput/9/timeseries?start_time={start}&end_time={end}', #HRU Supply Fan Status
 fr'/cxa_main_st_landing/2404:3-240403/analogOutput/3/timeseries?start_time={start}&end_time={end}', #AHU19 Supply fan VFD
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Exhaust fan 1 VFD speed
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Exhaust fan 2 VFD speed
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel VFD
-fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel Status
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/5/timeseries?start_time={start}&end_time={end}', #AHU19 Exhaust fan 1 VFD speed #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/6/timeseries?start_time={start}&end_time={end}', #AHU19 Exhaust fan 2 VFD speed #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={start}&end_time={end}', #AHU Heat Recovery Wheel VFD #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel Status #THIS ONE DOESN't COME THROUGH
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/9/timeseries?start_time={start}&end_time={end}', #Exhaust fan CFM
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/16/timeseries?start_time={start}&end_time={end}', #Total Cool Request from Zones
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start}&end_time={end}', #Total Heat Request from Zones
@@ -250,8 +247,7 @@ MSL_data['Avg. kW AHU19'] = MSL_data['Avg. Volt AHU19']*MSL_data['Avg. Amp AHU19
 MSL_data['Avg. kW Pump 1a'] = MSL_data['Avg. Volt Pump 1a']*MSL_data['Avg. Amp Pump 1a']*3**.5*PF/1000
 MSL_data['Avg. kW Pump 2b'] = MSL_data['Avg. Volt Pump 2b']*MSL_data['Avg. Amp Pump 2b']*3**.5*PF/1000
 MSL_data['Avg. kW Pump 2a'] = MSL_data['Avg. Volt Pump 2a']*MSL_data['Avg. Amp Pump 2a']*3**.5*PF/1000
-MSL_data['Avg. kW L1 HRU'] = MSL_data['Avg. VoltL1 HRU']*MSL_data['Avg. AmpL1 HRU']*3**.5*PF/1000
-MSL_data['Avg. kW L2 HRU'] = MSL_data['Avg. VoltL2 HRU']*MSL_data['Avg. AmpL2 HRU']*3**.5*PF/1000
+MSL_data['Avg. kW HRU'] = (MSL_data['Avg. VoltL1 HRU']*MSL_data['Avg. AmpL1 HRU']*3**.5*PF/1000 + MSL_data['Avg. VoltL2 HRU']*MSL_data['Avg. AmpL2 HRU']*3**.5*PF/1000)/2
 MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*3**.5*PF/1000
 
 #Calculate expected power from AceData
@@ -260,17 +256,15 @@ Ace_data['Ace kW Pump 4a']=get_hp('Pump4a',Nameplate)*0.745699872*(Ace_data['Pum
 Ace_data['Ace kW Pump 4b']=get_hp('Pump4b',Nameplate)*0.745699872*(Ace_data['Pump 4b VFD Output']/100)**2.5*Ace_data['Pump 4b s/s']
 Ace_data['Ace kW Pump 1a']=get_hp('Pump1a',Nameplate)*0.745699872*(Ace_data['Pump 1a feedback']/100)**2.5
 Ace_data['Ace kW Pump 2b']=get_hp('Pump2b',Nameplate)*0.745699872*(Ace_data['pump2b']/100)**2.5
-Ace_data['Ace kW Pump 2a']=(get_hp('Pump2a',Nameplate)*0.745699872*(Ace_data['pump2a']/100)**2.5)
+Ace_data['Ace kW Pump 2a']=(get_hp('Pump2a',Nameplate)*0.745699872*(Ace_data['pump2a']/100)**2.5) #todo: figure out what is happening with HRU exhaust fan data!
+Ace_data['HRU kW'] = get_hp('HRUSupplyFan', Nameplate)*0.745699872*(Ace_data['HRU supply fan VFD output']/100)**2.5 #+ get_hp('HRUReturnFan', Nameplate)*0.745699872*(Ace_data['HRU Exhaust fan VFD output']/100)**2.5
+#Ace_data['Ace kW AHU19'] = get_hp('AHU19EF2', Nameplate)*0.745699872*(Ace_data['AHU19 Exhaust fan 2 VFD speed']/100)**2.5 + get_hp('AHU19SF', Nameplate)*0.745699872*(Ace_data['AHU19 supply fan VFD output']/100)**2.5 + get_hp('AHU19HRW', Nameplate)*0.745699872*(Ace_data['AHU19 Heat Recovery Wheel VFD']/100)**2.5 #+get_hp('AHU19EF1', Nameplate)*0.745699872*(Ace_data['AHU19 Exhaust fan 1 VFD speed']/100)**2.5 +
 
 #15 minute Ace data averages
 Ace_15min = Ace_data.resample(rule='15Min').mean()
 
 #comine ace and Dent (MSL) data
 MSL_data = pd.merge(MSL_data, Ace_15min, left_index=True, right_index=True, how='outer')
-
-#Todo: Remove this section and do this for each regression separately
-#this is risky - drop rows with NaNs
-#MSL_data = MSL_data.dropna()
 
 #Correlation time!
 #and plots :-)
@@ -362,27 +356,30 @@ plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Co
 plt.close()
 
 #just AHU19 data
-AHU19 = pd.merge(MSL_data['AHU19 supply fan VFD output'],MSL_data['Avg. Amp AHU19'],left_index=True, right_index=True, how='outer')
+AHU19 = pd.merge(MSL_data['Ace kW AHU19'],MSL_data['Avg. kw AHU19'],left_index=True, right_index=True, how='outer')
 AHU19=AHU19.dropna() #drop nans from this set
 
-plt.plot(AHU19['AHU19 supply fan VFD output'], AHU19['Avg. Amp AHU19'])
-plt.xlabel('BAS AHU19 Supply Fan')
+plt.plot(AHU19['Ace kW AHU19'], AHU19['Avg. kW AHU19'])
+plt.xlabel('BAS AHU19')
 plt.ylabel('Dent Power data for AHU 19')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
 plt.close()
 
-# HRUmodel = LinearRegression()
-# HRUmodel = LinearRegression().fit(np.array(MSL_data['HRU supply fan']).reshape((-1,1)), np.array(MSL_data['Avg. kW L1 HRU']).reshape((-1,1)))
-# x=np.array([min(MSL_data['HRU supply fan']), max(MSL_data['HRU supply fan'])])
-# y=np.array(x*HRUmodel.coef_+HRUmodel.intercept_)
-# y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
+#just HRU data
+HRU = pd.merge(MSL_data['HRU kW'],MSL_data['Avg. kW HRU'],left_index=True, right_index=True, how='outer')
+HRU=HRU.dropna() #drop nans from this set
+
+HRUmodel = LinearRegression()
+HRUmodel = LinearRegression().fit(np.array(HRU['HRU kW']).reshape((-1,1)), np.array(HRU['Avg. kW HRU']).reshape((-1,1)))
+x=np.array([min(HRU['HRU kW']), max(HRU['HRU kW'])])
+y=np.array(x*HRUmodel.coef_+HRUmodel.intercept_)
+y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 #
-# plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L1 HRU'])
-# plt.plot(MSL_data['HRU supply fan'], MSL_data['Avg. kW L2 HRU'])
-# plt.plot(x,y, linestyle='solid',color="red",)
-# plt.xlabel('HRU Supply fan')
-# plt.ylabel('Dent Power data for HRU (kW)')
-# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
+plt.plot(HRU['HRU kW'], HRU['Avg. kW HRU'])
+plt.plot(x,y, linestyle='solid',color="red",)
+plt.xlabel('BAS HRU kW estimate')
+plt.ylabel('Dent Power data for HRU (kW)')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
 # plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 2a'])
@@ -421,19 +418,18 @@ plt.legend(['Ace Data (Pump 1a feedback)','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aTimeserries.png')
 plt.close()
 
-# plt.plot(MSL_data.index,MSL_data['kW AHU19'])
-# plt.plot(MSL_data.index,MSL_data['Avg. kW AHU19'])
-# plt.ylabel('Power (kW)')
-# plt.legend(['Ace Data (AHU19 Supply Fan)','Dent Data (all AHU19)'])
-# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Timeserries.png')
-# plt.close()
+plt.plot(MSL_data.index,MSL_data['Ace kW AHU19'])
+plt.plot(MSL_data.index,MSL_data['Avg. kW AHU19'])
+plt.ylabel('Power (kW)')
+plt.legend(['Ace Data (AHU19 Supply Fan)','Dent Data (all AHU19)'])
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Timeserries.png')
+plt.close()
 
-# plt.plot(MSL_data.index,MSL_data['HRU supply fan'])
-# plt.plot(MSL_data.index,MSL_data['Avg. AmpL1 HRU'])
-# plt.plot(MSL_data.index,MSL_data['Avg. AmpL2 HRU'])
-# plt.legend(['Ace Data (HRU Supply Fan)','Dent Data Phase 1','Dent Data Phase 2'])
-# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
-# plt.close()
+plt.plot(MSL_data.index,MSL_data['HRU kw'])
+plt.plot(MSL_data.index,MSL_data['Avg. kw HRU'])
+plt.legend(['Ace Data','Dent Data'])
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
+plt.close()
 
 
 #Export Linear Regressions!
@@ -454,4 +450,6 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParam
                                                               np.array(Pump2a['Avg. kW Pump 2a']).reshape((-1, 1)))])
     writer.writerow(['Pump2b', float(P4bmodel.coef_), float(P4bmodel.intercept_), P2bmodel.score(np.array(Pump2b['Ace kW Pump 2b']).reshape((-1, 1)),
                                                               np.array(Pump2b['Avg. kW Pump 2b']).reshape((-1, 1)))])
+    writer.writerow(['HRU', float(HRUmodel.coef_), float(HRUmodel.intercept_), HRUmodel.score(np.array(HRU['Ace kW HRU']).reshape((-1, 1)),
+                                                              np.array(HRU['Avg. kW HRU']).reshape((-1, 1)))])
 """
