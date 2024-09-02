@@ -101,7 +101,7 @@ gateway_up = pd.Timestamp("2024-07-15 14:15:00-04:00", tz='US/Eastern')
 # Filter out the rows between gateway_down and gateway_up
 MSL_data = MSL_data[(MSL_data.index < gateway_down) | (MSL_data.index > gateway_up)]
 
-MSL_data.to_csv('MSL_data.csv')
+#MSL_data.to_csv('MSL_data.csv') #todo: There are x and y components for a bunch of points in MSL ataframe which have x and y components so same points are being written into the df. Need to figure out why.
 # set the project baseline period #todo:maybe delete?
 #project.set_time_frames(
   #  baseline=('2023-10-01', '2024-05-01'),
@@ -113,7 +113,7 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
                         'AHU19SupplyFan', 'AHU19ReturnFan', 'Pump3a', 'Pump3b', "CTFan1", "CTFan2", "AHU19EF1", "AHU19EF2","AHU19SF", "AHU19HRW"], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10, 7.5, 7.5, 15, 15, 10, 10, 7.5, 0.1]}
 
 start = "2023-09-20"
-end = "2024-08-26"
+end = "2024-08-21"
 
 #Ace Data locations
 #Todo: make this a file you pull from instead of hard coded.
@@ -238,8 +238,8 @@ with open(env_filepath, 'r') as file:
             #raise Exception(msg)
 
 #Lets do some math to prepare for correlations!
-Ace_data['pump2a'] = Ace_data['Pump 2a activity']*Ace_data['Pump 2a-b VFD output']*Ace_data['Pump 2a status'] #this should be the BAS pump 2a VFD Output
-Ace_data['pump2b'] = Ace_data['Pump 2b activity']*Ace_data['Pump 2a-b VFD output']*Ace_data['Pump 2b status'] #same for pump 2b
+Ace_data['pump2a'] = Ace_data['Pump 2a-b VFD output']*Ace_data['Pump 2a status'] #this should be the BAS pump 2a VFD Output
+Ace_data['pump2b'] = Ace_data['Pump 2a-b VFD output']*Ace_data['Pump 2b status'] #same for pump 2b
 
 #Calculate kW from dent data
 #Assume a PF of 0.8 for now:
@@ -440,6 +440,7 @@ plt.close()
 #Format: Equipment name, slope, intercept, rsquared
 
 #Save in a .csv
+"""
 with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParameters.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Equipment name', 'slope', 'intercept', 'rsquared'])
