@@ -116,30 +116,30 @@ end = "2024-09-01"
 #Todo: make this a file you pull from instead of hard coded.
 str = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Pump 4b VFD Output
-fr'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Supply Temp_2
-fr'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Return Temp_2
-fr'/cxa_main_st_landing/2404:9-240409/analogOutput/3/timeseries?start_time={start}&end_time={end}', #Boiler 1% signal
-fr'/cxa_main_st_landing/2404:9-240409/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Boiler 2% signal
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/6/timeseries?start_time={start}&end_time={end}', #Boiler 1 Status
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/7/timeseries?start_time={start}&end_time={end}', #Boiler 2 Status'
-fr'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time={start}&end_time={end}', #chilled water power meter
+#fr'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Supply Temp_2
+#fr'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Return Temp_2
+#fr'/cxa_main_st_landing/2404:9-240409/analogOutput/3/timeseries?start_time={start}&end_time={end}', #Boiler 1% signal
+#fr'/cxa_main_st_landing/2404:9-240409/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Boiler 2% signal
+#fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/6/timeseries?start_time={start}&end_time={end}', #Boiler 1 Status
+#fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/7/timeseries?start_time={start}&end_time={end}', #Boiler 2 Status'
+#fr'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time={start}&end_time={end}', #chilled water power meter
 fr'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time={start}&end_time={end}', #pump 2a-b VFD output
 fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/12/timeseries?start_time={start}&end_time={end}', #pump 2a activity (binary)
 fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/13/timeseries?start_time={start}&end_time={end}', #pump 2b activity (binary)
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time={start}&end_time={end}', #P1a Feedback
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/11/timeseries?start_time={start}&end_time={end}', #P1b Feedback
 fr'/cxa_main_st_landing/2404:2-240402/analogOutput/3/timeseries?start_time={start}&end_time={end}', #P1 VFD Signal - THIS ONE DOESN'T COME THROUGH
-fr'/cxa_main_st_landing/2404:7-240407/binaryInput/9/timeseries?start_time={start}&end_time={end}', #Pump 3a status (binary)
-fr'/cxa_main_st_landing/2404:7-240407/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Pump 3b status (binary)
-fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/5/timeseries?start_time={start}&end_time={end}', #Chiller Status (binary)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/8/timeseries?start_time={start}&end_time={end}', #Chiller HX1 Flow (GPM) (only flow data we have for chiller)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/21/timeseries?start_time={start}&end_time={end}', #Chilled water supply temp (F)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/20/timeseries?start_time={start}&end_time={end}', #Chilled water return temp (F)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/17/timeseries?start_time={start}&end_time={end}', #Condenser Water Supply Temperature (F)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/13/timeseries?start_time={start}&end_time={end}', #Condenser Water Return Temperature (F)
-fr'/cxa_main_st_landing/2404:2-240402/analogInput/7/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp In (F) #THIS ONE DOESN't COME THROUGH
-fr'/cxa_main_st_landing/2404:2-240402/analogInput/8/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp Out (F)
-fr'/cxa_main_st_landing/2404:7-240407/binaryValue/11/timeseries?start_time={start}&end_time={end}', #Cooling Tower Free Cool Status (binary)
+#fr'/cxa_main_st_landing/2404:7-240407/binaryInput/9/timeseries?start_time={start}&end_time={end}', #Pump 3a status (binary)
+#fr'/cxa_main_st_landing/2404:7-240407/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Pump 3b status (binary)
+#fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/5/timeseries?start_time={start}&end_time={end}', #Chiller Status (binary)
+#fr'/cxa_main_st_landing/2404:7-240407/analogInput/8/timeseries?start_time={start}&end_time={end}', #Chiller HX1 Flow (GPM) (only flow data we have for chiller)
+#fr'/cxa_main_st_landing/2404:7-240407/analogInput/21/timeseries?start_time={start}&end_time={end}', #Chilled water supply temp (F)
+#fr'/cxa_main_st_landing/2404:7-240407/analogInput/20/timeseries?start_time={start}&end_time={end}', #Chilled water return temp (F)
+#fr'/cxa_main_st_landing/2404:7-240407/analogInput/17/timeseries?start_time={start}&end_time={end}', #Condenser Water Supply Temperature (F)
+#fr'/cxa_main_st_landing/2404:7-240407/analogInput/13/timeseries?start_time={start}&end_time={end}', #Condenser Water Return Temperature (F)
+#fr'/cxa_main_st_landing/2404:2-240402/analogInput/7/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp In (F) #THIS ONE DOESN't COME THROUGH
+#fr'/cxa_main_st_landing/2404:2-240402/analogInput/8/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp Out (F)
+#fr'/cxa_main_st_landing/2404:7-240407/binaryValue/11/timeseries?start_time={start}&end_time={end}', #Cooling Tower Free Cool Status (binary)
 fr'/cxa_main_st_landing/2404:2-240402/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Cooling tower fan %speed #THIS ONE DOESN't COME THROUGH
 fr'/cxa_main_st_landing/2404:2-240402/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Cooling tower Fan1 Status
 fr'/cxa_main_st_landing/2404:2-240402/binaryInput/11/timeseries?start_time={start}&end_time={end}', #Cooling tower Fan2 Status
@@ -153,8 +153,8 @@ fr'/cxa_main_st_landing/2404:3-240403/analogOutput/6/timeseries?start_time={star
 fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={start}&end_time={end}', #AHU Heat Recovery Wheel VFD #THIS ONE DOESN't COME THROUGH
 fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel Status #THIS ONE DOESN't COME THROUGH
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/9/timeseries?start_time={start}&end_time={end}', #Exhaust fan CFM
-fr'/cxa_main_st_landing/2404:3-240403/analogValue/16/timeseries?start_time={start}&end_time={end}', #Total Cool Request from Zones
-fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start}&end_time={end}', #Total Heat Request from Zones
+# fr'/cxa_main_st_landing/2404:3-240403/analogValue/16/timeseries?start_time={start}&end_time={end}', #Total Cool Request from Zones
+# fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start}&end_time={end}', #Total Heat Request from Zones
 fr'/cxa_main_st_landing/2404:7-240407/binaryInput/18/timeseries?start_time={start}&end_time={end}', #Pump 2a status
 fr'/cxa_main_st_landing/2404:7-240407/binaryInput/19/timeseries?start_time={start}&end_time={end}',#Pump 2b status
 fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time={start}&end_time={end}',#Pump 4a s/s
@@ -163,30 +163,30 @@ fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/13/timeseries?start_time={sta
 #Ace Data descriptions #Todo: Add statuses when available
 headers = ['Pump 4a VFD Output',
          'Pump 4b VFD Output',
-         'Primary Hot Water Supply Temp_2',
-         'Primary Hot Water Return Temp_2',
-         'Boiler 1% signal',
-         'Boiler 2% signal',
-         'Boiler 1 status',
-         'Boiler 2 status',
-         'Chilled water power meter',
+         #'Primary Hot Water Supply Temp_2',
+         #'Primary Hot Water Return Temp_2',
+         #'Boiler 1% signal',
+         #'Boiler 2% signal',
+         #'Boiler 1 status',
+         #'Boiler 2 status',
+         #'Chilled water power meter',
          'Pump 2a-b VFD output',
          'Pump 2a activity',
          'Pump 2b activity',
          'Pump 1a feedback',
          'Pump 1b feedback',
          'Pump 1 VFD Signal',
-         'Pump 3a status',
-         'Pump 3b status',
-         'Chiller status',
-         'Chiller HX1 Flow (GPM)',
-         'Chilled water supply temp (F)',
-         'Chilled water return temp (F)',
-         'Condenser Water Supply Temperature (F)',
-         'Condenser Water Return Temperature (F)',
-         'Cooling Tower Temp In (F)',
-         'Cooling Tower Temp Out (F)',
-         'Cooling Tower Free Cool Status',
+         #'Pump 3a status',
+         #'Pump 3b status',
+         # 'Chiller status',
+         # 'Chiller HX1 Flow (GPM)',
+         # 'Chilled water supply temp (F)',
+         # 'Chilled water return temp (F)',
+         # 'Condenser Water Supply Temperature (F)',
+         # 'Condenser Water Return Temperature (F)',
+         # 'Cooling Tower Temp In (F)',
+         # 'Cooling Tower Temp Out (F)',
+         # 'Cooling Tower Free Cool Status',
          'Cooling tower fan %speed',
          'Cooling tower Fan 1 Status',
          'Cooling tower Fan 2 Status',
@@ -200,8 +200,8 @@ headers = ['Pump 4a VFD Output',
          'AHU19 Heat Recovery Wheel VFD',
          'AHU19 Heat Recovery Wheel Status',
          'AHU19 Exhaust fan CFM',
-         'Total Cool Request from Zones',
-         'Total Heat Request from Zones',
+         # 'Total Cool Request from Zones',
+         # 'Total Heat Request from Zones',
          'Pump 2a status',
          'Pump 2b status',
          'Pump 4a s/s',
