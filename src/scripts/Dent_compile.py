@@ -4,6 +4,9 @@ Combine data
 Calculate estimated kW using proxy formulas
 Create some correlation plots and correlation values (and save)
 Create some time series plots (and save)
+
+The DENT that is labeled as being on Pump 1a is actually on Pump 2b - so note that this all comes out as Pump 2b stuff
+I am not sure what Pump 2b is thought...
 """
 
 import os
@@ -56,6 +59,8 @@ dentdatapath=[r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data p
 
 #Ace gateway data is missing between "2024-04-24 22:10:00-04:00" and "2024-07-15 14:15:00-04:00" (additional points were added a few days later so some points missing here and there)
 
+BASdatapath=[r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\data\BAS Trend Data\Chilled Water System\BAS TrendData CoolingTower combined.csv"]
+
 env_filename = 'api_keys.yml'
 f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
@@ -86,6 +91,19 @@ for path in dentdatapath:
     else:
         MSL_data=MSL_data1
 
+#read in BAS data (for where we didn't get appropriate data from Ace):
+for path in BASdatapath:
+    # Read in data from a file with data collected via on-site monitoring
+    BAS_data1 = pd.read_csv(path, skiprows=1, header=0)
+    BAS_data1['CombinedDatetime'] = pd.to_datetime(BAS_data1['Excel Time'])
+    BAS_data1.set_index('CombinedDatetime', inplace=True)
+    BAS_data1.index = BAS_data1.index.tz_localize('US/Eastern', ambiguous='NaT',
+                                                  nonexistent='shift_forward')  # Non-existent deals with daylight savings
+    if 'BAS_data' in locals():
+        BAS_data = pd.merge(BAS_data, BAS_data1, left_index=True, right_index=True, how='outer')
+    else:
+        BAS_data=BAS_data1
+
 # create an instance of the project class, giving it a name and a location
 project = Project(
     name=config_dict['name'],
@@ -98,12 +116,6 @@ project = Project(
 # Filter out the rows between gateway_down and gateway_up
 #MSL_data = MSL_data[(MSL_data.index < gateway_down) | (MSL_data.index > gateway_up)]
 
-#MSL_data.to_csv('MSL_data.csv') #todo: There are x and y components for a bunch of points in MSL ataframe which have x and y components so same points are being written into the df. Need to figure out why.
-# set the project baseline period #todo:maybe delete?
-#project.set_time_frames(
-  #  baseline=('2023-10-01', '2024-05-01'),
- #   #reporting=('2023-12-10', '2023-12-18')
-#)
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
@@ -129,8 +141,8 @@ fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/13/timeseries?start_time={sta
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time={start}&end_time={end}', #P1a Feedback
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/11/timeseries?start_time={start}&end_time={end}', #P1b Feedback
 fr'/cxa_main_st_landing/2404:2-240402/analogOutput/3/timeseries?start_time={start}&end_time={end}', #P1 VFD Signal - THIS ONE DOESN'T COME THROUGH
-#fr'/cxa_main_st_landing/2404:7-240407/binaryInput/9/timeseries?start_time={start}&end_time={end}', #Pump 3a status (binary)
-#fr'/cxa_main_st_landing/2404:7-240407/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Pump 3b status (binary)
+fr'/cxa_main_st_landing/2404:7-240407/binaryInput/9/timeseries?start_time={start}&end_time={end}', #Pump 3a status (binary)
+fr'/cxa_main_st_landing/2404:7-240407/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Pump 3b status (binary)
 #fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/5/timeseries?start_time={start}&end_time={end}', #Chiller Status (binary)
 #fr'/cxa_main_st_landing/2404:7-240407/analogInput/8/timeseries?start_time={start}&end_time={end}', #Chiller HX1 Flow (GPM) (only flow data we have for chiller)
 #fr'/cxa_main_st_landing/2404:7-240407/analogInput/21/timeseries?start_time={start}&end_time={end}', #Chilled water supply temp (F)
@@ -176,8 +188,8 @@ headers = ['Pump 4a VFD Output',
          'Pump 1a feedback',
          'Pump 1b feedback',
          'Pump 1 VFD Signal',
-         #'Pump 3a status',
-         #'Pump 3b status',
+         'Pump 3a status',
+         'Pump 3b status',
          # 'Chiller status',
          # 'Chiller HX1 Flow (GPM)',
          # 'Chilled water supply temp (F)',
@@ -237,9 +249,8 @@ with open(env_filepath, 'r') as file:
 #Lets do some math to prepare for correlations!
 Ace_data['pump2a'] = Ace_data['Pump 2a-b VFD output']*Ace_data['Pump 2a status'] #this should be the BAS pump 2a VFD Output
 Ace_data['pump2b'] = Ace_data['Pump 2a-b VFD output']*Ace_data['Pump 2b status'] #same for pump 2b
-Ace_data['CT1'] = Ace_data['Cooling tower fan %speed']*Ace_data['Cooling tower Fan 1 Status'] #same for cooling tower 1
-Ace_data['CT2'] = Ace_data['Cooling tower fan %speed']*Ace_data['Cooling tower Fan 2 Status'] #same for cooling tower 2
-
+# Ace_data['CT1'] = Ace_data['Cooling tower fan %speed']*Ace_data['Cooling tower Fan 1 Status'] #same for cooling tower 1
+# Ace_data['CT2'] = Ace_data['Cooling tower fan %speed']*Ace_data['Cooling tower Fan 2 Status'] #same for cooling tower 2
 
 #Calculate kW from dent data
 #Assume a PF of 0.8 for now:
@@ -247,8 +258,8 @@ PF=0.8
 MSL_data['Avg. kW Pump 4a'] = MSL_data['Avg. Volt Pump 4a']*MSL_data['Avg. Amp Pump 4a']*3**.5*PF/1000
 MSL_data['Avg. kW Pump 4b'] = MSL_data['Avg. Volt Pump 4b']*MSL_data['Avg. Amp Pump 4b']*3**.5*PF/1000
 MSL_data['Avg. kW AHU19'] = MSL_data['Avg. Volt AHU19']*MSL_data['Avg. Amp AHU19']*3**.5*PF/1000
-MSL_data['Avg. kW Pump 1a'] = MSL_data['Avg. Volt Pump 1a']*MSL_data['Avg. Amp Pump 1a']*3**.5*PF/1000
-MSL_data['Avg. kW Pump 2b'] = MSL_data['Avg. Volt Pump 2b']*MSL_data['Avg. Amp Pump 2b']*3**.5*PF/1000
+MSL_data['Avg. kW Pump 2b'] = MSL_data['Avg. Volt Pump 1a']*MSL_data['Avg. Amp Pump 1a']*3**.5*PF/1000
+MSL_data['Avg. kW unknown'] = MSL_data['Avg. Volt Pump 2b']*MSL_data['Avg. Amp Pump 2b']*3**.5*PF/1000
 MSL_data['Avg. kW Pump 2a'] = MSL_data['Avg. Volt Pump 2a']*MSL_data['Avg. Amp Pump 2a']*3**.5*PF/1000
 MSL_data['Avg. kW HRU'] = (MSL_data['Avg. VoltL1 HRU']*MSL_data['Avg. AmpL1 HRU']*3**.5*PF/1000 + MSL_data['Avg. VoltL2 HRU']*MSL_data['Avg. AmpL2 HRU']*3**.5*PF/1000)/2
 MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*3**.5*PF/1000
@@ -259,13 +270,13 @@ MSL_data['Avg. kW CT2'] = MSL_data['Avg. Volt L2 CT2']*MSL_data['Avg. Amp L2 CT2
 #=pump nameplate HP *0.745699872*%pump speed^2.5
 Ace_data['Ace kW Pump 4a']=get_hp('Pump4a',Nameplate)*0.745699872*(Ace_data['Pump 4a VFD Output']/100)**2.5*Ace_data['Pump 4a s/s']
 Ace_data['Ace kW Pump 4b']=get_hp('Pump4b',Nameplate)*0.745699872*(Ace_data['Pump 4b VFD Output']/100)**2.5*Ace_data['Pump 4b s/s']
-Ace_data['Ace kW Pump 1a']=get_hp('Pump1a',Nameplate)*0.745699872*(Ace_data['Pump 1a feedback']/100)**2.5
+Ace_data['Ace kW Pump 1a']=get_hp('Pump1a',Nameplate)*0.745699872*(Ace_data['Pump 1a feedback']/100)**2.5 #todo: change this to command!! once we have data!
 Ace_data['Ace kW Pump 2b']=get_hp('Pump2b',Nameplate)*0.745699872*(Ace_data['pump2b']/100)**2.5
 Ace_data['Ace kW Pump 2a']=(get_hp('Pump2a',Nameplate)*0.745699872*(Ace_data['pump2a']/100)**2.5) #todo: figure out what is happening with HRU exhaust fan data!
 Ace_data['HRU kW'] = get_hp('HRUSupplyFan', Nameplate)*0.745699872*(Ace_data['HRU supply fan VFD output']/100)**2.5 #+ get_hp('HRUReturnFan', Nameplate)*0.745699872*(Ace_data['HRU Exhaust fan VFD output']/100)**2.5
 #Ace_data['Ace kW AHU19'] = get_hp('AHU19EF2', Nameplate)*0.745699872*(Ace_data['AHU19 Exhaust fan 2 VFD speed']/100)**2.5 + get_hp('AHU19SF', Nameplate)*0.745699872*(Ace_data['AHU19 supply fan VFD output']/100)**2.5 + get_hp('AHU19HRW', Nameplate)*0.745699872*(Ace_data['AHU19 Heat Recovery Wheel VFD']/100)**2.5 #+get_hp('AHU19EF1', Nameplate)*0.745699872*(Ace_data['AHU19 Exhaust fan 1 VFD speed']/100)**2.5 +
-Ace_data['Ace kW CT1']=get_hp('CTFan1',Nameplate)*0.745699872*(Ace_data['CT1']/100)**2.5
-Ace_data['Ace kW CT2']=get_hp('CTFan2',Nameplate)*0.745699872*(Ace_data['CT2']/100)**2.5
+# Ace_data['Ace kW CT1']=get_hp('CTFan1',Nameplate)*0.745699872*(Ace_data['CT1']/100)**2.5
+# Ace_data['Ace kW CT2']=get_hp('CTFan2',Nameplate)*0.745699872*(Ace_data['CT2']/100)**2.5
 
 #15 minute Ace data averages
 Ace_15min = Ace_data.resample(rule='15Min').mean()
@@ -345,73 +356,73 @@ plt.ylabel('Dent kW for Pump 4b')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bCorrelation.png')
 plt.close()
 
-#just Pump 1a data
-Pump1a = pd.merge(MSL_data['Ace kW Pump 1a'],MSL_data['Avg. kW Pump 1a'],left_index=True, right_index=True, how='outer')
-Pump1a=Pump1a.dropna() #drop nans from this set
+# #just Pump 1a data
+# Pump1a = pd.merge(MSL_data['Ace kW Pump 1a'],MSL_data['Avg. kW Pump 1a'],left_index=True, right_index=True, how='outer')
+# Pump1a=Pump1a.dropna() #drop nans from this set
+#
+# P1amodel = LinearRegression()
+# P1amodel = LinearRegression().fit(np.array(Pump1a['Ace kW Pump 1a']).reshape((-1,1)), np.array(Pump1a['Avg. kW Pump 1a']).reshape((-1,1)))
+# x=np.array([min(Pump1a['Ace kW Pump 1a']), max(Pump1a['Ace kW Pump 1a'])])
+# y=np.array(x*P1amodel.coef_+P1amodel.intercept_)
+# y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
+#
+# plt.plot(Pump1a['Ace kW Pump 1a'], Pump1a['Avg. kW Pump 1a'])
+# plt.plot(x,y, linestyle='solid',color="black",)
+# plt.xlabel('BAS kW estimate')
+# plt.ylabel('Dent kW for Pump 1')
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Correlation.png')
+# plt.close()
 
-P1amodel = LinearRegression()
-P1amodel = LinearRegression().fit(np.array(Pump1a['Ace kW Pump 1a']).reshape((-1,1)), np.array(Pump1a['Avg. kW Pump 1a']).reshape((-1,1)))
-x=np.array([min(Pump1a['Ace kW Pump 1a']), max(Pump1a['Ace kW Pump 1a'])])
-y=np.array(x*P1amodel.coef_+P1amodel.intercept_)
-y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
-
-plt.plot(Pump1a['Ace kW Pump 1a'], Pump1a['Avg. kW Pump 1a'])
-plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS kW estimate')
-plt.ylabel('Dent kW for Pump 1')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Correlation.png')
-plt.close()
-
-#just AHU19 data
-AHU19 = pd.merge(MSL_data['Ace kW AHU19'],MSL_data['Avg. kw AHU19'],left_index=True, right_index=True, how='outer')
-AHU19=AHU19.dropna() #drop nans from this set
-
-AHU19model = LinearRegression()
-AHU19model = LinearRegression().fit(np.array(AHU19['Ace kW AHU19']).reshape((-1,1)), np.array(AHU19['Avg. kW AHU19']).reshape((-1,1)))
-x=np.array([min(AHU19['Ace kW AHU19']), max(AHU19['Ace kW AHU19'])])
-y=np.array(x*AHU19model.coef_+AHU19model.intercept_)
-y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
-
-plt.plot(AHU19['Ace kW AHU19'], AHU19['Avg. kW AHU19'])
-plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS AHU19 kW estimate')
-plt.ylabel('Dent Power data for AHU 19')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
-plt.close()
-
-#just CT1 data
-CT1 = pd.merge(MSL_data['Ace kW CT1'],MSL_data['Avg. kw CT1'],left_index=True, right_index=True, how='outer')
-CT1=CT1.dropna() #drop nans from this set
-
-CT1model = LinearRegression()
-CT1model = LinearRegression().fit(np.array(CT1['Ace kW CT1']).reshape((-1,1)), np.array(CT1['Avg. kW CT1']).reshape((-1,1)))
-x=np.array([min(CT1['Ace kW CT1']), max(CT1['Ace kW CT1'])])
-y=np.array(x*CT1model.coef_+CT1model.intercept_)
-y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
-
-plt.plot(CT1['Ace kW CT1'], CT1['Avg. kW CT1'])
-plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS Cooling Tower 1')
-plt.ylabel('Dent Power data for Cooling Tower 1')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CT1Correlation.png')
-plt.close()
-
-#just CT2 data
-CT2 = pd.merge(MSL_data['Ace kW CT2'],MSL_data['Avg. kw CT2'],left_index=True, right_index=True, how='outer')
-CT2=CT2.dropna() #drop nans from this set
-
-CT2model = LinearRegression()
-CT2model = LinearRegression().fit(np.array(CT2['Ace kW CT2']).reshape((-1,1)), np.array(CT2['Avg. kW CT2']).reshape((-1,1)))
-x=np.array([min(CT1['Ace kW CT2']), max(CT1['Ace kW CT2'])])
-y=np.array(x*CT2model.coef_+CT2model.intercept_)
-y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
-
-plt.plot(CT2['Ace kW CT2'], CT2['Avg. kW CT2'])
-plt.plot(x,y, linestyle='solid',color="black",)
-plt.xlabel('BAS Cooling Tower 2')
-plt.ylabel('Dent Power data for Cooling Tower 2')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CT2Correlation.png')
-plt.close()
+# #just AHU19 data
+# AHU19 = pd.merge(MSL_data['Ace kW AHU19'],MSL_data['Avg. kw AHU19'],left_index=True, right_index=True, how='outer')
+# AHU19=AHU19.dropna() #drop nans from this set
+#
+# AHU19model = LinearRegression()
+# AHU19model = LinearRegression().fit(np.array(AHU19['Ace kW AHU19']).reshape((-1,1)), np.array(AHU19['Avg. kW AHU19']).reshape((-1,1)))
+# x=np.array([min(AHU19['Ace kW AHU19']), max(AHU19['Ace kW AHU19'])])
+# y=np.array(x*AHU19model.coef_+AHU19model.intercept_)
+# y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
+#
+# plt.plot(AHU19['Ace kW AHU19'], AHU19['Avg. kW AHU19'])
+# plt.plot(x,y, linestyle='solid',color="black",)
+# plt.xlabel('BAS AHU19 kW estimate')
+# plt.ylabel('Dent Power data for AHU 19')
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Correlation.png')
+# plt.close()
+#
+# #just CT1 data
+# CT1 = pd.merge(MSL_data['Ace kW CT1'],MSL_data['Avg. kw CT1'],left_index=True, right_index=True, how='outer')
+# CT1=CT1.dropna() #drop nans from this set
+#
+# CT1model = LinearRegression()
+# CT1model = LinearRegression().fit(np.array(CT1['Ace kW CT1']).reshape((-1,1)), np.array(CT1['Avg. kW CT1']).reshape((-1,1)))
+# x=np.array([min(CT1['Ace kW CT1']), max(CT1['Ace kW CT1'])])
+# y=np.array(x*CT1model.coef_+CT1model.intercept_)
+# y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
+#
+# plt.plot(CT1['Ace kW CT1'], CT1['Avg. kW CT1'])
+# plt.plot(x,y, linestyle='solid',color="black",)
+# plt.xlabel('BAS Cooling Tower 1')
+# plt.ylabel('Dent Power data for Cooling Tower 1')
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CT1Correlation.png')
+# plt.close()
+#
+# #just CT2 data
+# CT2 = pd.merge(MSL_data['Ace kW CT2'],MSL_data['Avg. kw CT2'],left_index=True, right_index=True, how='outer')
+# CT2=CT2.dropna() #drop nans from this set
+#
+# CT2model = LinearRegression()
+# CT2model = LinearRegression().fit(np.array(CT2['Ace kW CT2']).reshape((-1,1)), np.array(CT2['Avg. kW CT2']).reshape((-1,1)))
+# x=np.array([min(CT1['Ace kW CT2']), max(CT1['Ace kW CT2'])])
+# y=np.array(x*CT2model.coef_+CT2model.intercept_)
+# y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
+#
+# plt.plot(CT2['Ace kW CT2'], CT2['Avg. kW CT2'])
+# plt.plot(x,y, linestyle='solid',color="black",)
+# plt.xlabel('BAS Cooling Tower 2')
+# plt.ylabel('Dent Power data for Cooling Tower 2')
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CT2Correlation.png')
+# plt.close()
 
 #just HRU data
 HRU = pd.merge(MSL_data['HRU kW'],MSL_data['Avg. kW HRU'],left_index=True, right_index=True, how='outer')
@@ -428,7 +439,7 @@ plt.plot(x,y, linestyle='solid',color="red",)
 plt.xlabel('BAS HRU kW estimate')
 plt.ylabel('Dent Power data for HRU (kW)')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUCorrelation.png')
-# plt.close()
+plt.close()
 
 plt.plot(MSL_data.index,MSL_data['Ace kW Pump 2a'])
 plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 2a'])
@@ -460,21 +471,21 @@ plt.legend(['BAS kW estimate','Dent Data (kW)'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bTimeserries.png')
 plt.close()
 
-plt.plot(MSL_data.index,MSL_data['Ace kW Pump 1a'])
-plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 1a'])
-plt.legend(['Ace Data (Pump 1a feedback)','Dent Data (kW)'])
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aTimeserries.png')
-plt.close()
+# plt.plot(MSL_data.index,MSL_data['Ace kW Pump 1a'])
+# plt.plot(MSL_data.index,MSL_data['Avg. kW Pump 1a'])
+# plt.legend(['Ace Data (Pump 1a feedback)','Dent Data (kW)'])
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aTimeserries.png')
+# plt.close()
 
-plt.plot(MSL_data.index,MSL_data['Ace kW AHU19'])
-plt.plot(MSL_data.index,MSL_data['Avg. kW AHU19'])
-plt.ylabel('Power (kW)')
-plt.legend(['Ace Data (AHU19 Supply Fan)','Dent Data (all AHU19)'])
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Timeserries.png')
-plt.close()
+# plt.plot(MSL_data.index,MSL_data['Ace kW AHU19'])
+# plt.plot(MSL_data.index,MSL_data['Avg. kW AHU19'])
+# plt.ylabel('Power (kW)')
+# plt.legend(['Ace Data (AHU19 Supply Fan)','Dent Data (all AHU19)'])
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\AHU19Timeserries.png')
+# plt.close()
 
-plt.plot(MSL_data.index,MSL_data['HRU kw'])
-plt.plot(MSL_data.index,MSL_data['Avg. kw HRU'])
+plt.plot(MSL_data.index,MSL_data['HRU kW'])
+plt.plot(MSL_data.index,MSL_data['Avg. kW HRU'])
 plt.legend(['Ace Data','Dent Data'])
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HRUTimeserries.png')
 plt.close()
@@ -484,7 +495,6 @@ plt.close()
 #Format: Equipment name, slope, intercept, rsquared
 
 #Save in a .csv
-"""
 with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParameters.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Equipment name', 'slope', 'intercept', 'rsquared'])
@@ -492,18 +502,15 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParam
                                                                                  np.array(Pump4a['Avg. kW Pump 4a']).reshape((-1,1)))])
     writer.writerow(['Pump4b', float(P4bmodel.coef_),float(P4bmodel.intercept_),P4bmodel.score(np.array(Pump4b['Ace kW Pump 4b']).reshape((-1,1)),
                                                                                 np.array(Pump4b['Avg. kW Pump 4b']).reshape((-1,1)))])
-    writer.writerow(['Pump1a', float(P1amodel.coef_), float(P1amodel.intercept_), P1amodel.score(np.array(Pump1a['Ace kW Pump 1a']).reshape((-1, 1)),
-                                                                                  np.array(Pump1a['Avg. kW Pump 1a']).reshape((-1, 1)))])
     writer.writerow(['Pump2a', float(P2amodel.coef_), float(P2amodel.intercept_), P2amodel.score(np.array(Pump2a['Ace kW Pump 2a']).reshape((-1, 1)),
                                                               np.array(Pump2a['Avg. kW Pump 2a']).reshape((-1, 1)))])
-    writer.writerow(['Pump2b', float(P4bmodel.coef_), float(P4bmodel.intercept_), P2bmodel.score(np.array(Pump2b['Ace kW Pump 2b']).reshape((-1, 1)),
+    writer.writerow(['Pump2b', float(P2bmodel.coef_), float(P2bmodel.intercept_), P2bmodel.score(np.array(Pump2b['Ace kW Pump 2b']).reshape((-1, 1)),
                                                               np.array(Pump2b['Avg. kW Pump 2b']).reshape((-1, 1)))])
-    writer.writerow(['HRU', float(HRUmodel.coef_), float(HRUmodel.intercept_), HRUmodel.score(np.array(HRU['Ace kW HRU']).reshape((-1, 1)),
-                                                              np.array(HRU['Avg. kW HRU']).reshape((-1, 1)))])
-    writer.writerow(['AHU19', float(AHU19model.coef_), float(AHU19model.intercept_), AHU19model.score(np.array(AHU19['Ace kW AHU19']).reshape((-1, 1)),
-                                                              np.array(AHU19['Avg. kW AHU19']).reshape((-1, 1)))])
-    writer.writerow(['CoolingTower1', float(CT1model.coef_), float(CT1model.intercept_), CT1model.score(np.array(CT1['Ace kW CT1']).reshape((-1, 1)),
-                                                              np.array(CT1['Avg. kW CT1']).reshape((-1, 1)))])
-    writer.writerow(['CoolingTower2', float(CT2model.coef_), float(CT2model.intercept_), CT2model.score(np.array(CT2['Ace kW CT2']).reshape((-1, 1)),
-                                                              np.array(CT2['Avg. kW CT2']).reshape((-1, 1)))])                    
-"""
+    #writer.writerow(['HRU', float(HRUmodel.coef_), float(HRUmodel.intercept_), HRUmodel.score(np.array(HRU['Ace kW HRU']).reshape((-1, 1)),
+    #                                                         np.array(HRU['Avg. kW HRU']).reshape((-1, 1)))])
+    # writer.writerow(['AHU19', float(AHU19model.coef_), float(AHU19model.intercept_), AHU19model.score(np.array(AHU19['Ace kW AHU19']).reshape((-1, 1)),
+    #                                                           np.array(AHU19['Avg. kW AHU19']).reshape((-1, 1)))])
+    # writer.writerow(['CoolingTower1', float(CT1model.coef_), float(CT1model.intercept_), CT1model.score(np.array(CT1['Ace kW CT1']).reshape((-1, 1)),
+    #                                                           np.array(CT1['Avg. kW CT1']).reshape((-1, 1)))])
+    # writer.writerow(['CoolingTower2', float(CT2model.coef_), float(CT2model.intercept_), CT2model.score(np.array(CT2['Ace kW CT2']).reshape((-1, 1)),
+    #                                                          np.array(CT2['Avg. kW CT2']).reshape((-1, 1)))])
