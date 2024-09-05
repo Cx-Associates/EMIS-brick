@@ -1,12 +1,15 @@
 """
-Get data from Ace and dents
+Get data from Ace and dents (and BAS where missing Ace data)
 Combine data
 Calculate estimated kW using proxy formulas
 Create some correlation plots and correlation values (and save)
 Create some time series plots (and save)
 
+Outputs results in file "RegressionParameters"
+Lots of plots are also saved in the plots folder
+
 The DENT that is labeled as being on Pump 1a is actually on Pump 2b - so note that this all comes out as Pump 2b stuff
-I am not sure what Pump 2b is thought...
+
 """
 
 import os
