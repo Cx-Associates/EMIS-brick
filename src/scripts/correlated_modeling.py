@@ -35,8 +35,8 @@ env_filename = 'api_keys.yml'
 f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
-start = "2023-06-01"
-end = "2024-08-15"
+start = "2024-09-01"
+end = "2024-09-06"
 ACE_data = pd.DataFrame()
 
 def get_value(equipment_name, data): #Todo: For next project it will be good to define al functions in the utils.py
@@ -66,7 +66,7 @@ fr'/cxa_main_st_landing/2404:7-240407/binaryInput/18/timeseries?start_time={star
 fr'/cxa_main_st_landing/2404:7-240407/binaryInput/19/timeseries?start_time={start}&end_time={end}', #Pump 2b status
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time={start}&end_time={end}', #P1a Feedback
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/11/timeseries?start_time={start}&end_time={end}', #P1b Feedback
-fr'/cxa_main_st_landing/2404:2-240402/analogOutput/3/timeseries?start_time={start}&end_time={end}', #P1 VFD Signal #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:2-240402/analogOutput/3/timeseries?start_time={start}&end_time={end}', #P1 VFD Signal
 fr'/cxa_main_st_landing/2404:7-240407/binaryInput/9/timeseries?start_time={start}&end_time={end}', #Pump 3a status
 fr'/cxa_main_st_landing/2404:7-240407/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Pump 3b status
 fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/5/timeseries?start_time={start}&end_time={end}', #Chiller Status (binary)
@@ -75,27 +75,27 @@ fr'/cxa_main_st_landing/2404:7-240407/analogInput/21/timeseries?start_time={star
 fr'/cxa_main_st_landing/2404:7-240407/analogInput/20/timeseries?start_time={start}&end_time={end}', #Chilled water return temp (F)
 fr'/cxa_main_st_landing/2404:7-240407/analogInput/17/timeseries?start_time={start}&end_time={end}', #Condenser Water Supply Temperature (F)
 fr'/cxa_main_st_landing/2404:7-240407/analogInput/13/timeseries?start_time={start}&end_time={end}', #Condenser Water Return Temperature (F)
-fr'/cxa_main_st_landing/2404:2-240402/analogInput/7/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp In (F) #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:2-240402/analogInput/7/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp In (F)
 fr'/cxa_main_st_landing/2404:2-240402/analogInput/8/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp Out (F)
 fr'/cxa_main_st_landing/2404:7-240407/binaryValue/11/timeseries?start_time={start}&end_time={end}', #Cooling Tower Free Cool Status (binary)
-fr'/cxa_main_st_landing/2404:2-240402/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Cooling tower fan %speed #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:2-240402/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Cooling tower fan %speed
 fr'/cxa_main_st_landing/2404:2-240402/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Cooling tower Fan1 Status
 fr'/cxa_main_st_landing/2404:2-240402/binaryInput/11/timeseries?start_time={start}&end_time={end}', #Cooling tower Fan2 Status
 fr'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time={start}&end_time={end}', #HRU Supply fan VFD output
-fr'/cxa_main_st_landing/2404:10-240410/analogOutput/2/timeseries?start_time={start}&end_time={end}', #HRU Exhaust Fan VFD speed #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:10-240410/analogOutput/2/timeseries?start_time={start}&end_time={end}', #HRU Exhaust Fan VFD speed
 fr'/cxa_main_st_landing/2404:10-240410/binaryInput/1/timeseries?start_time={start}&end_time={end}', #HRU Exhaust Fan Status
 fr'/cxa_main_st_landing/2404:10-240410/binaryInput/9/timeseries?start_time={start}&end_time={end}', #HRU Supply Fan Status
 fr'/cxa_main_st_landing/2404:3-240403/analogOutput/3/timeseries?start_time={start}&end_time={end}', #AHU19 Supply fan VFD
 fr'/cxa_main_st_landing/2404:3-240403/binaryInput/3/timeseries?start_time={start}&end_time={end}', #AHU19 Supply fan Status
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Exhaust fan 1 VFD speed #THIS ONE DOESN't COME THROUGH
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Exhaust fan 2 VFD speed #THIS ONE DOESN't COME THROUGH
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel VFD#THIS ONE DOESN't COME THROUGH
-fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel Status #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Exhaust fan 1 VFD speed
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Exhaust fan 2 VFD speed
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel VFD
+fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel Status
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/9/timeseries?start_time={start}&end_time={end}', #Exhaust fan CFM
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/16/timeseries?start_time={start}&end_time={end}', #Total Cool Request from Zones
 fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start}&end_time={end}', #Total Heat Request from Zones
-fr'/cxa_main_st_landing/2404:9-240409/binaryInput/19/timeseries?start_time={start}&end_time={end}', #P4B Status #THIS ONE DOESN't COME THROUGH
-fr'/cxa_main_st_landing/2404:9-240409/binaryInput/18/timeseries?start_time={start}&end_time={end}'] #P4A Status #THIS ONE DOESN't COME THROUGH
+fr'/cxa_main_st_landing/2404:9-240409/binaryInput/19/timeseries?start_time={start}&end_time={end}', #P4B Status
+fr'/cxa_main_st_landing/2404:9-240409/binaryInput/18/timeseries?start_time={start}&end_time={end}'] #P4A Status
 
 
 #Ace Data descriptions
@@ -170,7 +170,7 @@ with open(env_filepath, 'r') as file:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
 
-ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
+#ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
@@ -216,15 +216,12 @@ AHU_df['AHU 19 EF1 kW (Formula Based)'] = (get_hp('AHU19EF1', Nameplate))*0.7456
 AHU_df['AHU 19 EF2 kW (Formula Based)'] = (get_hp('AHU19EF2', Nameplate))*0.745699872*(AHU_df['AHU19 Exhaust fan 2 VFD speed']/100)**2.5 #No status exists
 AHU_df['AHU 19 SF kW (Formula Based)'] = AHU_df['AHU19 Supply fan Status']*(get_hp('AHU19SF', Nameplate))*0.745699872*(AHU_df['AHU19 supply fan VFD output']/100)**2.5
 AHU_df['AHU 19 HRW kW (Formula Based)'] = AHU_df['AHU19 Heat Recovery Wheel Status']*(get_hp('AHU19HRW', Nameplate))*0.745699872*(AHU_df['AHU19 Heat Recovery Wheel VFD']/100)**2.5
+AHU_df['AHU 19 Total kW (Formula Based)'] = AHU_df['AHU 19 EF1 kW (Formula Based)'] + AHU_df['AHU 19 EF2 kW (Formula Based)'] + AHU_df['AHU 19 SF kW (Formula Based)'] + AHU_df['AHU 19 HRW kW (Formula Based)']
 AHU_df_15min = AHU_df.resample(rule='15Min').mean()
 #AHU_df.to_csv('AHU_df.csv) #Uncomment for troubleshooting
 
-#Calculating correlated values and adding reporting variables to dataframe #Todo: If all of AHU is on one DENT then correlation will have to be after summing in the AHU df
-Report_df['AHU 19 EF1 kW (Correlated)'] = AHU_df_15min['AHU 19 EF1 kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
-Report_df['AHU 19 EF2 kW (Correlated)'] = AHU_df_15min['AHU 19 EF2 kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
-Report_df['AHU 19 SF kW (Correlated)'] = AHU_df_15min['AHU 19 SF kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
-Report_df['AHU 19 HRW kW (Correlated)'] = AHU_df_15min['AHU 19 HRW kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
-Report_df['AHU 19 Total KW'] = Report_df['AHU 19 EF1 kW (Correlated)'] + Report_df['AHU 19 EF2 kW (Correlated)'] + Report_df['AHU 19 SF kW (Correlated)'] + Report_df['AHU 19 HRW kW (Correlated)']
+#Calculating correlated values and adding reporting variables to dataframe
+Report_df['AHU 19 Total kW (Correlated)'] = AHU_df_15min['AHU 19 Total kW (Formula Based)']* Corr_param_df['slope'][5] + Corr_param_df['intercept'][5]
 
 ##HRU CALCS
 HRU_df = ACE_data[['HRU supply fan VFD output', 'HRU Exhaust fan VFD output', 'HRU Exhaust Fan Status', 'HRU Supply Fan Status']]
@@ -235,7 +232,7 @@ HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 #HRU_df_15min.to_csv('HRU_df_15min.csv')
 
 #Calculating correlated values and adding reporting variables to dataframe
-Report_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][4] + Corr_param_df['intercept'][4]
 
 #CHILLED WATER SYSTEM CALCS
 CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling Tower Free Cool Status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
@@ -249,21 +246,26 @@ CHW_df['Pump 3a kW (Formula Based)'] = CHW_df['Pump 3a status']*(get_hp('Pump3a'
 CHW_df['Pump 3b kW (Formula Based)'] = CHW_df['Pump 3b status']*(get_hp('Pump3a', Nameplate))*0.745699872
 CHW_df['Tower Fan 1 kW (Formula Based)'] = CHW_df['Cooling tower Fan 1 Status']*(get_hp('CTFan1', Nameplate))*0.745699872*(CHW_df['Cooling tower fan %speed']/100)**2.5
 CHW_df['Tower Fan 2 kW (Formula Based)'] = CHW_df['Cooling tower Fan 2 Status']*(get_hp('CTFan2', Nameplate))*0.745699872*(CHW_df['Cooling tower fan %speed']/100)**2.5
-CHW_df['Chiller kW'] = CHW_df['Chiller status'] * CHW_df['Chilled water power meter']
+CHW_df['Chiller kW'] = CHW_df['Chiller status'] * CHW_df['Chilled water power meter'] #Todo: Seeing a bunch of negative readings will need to drop those or set it to 0
+
 CHW_df_15min = CHW_df.resample(rule='15Min').mean()
 
+#df_new = df[df[columns].min(axis=1) >= 0] #Todo: example code to drop negatives but setting to 0 might be the better option
+
 #Calculating correlated values and adding reporting variables to dataframe
-Report_df['Pump 1a kW (Correlated)'] = CHW_df_15min['Pump 1a kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+#Report_df['Pump 1a kW (Correlated)'] = CHW_df_15min['Pump 1a kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Pump 1a kW (Formula Based)'] = CHW_df_15min['Pump 1a kW (Formula Based)']
 Report_df['Pump 1b kW (Formula Based)'] = CHW_df_15min['Pump 1b kW (Formula Based)']
-Report_df['Pump 2a kW (Correlated)'] = CHW_df_15min['Pump 2a kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
-Report_df['Pump 2b kW (Correlated)'] = CHW_df_15min['Pump 2b kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Pump 2a kW (Correlated)'] = CHW_df_15min['Pump 2a kW (Formula Based)'] * Corr_param_df['slope'][2] + Corr_param_df['intercept'][2]
+Report_df['Pump 2b kW (Correlated)'] = CHW_df_15min['Pump 2b kW (Formula Based)'] * Corr_param_df['slope'][3] + Corr_param_df['intercept'][3]
 Report_df['Pump 3a kW (Formula Based)'] = CHW_df_15min['Pump 3a kW (Formula Based)']
 Report_df['Pump 3b kW (Formula Based)'] = CHW_df_15min['Pump 3b kW (Formula Based)']
-Report_df['Tower Fan 1 kW (Correlated)'] = CHW_df_15min['Tower Fan 1 kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available, the only electricty consuming equipment in the CTs are the fan assemblies
-Report_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula Based)'] * Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
+Report_df['Tower Fan 1 kW (Correlated)'] = CHW_df_15min['Tower Fan 1 kW (Formula Based)'] * Corr_param_df['slope'][6] + Corr_param_df['intercept'][6] #the only electricty consuming equipment in the CTs are the fan assemblies
+Report_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula Based)'] * Corr_param_df['slope'][7] + Corr_param_df['intercept'][7]
 Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
-Report_df['Total CHW kW'] = Report_df['Pump 1a kW (Correlated)']+Report_df['Pump 1b kW (Formula Based)']+Report_df['Pump 2a kW (Correlated)']+Report_df['Pump 2b kW (Correlated)']+Report_df['Pump 3a kW (Formula Based)']+Report_df['Pump 3b kW (Formula Based)']+Report_df['Tower Fan 1 kW (Correlated)']+Report_df['Tower Fan 2 kW (Correlated)']+Report_df['Chiller kW']
+Report_df['Total CHW kW'] = Report_df['Pump 1a kW (Formula Based)']+Report_df['Pump 1b kW (Formula Based)']+Report_df['Pump 2a kW (Correlated)']+Report_df['Pump 2b kW (Correlated)']+Report_df['Pump 3a kW (Formula Based)']+Report_df['Pump 3b kW (Formula Based)']+Report_df['Tower Fan 1 kW (Correlated)']+Report_df['Tower Fan 2 kW (Correlated)']+Report_df['Chiller kW']
 
+Report_df.to_csv('Report_df.csv')
 
 
 
