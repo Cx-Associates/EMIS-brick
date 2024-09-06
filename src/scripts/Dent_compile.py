@@ -418,7 +418,7 @@ CT1 = pd.merge(MSL_data['BAS kW CT1'],MSL_data['Avg. kW CT1'],left_index=True, r
 CT1=CT1.dropna() #drop nans from this set
 
 CT1model = LinearRegression()
-CT1model = LinearRegression().fit(np.array(CT1['BAS kW CT1']).reshape((-1,1)), np.array(CT1['Avg. kW CT1']).reshape((-1,1)))
+CT1model = LinearRegression(fit_intercept=False).fit(np.array(CT1['BAS kW CT1']).reshape((-1,1)), np.array(CT1['Avg. kW CT1']).reshape((-1,1)))
 x=np.array([min(CT1['BAS kW CT1']), max(CT1['BAS kW CT1'])])
 y=np.array(x*CT1model.coef_+CT1model.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
@@ -435,7 +435,7 @@ CT2 = pd.merge(MSL_data['BAS kW CT2'],MSL_data['Avg. kW CT2'],left_index=True, r
 CT2=CT2.dropna() #drop nans from this set
 
 CT2model = LinearRegression()
-CT2model = LinearRegression().fit(np.array(CT2['BAS kW CT2']).reshape((-1,1)), np.array(CT2['Avg. kW CT2']).reshape((-1,1)))
+CT2model = LinearRegression(fit_intercept=False).fit(np.array(CT2['BAS kW CT2']).reshape((-1,1)), np.array(CT2['Avg. kW CT2']).reshape((-1,1)))
 x=np.array([min(CT2['BAS kW CT2']), max(CT2['BAS kW CT2'])])
 y=np.array(x*CT2model.coef_+CT2model.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
