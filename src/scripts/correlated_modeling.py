@@ -202,10 +202,11 @@ Heating_df_15min = Heating_df.resample(rule='15Min').mean() #Averaging for 15 mi
 #Calculating correlated values and adding reporting variables to dataframe
 Report_df['Boiler 1 MBtu'] = Heating_df_15min['Boiler 1 MBtu']
 Report_df['Boiler 2 MBtu'] = Heating_df_15min['Boiler 2 MBtu']
-Report_df['Total Boiler NG Consumption (MBtu)'] = Heating_df_15min['Boiler 1 MBtu'] + Heating_df_15min['Boiler 2 MBtu']
+Report_df['Total Boiler NG Consumption (MBtu)'] = Heating_df_15min[['Boiler 1 MBtu', 'Boiler 2 MBtu']].sum(axis=1, min_count=1)
 Report_df['Pump 4a kW (Correlated)'] = Heating_df_15min['Pump 4a kW (Formula Based)'] * Corr_param_df['slope'][0] + Corr_param_df['intercept'][0]
 Report_df['Pump 4b kW (Correlated)'] = Heating_df_15min['Pump 4b kW (Formula Based)'] * Corr_param_df['slope'][1] + Corr_param_df['intercept'][1]
-Report_df['Heating System kW'] = Report_df['Pump 4a kW (Correlated)'] + Report_df['Pump 4b kW (Correlated)']
+Report_df['Heating System kW'] = Report_df[['Pump 4a kW (Correlated)', 'Pump 4b kW (Correlated)']].sum(axis=1, min_count=1) #If there are columns with NAN data then the sum won't work and the total column will also be nan. The min_count deals with this so if at least one column has a non-NaN value, the sum will be computed using the non-NaN values. The NaN values will be ignored
+
 #Report_df.to_csv('Report_df.csv') #Uncomment for troubleshooting
 
 ##AHU-19 CALCS
@@ -216,7 +217,7 @@ AHU_df['AHU 19 EF1 kW (Formula Based)'] = (get_hp('AHU19EF1', Nameplate))*0.7456
 AHU_df['AHU 19 EF2 kW (Formula Based)'] = (get_hp('AHU19EF2', Nameplate))*0.745699872*(AHU_df['AHU19 Exhaust fan 2 VFD speed']/100)**2.5 #No status exists
 AHU_df['AHU 19 SF kW (Formula Based)'] = AHU_df['AHU19 Supply fan Status']*(get_hp('AHU19SF', Nameplate))*0.745699872*(AHU_df['AHU19 supply fan VFD output']/100)**2.5
 AHU_df['AHU 19 HRW kW (Formula Based)'] = AHU_df['AHU19 Heat Recovery Wheel Status']*(get_hp('AHU19HRW', Nameplate))*0.745699872*(AHU_df['AHU19 Heat Recovery Wheel VFD']/100)**2.5
-AHU_df['AHU 19 Total kW (Formula Based)'] = AHU_df['AHU 19 EF1 kW (Formula Based)'] + AHU_df['AHU 19 EF2 kW (Formula Based)'] + AHU_df['AHU 19 SF kW (Formula Based)'] + AHU_df['AHU 19 HRW kW (Formula Based)']
+AHU_df['AHU 19 Total kW (Formula Based)'] = AHU_df[['AHU 19 EF1 kW (Formula Based)', 'AHU 19 EF2 kW (Formula Based)', 'AHU 19 SF kW (Formula Based)', 'AHU 19 HRW kW (Formula Based)']].sum(axis=1, min_count=1)
 AHU_df_15min = AHU_df.resample(rule='15Min').mean()
 #AHU_df.to_csv('AHU_df.csv) #Uncomment for troubleshooting
 
@@ -227,7 +228,7 @@ Report_df['AHU 19 Total kW (Correlated)'] = AHU_df_15min['AHU 19 Total kW (Formu
 HRU_df = ACE_data[['HRU supply fan VFD output', 'HRU Exhaust fan VFD output', 'HRU Exhaust Fan Status', 'HRU Supply Fan Status']]
 HRU_df['HRU Supply Fan kW (Formula Based)'] = HRU_df['HRU Supply Fan Status']*(get_hp('HRUSupplyFan',Nameplate))*0.745699872*(HRU_df['HRU supply fan VFD output']/100)**2.5
 HRU_df['HRU Exhaust Fan kW (Formula Based)'] = HRU_df['HRU Exhaust Fan Status']*(get_hp('HRUReturnFan',Nameplate))*0.745699872*(HRU_df['HRU Exhaust fan VFD output']/100)**2.5
-HRU_df['HRU Total kW (Formula Based)'] = HRU_df['HRU Exhaust Fan kW (Formula Based)'] + HRU_df['HRU Supply Fan kW (Formula Based)'] #One DENT on all HRU so will need to correlate to total
+HRU_df['HRU Total kW (Formula Based)'] = HRU_df[['HRU Exhaust Fan kW (Formula Based)', 'HRU Supply Fan kW (Formula Based)']].sum(axis=1, min_count=1) #One DENT on all HRU so will need to correlate to total
 HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 #HRU_df_15min.to_csv('HRU_df_15min.csv')
 
@@ -263,7 +264,7 @@ Report_df['Pump 3b kW (Formula Based)'] = CHW_df_15min['Pump 3b kW (Formula Base
 Report_df['Tower Fan 1 kW (Correlated)'] = CHW_df_15min['Tower Fan 1 kW (Formula Based)'] * Corr_param_df['slope'][6] + Corr_param_df['intercept'][6] #the only electricty consuming equipment in the CTs are the fan assemblies
 Report_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula Based)'] * Corr_param_df['slope'][7] + Corr_param_df['intercept'][7]
 Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
-Report_df['Total CHW kW'] = Report_df['Pump 1a kW (Formula Based)']+Report_df['Pump 1b kW (Formula Based)']+Report_df['Pump 2a kW (Correlated)']+Report_df['Pump 2b kW (Correlated)']+Report_df['Pump 3a kW (Formula Based)']+Report_df['Pump 3b kW (Formula Based)']+Report_df['Tower Fan 1 kW (Correlated)']+Report_df['Tower Fan 2 kW (Correlated)']+Report_df['Chiller kW']
+Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
 Report_df.to_csv('Report_df.csv')
 
