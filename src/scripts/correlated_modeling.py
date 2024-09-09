@@ -286,7 +286,7 @@ Report_df_daily_total = Report_df.resample(rule='D').sum() #Doing daily totals f
 
 ##Normalization #Todo: Normalize per day per hdd/cdd
 balance_point_HDD = 65 #These base temp will be calculated once we have enough data to establish a baseline/balance point. These values are taken from AHSRAE recommendation: https://www.ashrae.org/File%20Library/Technical%20Resources/Building%20Energy%20Quotient/User-Tip-5_May2019.pdf
-balance_point_CDD = 50
+balance_point_CDD = 50 #Todo: Discuss if these need to be the same otherwise we will have HDD and CDD fir sme days
 
 #Get weather data from Open Meteo
 
@@ -349,6 +349,15 @@ hourly_data = {
 # Create a DataFrame from the hourly data
 hourly_weather_dataframe = pd.DataFrame(data=hourly_data)
 
+# Calculate HDD (when temperature is below balance_point_HDD)
+hourly_weather_dataframe['HDD'] = hourly_weather_dataframe['temperature_2m'].apply(
+    lambda temp: abs(temp - balance_point_HDD) if temp < balance_point_HDD else 0)
+
+# Calculate CDD (when temperature is above balance_point_CDD)
+hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].apply(
+    lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
+
 # Output the DataFrame
 #hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv")
 
+#Todo: Resample weather data to make sure HDD and CDD are summed, while the temp is being averaged? Pull that into the results df for plotting
