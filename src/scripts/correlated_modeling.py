@@ -4,6 +4,12 @@ import os
 import requests
 import pandas as pd
 import yaml
+from datetime import date
+from dateutil.relativedelta import relativedelta
+import openmeteo_requests
+import requests_cache
+import pandas as pd
+from retry_requests import retry
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,9 +41,16 @@ env_filename = 'api_keys.yml'
 f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
-start = "2024-09-01"
-end = "2024-09-06"
-ACE_data = pd.DataFrame()
+
+#Define reporting period
+today = date.today()
+#print("Today's date is: ", today) #Uncomment for troubleshooting
+end = str(today) #Start and end dates need to be strings
+a_month_ago = today - relativedelta(months=1) #Setting monthly reporting period
+start = str(a_month_ago)
+#print("Date one month back: ", one_month_back) #Uncomment for troubleshooting
+
+ACE_data = pd.DataFrame() #Defining empty dataframe into which BMS data will be pulled into from ACE API
 
 def get_value(equipment_name, data): #Todo: For next project it will be good to define al functions in the utils.py
     index = data['Equipt'].index(equipment_name)  # Find index of equipment name
@@ -266,7 +279,76 @@ Report_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula
 Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
-Report_df.to_csv('Report_df.csv')
+#Report_df.to_csv('Report_df.csv') #You know the drill
 
+Report_df_daily_total = Report_df.resample(rule='D').sum() #Doing daily totals for reporting and normalization
+#Report_df_daily_total.to_csv('Report_df_daily_total.csv') #You know the drill
 
+##Normalization #Todo: Normalize per day per hdd/cdd
+balance_point_HDD = 65 #These base temp will be calculated once we have enough data to establish a baseline/balance point. These values are taken from AHSRAE recommendation: https://www.ashrae.org/File%20Library/Technical%20Resources/Building%20Energy%20Quotient/User-Tip-5_May2019.pdf
+balance_point_CDD = 50
+
+#Get weather data from Open Meteo
+
+# Setup the Open-Meteo API client with cache and retry on error. Caching preents the need for multiple API calls which is important since open meteo has a fixed number of free API calls
+cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
+retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+openmeteo = openmeteo_requests.Client(session=retry_session)
+
+# Define the parameters as variables
+latitude = 44.48
+longitude = -73.21
+hourly_variables = ["temperature_2m", "dew_point_2m", "precipitation", "weather_code"]
+temperature_unit = "fahrenheit"
+timezone = "America/New_York"
+start_date = start
+end_date = end
+
+# Parameters dictionary using variables
+params = {
+    "latitude": latitude,
+    "longitude": longitude,
+    "hourly": hourly_variables,
+    "temperature_unit": temperature_unit,
+    "timezone": timezone,
+    "start_date": start_date,
+    "end_date": end_date
+}
+
+# Make the API request
+responses = openmeteo.weather_api(url="https://api.open-meteo.com/v1/forecast", params=params)
+
+# Process the first location. Add a loop if needed for multiple locations or weather models
+response = responses[0]
+print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
+#print(f"Elevation {response.Elevation()} m asl")
+print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
+print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
+
+# Process hourly data. Ensure the order of variables matches the request
+hourly = response.Hourly()
+hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+hourly_dew_point_2m = hourly.Variables(1).ValuesAsNumpy()
+hourly_precipitation = hourly.Variables(2).ValuesAsNumpy()
+hourly_weather_code = hourly.Variables(3).ValuesAsNumpy()
+
+# Prepare hourly data with date range and assign the values
+hourly_data = {
+    "date": pd.date_range(
+        start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
+        end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
+        freq=pd.Timedelta(seconds=hourly.Interval()),
+        inclusive="left"
+    ),
+    "temperature_2m": hourly_temperature_2m,
+    "dew_point_2m": hourly_dew_point_2m,
+    "precipitation": hourly_precipitation,
+    "weather_code": hourly_weather_code
+}
+
+# Create a DataFrame from the hourly data
+hourly_weather_dataframe = pd.DataFrame(data=hourly_data)
+
+# Output the DataFrame
+#hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv")
 
