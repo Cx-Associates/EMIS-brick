@@ -42,7 +42,7 @@ f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
 
-#Define reporting period
+#Define reporting period #Todo: Very important to check dates for each reporting period since it is automated to the date when the code is being run to generate the data needed for reporting
 today = date.today()
 #print("Today's date is: ", today) #Uncomment for troubleshooting
 end = str(today) #Start and end dates need to be strings
@@ -281,7 +281,11 @@ Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW
 
 #Report_df.to_csv('Report_df.csv') #You know the drill
 
-Report_df_daily_total = Report_df.resample(rule='D').sum() #Doing daily totals for reporting and normalization
+#Doing daily sums for easier reporting, granularity can always be done if needed
+Report_df.index = pd.to_datetime(Report_df.index).normalize()  #Normalizing the time aspect, need to do this otheriwse the time aspect interferes with the resampling in the next line.
+Report_df_daily_total = Report_df.resample(rule='D').sum() #Doing daily totals for reporting and normalization #Todo: talk to Dan to see if we are losing too much info for weather normalization via daily aggregation, we can set the interval to what MSL wants to see
+Report_df_daily_total.index = Report_df_daily_total.index.date #Removing the time aspect completely
+Report_df_daily_total.index.name = 'date' #Renaming to match the index for HDD and CDD, so that the two dfs can be merged together
 #Report_df_daily_total.to_csv('Report_df_daily_total.csv') #You know the drill
 
 ##Normalization #Todo: Normalize per day per hdd/cdd
@@ -290,8 +294,8 @@ balance_point_CDD = 50 #Todo: Discuss if these need to be the same otherwise we 
 
 #Get weather data from Open Meteo
 
-# Setup the Open-Meteo API client with cache and retry on error. Caching preents the need for multiple API calls which is important since open meteo has a fixed number of free API calls
-cache_session = requests_cache.CachedSession('.cache', expire_after=3600)
+# Setup the Open-Meteo API client with cache and retry on error.
+cache_session = requests_cache.CachedSession('.cache', expire_after=3600) #Caching prevents the need for multiple API calls which is important since open meteo has a fixed number of free API calls
 retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
 
@@ -321,7 +325,6 @@ responses = openmeteo.weather_api(url="https://api.open-meteo.com/v1/forecast", 
 # Process the first location. Add a loop if needed for multiple locations or weather models
 response = responses[0]
 print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
-#print(f"Elevation {response.Elevation()} m asl")
 print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
 print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
@@ -358,6 +361,17 @@ hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].app
     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
 
 # Output the DataFrame
-#hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv")
+hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv")
 
 #Todo: Resample weather data to make sure HDD and CDD are summed, while the temp is being averaged? Pull that into the results df for plotting
+#Calculate the daily total HDD and CDD
+daily_weather_df = hourly_weather_dataframe.drop(['temperature_2m', 'dew_point_2m', 'precipitation', 'weather_code'], axis=1) #Dropping whatever variables are not going to be summed
+daily_weather_df['date'] = pd.to_datetime(daily_weather_df['date']).dt.date #Date from open meteo is a RangeIndex and resample only works on DatetimeIndex, TimedeltaIndex, or PeriodIndex. The dt.date drops the time component otherwise resampling was not working properly.
+daily_weather_df.set_index('date', inplace=True) #Setting the date as index
+daily_sums = daily_weather_df.groupby('date').agg({'HDD': 'sum', 'CDD': 'sum'})
+#daily_sums.to_csv('Daily_DD.csv') #You know the drill
+
+#Create the final dataframe which will be used for graphing
+Report_df_final = pd.merge(Report_df_daily_total, daily_sums, how='outer', left_index=True, right_index=True)
+Report_df_final.to_csv("Report_df_final.csv")
+
