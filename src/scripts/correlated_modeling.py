@@ -361,7 +361,7 @@ hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].app
     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
 
 # Output the DataFrame
-hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv")
+#hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv")
 
 #Todo: Resample weather data to make sure HDD and CDD are summed, while the temp is being averaged? Pull that into the results df for plotting
 #Calculate the daily total HDD and CDD
@@ -373,5 +373,11 @@ daily_sums = daily_weather_df.groupby('date').agg({'HDD': 'sum', 'CDD': 'sum'})
 
 #Create the final dataframe which will be used for graphing
 Report_df_final = pd.merge(Report_df_daily_total, daily_sums, how='outer', left_index=True, right_index=True)
-Report_df_final.to_csv("Report_df_final.csv")
+Report_df_final['Boiler NG Consumption (MBtu)/HDD'] = Report_df_final['Total Boiler NG Consumption (MBtu)']/Report_df_final['HDD']
+Report_df_final['Heating System kW/HDD'] = Report_df_final['Heating System kW']/Report_df_final['HDD']
+Report_df_final['AHU 19 Total kW/DD'] = Report_df_final['AHU 19 Total kW (Correlated)']/(Report_df_final['HDD'] + Report_df_final['CDD'])
+Report_df_final['HRU Total kW/DD'] = Report_df_final['HRU Total kW (Correlated)']/(Report_df_final['HDD'] + Report_df_final['CDD'])
+Report_df_final['Total CHW kW/CDD'] = Report_df_final['Total CHW kW']/Report_df_final['CDD']
+Report_df_final.to_csv(f"Report_df_final_{end}.csv")
+
 
