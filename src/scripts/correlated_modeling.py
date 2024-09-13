@@ -10,6 +10,7 @@ import openmeteo_requests
 import requests_cache
 import pandas as pd
 from retry_requests import retry
+import calendar
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,9 +45,14 @@ timezone='US/Eastern'
 
 #Define reporting period #Todo: Very important to check dates for each reporting period since it is automated to the date when the code is being run to generate the data needed for reporting
 today = date.today()
-#print("Today's date is: ", today) #Uncomment for troubleshooting
-end = str(today) #Start and end dates need to be strings
 a_month_ago = today - relativedelta(months=1) #Setting monthly reporting period
+start = a_month_ago.replace(day=1) # Get the first day of the previous month
+last_day_of_prev_month = calendar.monthrange(a_month_ago.year, a_month_ago.month)[1] # Get the last day of the previous month
+end = a_month_ago.replace(day=last_day_of_prev_month)
+#print("Today's date is: ", today) #Uncomment for troubleshooting
+start = str(start)
+end = str(end) #Start and end dates need to be strings
+
 start = str(a_month_ago)
 #print("Date one month back: ", one_month_back) #Uncomment for troubleshooting
 
@@ -252,7 +258,7 @@ Report_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Bas
 CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling Tower Free Cool Status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
 
 #Calculating kW from BMS information
-CHW_df['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists
+CHW_df['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists #todo: add correlation if needed
 CHW_df['Pump 1b kW (Formula Based)'] = get_hp('Pump1b', Nameplate)*0.745699872*(CHW_df['Pump 1b feedback']/100)**2.5 #No status exists and does not need correlation
 CHW_df['Pump 2b kW (Formula Based)'] = CHW_df['Pump 2b status']*get_hp('Pump2b',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5
 CHW_df['Pump 2a kW (Formula Based)'] = CHW_df['Pump 2a status']*(get_hp('Pump2a',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5)
