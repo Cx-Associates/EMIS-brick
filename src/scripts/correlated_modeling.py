@@ -361,7 +361,7 @@ hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].app
 #hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv") #Todo: Comment this out before push
 
 #Calculate the daily total HDD and CDD for each hours #Todo: Needs to be removed possibly
-hourly_weather_df = hourly_weather_dataframe.drop(['dew_point_2m', 'precipitation'], axis=1) #Dropping whatever variables are not going to be important
+hourly_weather_df = hourly_weather_dataframe.drop(['dew_point_2m', 'precipitation', 'weather_code'], axis=1) #Dropping whatever variables are not going to be important
 hourly_weather_df['date'] = pd.to_datetime(hourly_weather_df['date']) #Date from open meteo is a RangeIndex and resample only works on DatetimeIndex, TimedeltaIndex, or PeriodIndex. The dt.date drops the time component otherwise resampling was not working properly.
 hourly_weather_df.set_index('date', inplace=True) #Setting the date as index
 hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
@@ -394,10 +394,13 @@ os.makedirs(subfolder_path, exist_ok=True) # Create the subfolder if it doesn't 
 file_path = os.path.join(subfolder_path, f"Report_df_final_{end}.csv")
 Report_df_final.to_csv(file_path)
 
-Total_energy_MMBtu = (Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'] +
-                            (Report_df_final['AHU 19 Total kW (Correlated)']* 0.003412) +
-                            (Report_df_final['HRU Total kW (Correlated)']* 0.003412) +
-                            (Report_df_final['Total CHW kW']* 0.003412))
+
+Total_energy_MMBtu = round(
+        Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum() +
+        (Report_df_final['AHU 19 Total kW (Correlated)'].sum()* 0.003412) +
+        (Report_df_final['HRU Total kW (Correlated)'].sum()* 0.003412) +
+        (Report_df_final['Total CHW kW'].sum()* 0.003412)
+)
 
 #Todo: All normalization needs to be done based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
 #Todo: All normalization above needs to be updated based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
