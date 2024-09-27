@@ -6,8 +6,8 @@ import pandas as pd
 import yaml
 from datetime import date
 from dateutil.relativedelta import relativedelta
-import openmeteo_requests
-import requests_cache
+import openmeteo_requests #Todo: add this to env file
+import requests_cache #Todo: add this to env file
 import pandas as pd
 from retry_requests import retry
 import calendar
@@ -208,7 +208,7 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']]#Always use double [] brackets for picking the data you need
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
-#Calculating kW from BMS information
+#Calculating kW from BMS information #Todo: For a future project try to get rid of the warning:  value is trying to be set on a copy of a slice from a DataFrame.
 Heating_df['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(Heating_df['Pump 4a VFD Output']/100)**2.5*Heating_df['Pump 4a Status']
 Heating_df['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(Heating_df['Pump 4b VFD Output']/100)**2.5*Heating_df['Pump 4b Status']
 Heating_df['Boiler 1 MBtu'] = get_value('Boiler1_capacity', Boiler_Nameplate)*Heating_df['Boiler 1 status']*Heating_df['Boiler 1% signal']/(100*get_value('Boiler1_Eff', Boiler_Nameplate)) #The 100 in the denominator is to convert the % signal value
@@ -368,7 +368,7 @@ hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
 
 #Create the final dataframe which will be used for graphing
 Report_df_final = pd.merge(Report_df_hourly, hourly_weather_df, how='outer', left_index=True, right_index=True)
-Report_df_final['Heating Plant Consumption (MMBtu)'] = (Report_df_final['Total Boiler NG Consumption (MBtu)']/1000) + (Report_df_final['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
+Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'] = (Report_df_final['Total Boiler NG Consumption (MBtu)']/1000) + (Report_df_final['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
 
 #Report_df_final['Boiler NG Consumption (MBtu/hr)/HDD'] = Report_df_final['Total Boiler NG Consumption (MBtu)']/Report_df_final['HDD']
 #Report_df_final['Heating System kW/HDD'] = Report_df_final['Heating System kW']/Report_df_final['HDD']

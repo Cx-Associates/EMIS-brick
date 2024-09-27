@@ -272,8 +272,9 @@ Baseline_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Baseline_df['Total CHW kW'] = Baseline_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
 Baseline_df_hourly = Baseline_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
+Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)'] = (Baseline_df_hourly['Total Boiler NG Consumption (MBtu)']/1000) + (Baseline_df_hourly['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
 
-#Baseline_df_hourly.to_csv('Baseline_df_hourly.csv') #You know the drill
+Baseline_df_hourly.to_csv('Baseline_df_hourly.csv') #You know the drill
 
 
 #Get weather data from Open Meteo #Todo: For future projects convert this into a function that just takes the start and end date as inputs. Maybe the variables too?
@@ -393,7 +394,7 @@ Baseline_df_hourly ['CDD'] = Baseline_df_hourly['temperature_2m'].apply(
 Baseline_df_hourly['Total DD'] = Baseline_df_hourly[['HDD','CDD']].sum(axis=1, min_count=1)
 
 # List of columns to check for NaN values. Due to difference in how open meteo and ACE handle API requests, we get some additional rows where we have no ACE data which causes the regression to not work
-columns_to_check = ['Total Boiler NG Consumption (MBtu)', 'Heating System kW', 'AHU 19 Total kW (Correlated)',
+columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'Heating System kW', 'AHU 19 Total kW (Correlated)',
                     'HRU Total kW (Correlated)', 'Total CHW kW']
 
 # Drop rows where all the specified columns have NaN values
@@ -404,14 +405,9 @@ Baseline_df_hourly.to_csv('Baseline_df_hourly.csv')
 ##Now to fit regression equations for normalization
 
 # Fitting the models
-Heating_NG_model = LinearRegression().fit(
+Heating_model = LinearRegression().fit(
     Baseline_df_hourly['HDD'].values.reshape(-1, 1),
-    Baseline_df_hourly['Total Boiler NG Consumption (MBtu)']
-)
-
-Heating_kW_model = LinearRegression().fit(
-    Baseline_df_hourly['HDD'].values.reshape(-1, 1),
-    Baseline_df_hourly['Heating System kW']
+    Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)']
 )
 
 AHU19_model = LinearRegression().fit(
@@ -436,22 +432,12 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Baseline_Model_
     writer.writerow(['Model name', 'slope', 'intercept', 'rsquared'])
 
     writer.writerow([
-        'Heating_NG_model',
-        float(Heating_NG_model.coef_),
-        float(Heating_NG_model.intercept_),
-        Heating_NG_model.score(
+        'Heating_model',
+        float(Heating_model.coef_),
+        float(Heating_model.intercept_),
+        Heating_model.score(
             Baseline_df_hourly['HDD'].values.reshape(-1, 1),
-            Baseline_df_hourly['Total Boiler NG Consumption (MBtu)']
-        )
-    ])
-
-    writer.writerow([
-        'Heating_kW_model',
-        float(Heating_kW_model.coef_),
-        float(Heating_kW_model.intercept_),
-        Heating_kW_model.score(
-            Baseline_df_hourly['HDD'].values.reshape(-1, 1),
-            Baseline_df_hourly['Heating System kW']
+            Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)']
         )
     ])
 
