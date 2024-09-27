@@ -196,7 +196,7 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
 nameplate=pd.DataFrame(Nameplate)
 
 #Boiler Nameplate
-Boiler_Nameplate = {'Equipt':['Boiler1_capacity', 'Boiler2_capacity', 'Boiler1_Eff', 'Boiler2_Eff'], 'value':[2047, 2081, 0.878, 0.891]}
+Boiler_Nameplate = {'Equipt':['Boiler1_capacity', 'Boiler2_capacity', 'Boiler1_Eff', 'Boiler2_Eff'], 'value':[2047, 2081, 0.878, 0.891]} #Boiler capacity is in MBtu/hr
 
 Report_df = pd.DataFrame() #Dataframe which will store all calculated energy consumption and any data needed for reporting
 
@@ -208,7 +208,7 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']]#Always use double [] brackets for picking the data you need
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
-#Calculating kW from BMS information
+#Calculating kW from BMS information #Todo: For a future project try to get rid of the warning:  value is trying to be set on a copy of a slice from a DataFrame.
 Heating_df['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(Heating_df['Pump 4a VFD Output']/100)**2.5*Heating_df['Pump 4a Status']
 Heating_df['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(Heating_df['Pump 4b VFD Output']/100)**2.5*Heating_df['Pump 4b Status']
 Heating_df['Boiler 1 MBtu'] = get_value('Boiler1_capacity', Boiler_Nameplate)*Heating_df['Boiler 1 status']*Heating_df['Boiler 1% signal']/(100*get_value('Boiler1_Eff', Boiler_Nameplate)) #The 100 in the denominator is to convert the % signal value
@@ -282,7 +282,7 @@ Report_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula
 Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
-Report_df_hourly = Report_df.resample(rule='H').mean()
+Report_df_hourly = Report_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
 Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill #Todo: Comment this out before push
 
 ##Normalization
@@ -368,12 +368,15 @@ hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
 
 #Create the final dataframe which will be used for graphing
 Report_df_final = pd.merge(Report_df_hourly, hourly_weather_df, how='outer', left_index=True, right_index=True)
-Report_df_final['Boiler NG Consumption (MBtu/hr)/HDD'] = Report_df_final['Total Boiler NG Consumption (MBtu)']/Report_df_final['HDD']
-Report_df_final['Heating System kW/HDD'] = Report_df_final['Heating System kW']/Report_df_final['HDD']
-Report_df_final['AHU 19 Total kW/DD'] = Report_df_final['AHU 19 Total kW (Correlated)']/(Report_df_final['HDD'] + Report_df_final['CDD'])
-Report_df_final['HRU Total kW/DD'] = Report_df_final['HRU Total kW (Correlated)']/(Report_df_final['HDD'] + Report_df_final['CDD'])
-Report_df_final['Total CHW kW/CDD'] = Report_df_final['Total CHW kW']/Report_df_final['CDD']
-Report_df_final.to_csv(f"Report_df_final_{end}.csv")
+Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'] = (Report_df_final['Total Boiler NG Consumption (MBtu)']/1000) + (Report_df_final['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
+
+#Report_df_final['Boiler NG Consumption (MBtu/hr)/HDD'] = Report_df_final['Total Boiler NG Consumption (MBtu)']/Report_df_final['HDD']
+#Report_df_final['Heating System kW/HDD'] = Report_df_final['Heating System kW']/Report_df_final['HDD']
+#Report_df_final['AHU 19 Total kW/DD'] = Report_df_final['AHU 19 Total kW (Correlated)']/(Report_df_final['HDD'] + Report_df_final['CDD'])
+#Report_df_final['HRU Total kW/DD'] = Report_df_final['HRU Total kW (Correlated)']/(Report_df_final['HDD'] + Report_df_final['CDD'])
+#Report_df_final['Total CHW kW/CDD'] = Report_df_final['Total CHW kW']/Report_df_final['CDD']
+
+#Report_df_final.to_csv(f"Report_df_final_{end}.csv")
 
 #Todo: All normalization above needs to be updated based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
 
