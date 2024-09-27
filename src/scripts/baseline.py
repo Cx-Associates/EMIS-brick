@@ -394,13 +394,13 @@ Baseline_df_hourly ['CDD'] = Baseline_df_hourly['temperature_2m'].apply(
 Baseline_df_hourly['Total DD'] = Baseline_df_hourly[['HDD','CDD']].sum(axis=1, min_count=1)
 
 # List of columns to check for NaN values. Due to difference in how open meteo and ACE handle API requests, we get some additional rows where we have no ACE data which causes the regression to not work
-columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'Heating System kW', 'AHU 19 Total kW (Correlated)',
+columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 Total kW (Correlated)',
                     'HRU Total kW (Correlated)', 'Total CHW kW']
 
 # Drop rows where all the specified columns have NaN values
 Baseline_df_hourly= Baseline_df_hourly.dropna(subset=columns_to_check, how='all')
 
-Baseline_df_hourly.to_csv('Baseline_df_hourly.csv')
+#Baseline_df_hourly.to_csv('Baseline_df_hourly.csv')
 
 ##Now to fit regression equations for normalization
 
