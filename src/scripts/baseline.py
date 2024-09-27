@@ -271,7 +271,7 @@ Baseline_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formu
 Baseline_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Baseline_df['Total CHW kW'] = Baseline_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
-Baseline_df_hourly = Baseline_df.resample(rule='H').mean()
+Baseline_df_hourly = Baseline_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
 
 #Baseline_df_hourly.to_csv('Baseline_df_hourly.csv') #You know the drill
 
