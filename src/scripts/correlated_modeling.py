@@ -283,7 +283,7 @@ Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
 Report_df_hourly = Report_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
-Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill #Todo: Comment this out before push
+#Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill #Todo: Comment this out before push
 
 ##Normalization
 balance_point_HDD = 65 #These base temp will be calculated once we have enough data to establish a baseline/balance point. These values are taken from AHSRAE recommendation: https://www.ashrae.org/File%20Library/Technical%20Resources/Building%20Energy%20Quotient/User-Tip-5_May2019.pdf
@@ -358,7 +358,7 @@ hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].app
     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
 
 # Output the DataFrame
-hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv") #Todo: Comment this out before push
+#hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv") #Todo: Comment this out before push
 
 #Calculate the daily total HDD and CDD for each hours #Todo: Needs to be removed possibly
 hourly_weather_df = hourly_weather_dataframe.drop(['dew_point_2m', 'precipitation'], axis=1) #Dropping whatever variables are not going to be important
@@ -370,6 +370,14 @@ hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
 Report_df_final = pd.merge(Report_df_hourly, hourly_weather_df, how='outer', left_index=True, right_index=True)
 Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'] = (Report_df_final['Total Boiler NG Consumption (MBtu)']/1000) + (Report_df_final['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
 
+# List of columns to check for NaN values. Due to difference in how open meteo and ACE handle API requests, we get some additional rows where we have no ACE data
+columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 Total kW (Correlated)',
+                    'HRU Total kW (Correlated)', 'Total CHW kW']
+
+# Drop rows where all the specified columns have NaN values
+Report_df_final= Report_df_final.dropna(subset=columns_to_check, how='all')
+
+
 #Report_df_final['Boiler NG Consumption (MBtu/hr)/HDD'] = Report_df_final['Total Boiler NG Consumption (MBtu)']/Report_df_final['HDD']
 #Report_df_final['Heating System kW/HDD'] = Report_df_final['Heating System kW']/Report_df_final['HDD']
 #Report_df_final['AHU 19 Total kW/DD'] = Report_df_final['AHU 19 Total kW (Correlated)']/(Report_df_final['HDD'] + Report_df_final['CDD'])
@@ -378,6 +386,20 @@ Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'] = (Report_df_f
 
 #Report_df_final.to_csv(f"Report_df_final_{end}.csv")
 
+##Write the final dataframe to the F drive
+main_folder = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\reports"
+subfolder_name = f"Progress Report_{end}"
+subfolder_path = os.path.join(main_folder, subfolder_name)
+os.makedirs(subfolder_path, exist_ok=True) # Create the subfolder if it doesn't exist
+file_path = os.path.join(subfolder_path, f"Report_df_final_{end}.csv")
+Report_df_final.to_csv(file_path)
+
+Total_energy_MMBtu = (Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'] +
+                            (Report_df_final['AHU 19 Total kW (Correlated)']* 0.003412) +
+                            (Report_df_final['HRU Total kW (Correlated)']* 0.003412) +
+                            (Report_df_final['Total CHW kW']* 0.003412))
+
+#Todo: All normalization needs to be done based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
 #Todo: All normalization above needs to be updated based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
 
 
