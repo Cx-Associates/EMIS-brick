@@ -8,12 +8,12 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import openmeteo_requests
 import requests_cache
-import pandas as pd
 from retry_requests import retry
 import calendar
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import datetime
 
 #from src.utils import Project
 #from config_MSL import config_dict
@@ -376,3 +376,21 @@ Report_df_final['Total CHW kW/CDD'] = Report_df_final['Total CHW kW']/Report_df_
 Report_df_final.to_csv(f"Report_df_final_{end}.csv")
 
 #Todo: All normalization above needs to be updated based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
+
+
+#Calculate Total Energy used for the month
+TotalEnergy=sum(Report_df_final['Boiler NG Consumption (MBtu/hr)/HDD'])
+
+#This outputs the necessary information for the reporting
+#Report Period Start Date
+startd = datetime.strptime(start,"%Y-%m-%d")
+startdateformated=startd.strftime("%B %d, %Y")
+#Report Period End Date
+endd = datetime.strptime(end,"%Y-%m-%d")
+enddateformated=endd.strftime("%B %d, %Y")
+
+with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Reporting\Output.tex','w') as tex_file:
+    # Write the variable to the file
+    tex_file.write(f"\\newcommand{{\\StartDate}}{{{startdateformated}}}\n")
+    tex_file.write(f"\\newcommand{{\\EndDate}}{{{enddateformated}}}\n")
+    tex_file.write(f"\\newcommand{{\\TotalEnergy}}{{{TotalEnergy}}}\n")

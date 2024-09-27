@@ -1,4 +1,4 @@
-#Todo: Delete whatever we don't end up using from the beelow imports
+#Todo: Delete whatever we don't end up using from the below imports
 import os
 import requests
 import pandas as pd

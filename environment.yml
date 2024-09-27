@@ -160,6 +160,7 @@ dependencies:
   - numpy=1.22.3=py38h7a0a035_0
   - numpy-base=1.22.3=py38hca35cd5_0
   - openjpeg=2.4.0=h4fc8c34_0
+  - openmeteo-requests
   - openpyxl=3.0.10=py38h2bbff1b_0
   - openssl=3.0.12=h2bbff1b_0
   - orc=1.7.4=h623e30f_1
@@ -217,6 +218,8 @@ dependencies:
   - qtwebkit=5.212=h2bbfb41_5
   - re2=2022.04.01=hd77b12b_0
   - requests=2.31.0=py38haa95532_0
+  - requests-cache
+  - retry-requests
   - rfc3339-validator=0.1.4=py38haa95532_0
   - rfc3986=1.4.0=pyhd3eb1b0_0
   - rfc3986-validator=0.1.1=py38haa95532_0
