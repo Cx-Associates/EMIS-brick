@@ -42,7 +42,7 @@ f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
 
-#Define reporting period #Todo: Very important to check dates for each reporting period since it is automated to the date when the code is being run to generate the data needed for reporting
+#Define reporting period #todo: fix this. #Todo: Very important to check dates for each reporting period since it is automated to the date when the code is being run to generate the data needed for reporting
 today = date.today()
 a_month_ago = today - relativedelta(months=1) #Setting monthly reporting period
 start = a_month_ago.replace(day=1) # Get the first day of the previous month
@@ -50,7 +50,7 @@ last_day_of_prev_month = calendar.monthrange(a_month_ago.year, a_month_ago.month
 end = a_month_ago.replace(day=last_day_of_prev_month)
 #print("Today's date is: ", today) #Uncomment for troubleshooting
 start = str(start)
-end = str(today) #Start and end dates need to be strings
+end = str(end) #Start and end dates need to be strings
 
 start = str(a_month_ago)
 #print("Date one month back: ", one_month_back) #Uncomment for troubleshooting
@@ -188,7 +188,7 @@ with open(env_filepath, 'r') as file:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
 
-#ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
+ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
@@ -204,7 +204,7 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 #Todo: For future projects, we should have different files for each system so that if data is missing for certain points, it doesn't break the whole code. Also easier troubleshooting.
 
 ##HEATING SYSTEM CALCS
-#Create system level dataframes
+#Create system level dataframes #Todo: For future projects, will be good to create system level functions which will take in equipments as input and use that to calculate system level energy consumption
 Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']]#Always use double [] brackets for picking the data you need
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
@@ -282,8 +282,9 @@ Report_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula
 Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
+Report_df.to_csv('Report_df_15min.csv')
 Report_df_hourly = Report_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
-#Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill #Todo: Comment this out before push
+Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill #Todo: Comment this out before push
 
 ##Normalization
 balance_point_HDD = 65 #These base temp will be calculated once we have enough data to establish a baseline/balance point. These values are taken from AHSRAE recommendation: https://www.ashrae.org/File%20Library/Technical%20Resources/Building%20Energy%20Quotient/User-Tip-5_May2019.pdf
@@ -362,7 +363,7 @@ hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].app
 
 #Calculate the daily total HDD and CDD for each hours #Todo: Needs to be removed possibly
 hourly_weather_df = hourly_weather_dataframe.drop(['dew_point_2m', 'precipitation', 'weather_code'], axis=1) #Dropping whatever variables are not going to be important
-hourly_weather_df['date'] = pd.to_datetime(hourly_weather_df['date']) #Date from open meteo is a RangeIndex and resample only works on DatetimeIndex, TimedeltaIndex, or PeriodIndex. The dt.date drops the time component otherwise resampling was not working properly.
+hourly_weather_df['date'] = pd.to_datetime(hourly_weather_df['date']) #todo: Add timezone, and that might fix it? #Date from open meteo is a RangeIndex and resample only works on DatetimeIndex, TimedeltaIndex, or PeriodIndex. The dt.date drops the time component otherwise resampling was not working properly.
 hourly_weather_df.set_index('date', inplace=True) #Setting the date as index
 hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
 
@@ -403,7 +404,11 @@ Total_energy_MMBtu = round(
 )
 
 #Todo: All normalization needs to be done based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
-#Todo: All normalization above needs to be updated based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
+#Todo: Add normalization below
+#Todo: Message KK  to calculate VGS and BED energy consumption
+
+#Normalizing the energy consumption
+
 
 #This outputs the necessary information for the reporting
 #Report Period Start Date

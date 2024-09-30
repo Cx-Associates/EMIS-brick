@@ -11,7 +11,7 @@ Report_df_final.index = pd.to_datetime(Report_df_final.index)
 Report_df_final.index = Report_df_final.index.time
 hourly_avg_df = Report_df_final.groupby(Report_df_final.index).mean()
 hourly_avg_df.index = [time.strftime("%H:%M") for time in hourly_avg_df.index] # Converting the time index to strings for easier plotting
-#hourly_avg_df.to_csv('hourly_avg_df.csv')
+hourly_avg_df.to_csv('hourly_avg_df.csv')
 
 #Plotting Heating System
 
@@ -79,7 +79,9 @@ plt.xlabel('Hour of the Day')
 plt.ylabel('Energy Consumption (kW)')
 plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
 plt.grid(True)
-plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1))  # Adjust location if needed
+plt.legend(loc='upper right', bbox_to_anchor=(1.5, 1))  # Adjust location if needed
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\For MMM\CHW System Equiipment.png')
 plt.close()
+
+#Todo: Add stupid graphs with baseline black bars
