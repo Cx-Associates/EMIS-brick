@@ -52,7 +52,6 @@ end = a_month_ago.replace(day=last_day_of_prev_month)
 start = str(start)
 end = str(end) #Start and end dates need to be strings
 
-start = str(a_month_ago)
 #print("Date one month back: ", one_month_back) #Uncomment for troubleshooting
 
 ACE_data = pd.DataFrame() #Defining empty dataframe into which BMS data will be pulled into from ACE API
@@ -188,7 +187,7 @@ with open(env_filepath, 'r') as file:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
 
-ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
+#ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
@@ -364,7 +363,8 @@ hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].app
 #Calculate the daily total HDD and CDD for each hours #Todo: Needs to be removed possibly
 hourly_weather_df = hourly_weather_dataframe.drop(['dew_point_2m', 'precipitation', 'weather_code'], axis=1) #Dropping whatever variables are not going to be important
 hourly_weather_df['date'] = pd.to_datetime(hourly_weather_df['date']) #todo: Add timezone, and that might fix it? #Date from open meteo is a RangeIndex and resample only works on DatetimeIndex, TimedeltaIndex, or PeriodIndex. The dt.date drops the time component otherwise resampling was not working properly.
-hourly_weather_df.set_index('date', inplace=True) #Setting the date as index
+hourly_weather_df.set_index('date', inplace=True).tz_localize('UTC').tz_convert(timezone) #Setting the date as index
+#df.index = df.index.tz_localize('UTC').tz_convert(timezone)
 hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
 
 #Create the final dataframe which will be used for graphing
