@@ -14,8 +14,8 @@ with open(env_filepath, 'r') as file:
 
 # Set the endpoint and headers
 start_time = '2024-03-01'
-end_time = '2024-05-31'
-endpoint = f'cxa_main_st_landing/2404:9-240409/analogOutput/4/timeseries?start_time={start_time}&end_time={end_time}'
+end_time = '2024-09-31'
+endpoint = f'cxa_main_st_landing/2404:10-240410/binaryValue/5/timeseries?start_time={start_time}&end_time={end_time}'
 full_url = url + endpoint
 headers = {
     'Authorization': f'Bearer {auth_token}',
