@@ -57,8 +57,8 @@ def get_hp(equipment_name, data):
 #some places and specifics #todo: This data is all compiled from multiple data pulls, pd.merge doesn't do well with similar column headers. Future work to update code to accept similar column headers over multiple time periods
 dentdatapath=[r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876C-01.csv",
               r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876D-01.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876F-01.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/XC1409243-01_CT.csv"]
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876F-01_timeedits.csv",
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/XC1409243-01_CT_timeedits.csv"]
 
 #Ace gateway data is missing between "2024-04-24 22:10:00-04:00" and "2024-07-15 14:15:00-04:00" (additional points were added a few days later so some points missing here and there)
 
@@ -310,7 +310,7 @@ MSL_data = pd.merge(MSL_data, Ace_15min, left_index=True, right_index=True, how=
 MSL_data = pd.merge(MSL_data, BAS_15min, left_index=True, right_index=True, how='outer')
 
 Pump2a=1
-"""
+
 #Correlation time!
 #and plots :-)
 
@@ -533,23 +533,22 @@ plt.close()
 #Format: Equipment name, slope, intercept, rsquared
 
 # #Save in a .csv
-# with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParameters.csv', 'w', newline='') as file:
-#     writer = csv.writer(file)
-#     writer.writerow(['Equipment name', 'slope', 'intercept', 'rsquared'])
-#     writer.writerow(['Pump4a',float(P4amodel.coef_),float(P4amodel.intercept_),P4amodel.score(np.array(Pump4a['Ace kW Pump 4a']).reshape((-1,1)),
-#                                                                                  np.array(Pump4a['Avg. kW Pump 4a']).reshape((-1,1)))])
-#     writer.writerow(['Pump4b', float(P4bmodel.coef_),float(P4bmodel.intercept_),P4bmodel.score(np.array(Pump4b['Ace kW Pump 4b']).reshape((-1,1)),
-#                                                                                 np.array(Pump4b['Avg. kW Pump 4b']).reshape((-1,1)))])
-#     writer.writerow(['Pump2a', float(P2amodel.coef_), float(P2amodel.intercept_), P2amodel.score(np.array(Pump2a['Ace kW Pump 2a']).reshape((-1, 1)),
-#                                                               np.array(Pump2a['Avg. kW Pump 2a']).reshape((-1, 1)))])
-#     writer.writerow(['Pump2b', float(P2bmodel.coef_), float(P2bmodel.intercept_), P2bmodel.score(np.array(Pump2b['Ace kW Pump 2b']).reshape((-1, 1)),
-#                                                               np.array(Pump2b['Avg. kW Pump 2b']).reshape((-1, 1)))])
-#     writer.writerow(['HRU', float(HRUmodel.coef_), float(HRUmodel.intercept_), HRUmodel.score(np.array(HRU['BAS kW HRU']).reshape((-1, 1)),
-#                                                              np.array(HRU['Avg. kW HRU']).reshape((-1, 1)))])
-#     writer.writerow(['AHU19', float(AHU19model.coef_), float(AHU19model.intercept_), AHU19model.score(np.array(AHU19['BAS kW AHU19']).reshape((-1, 1)),
-#                                                               np.array(AHU19['Avg. kW AHU19']).reshape((-1, 1)))])
-#     writer.writerow(['CoolingTower1', float(CT1model.coef_), float(CT1model.intercept_), CT1model.score(np.array(CT1['BAS kW CT1']).reshape((-1, 1)),
-#                                                               np.array(CT1['Avg. kW CT1']).reshape((-1, 1)))])
-#     writer.writerow(['CoolingTower2', float(CT2model.coef_), float(CT2model.intercept_), CT2model.score(np.array(CT2['BAS kW CT2']).reshape((-1, 1)),
-#                                                              np.array(CT2['Avg. kW CT2']).reshape((-1, 1)))])
-"""
+with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParameters.csv', 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Equipment name', 'slope', 'intercept', 'rsquared'])
+    writer.writerow(['Pump4a',float(P4amodel.coef_),float(P4amodel.intercept_),P4amodel.score(np.array(Pump4a['Ace kW Pump 4a']).reshape((-1,1)),
+                                                                                 np.array(Pump4a['Avg. kW Pump 4a']).reshape((-1,1)))])
+    writer.writerow(['Pump4b', float(P4bmodel.coef_),float(P4bmodel.intercept_),P4bmodel.score(np.array(Pump4b['Ace kW Pump 4b']).reshape((-1,1)),
+                                                                                np.array(Pump4b['Avg. kW Pump 4b']).reshape((-1,1)))])
+    writer.writerow(['Pump2a', float(P2amodel.coef_), float(P2amodel.intercept_), P2amodel.score(np.array(Pump2a['Ace kW Pump 2a']).reshape((-1, 1)),
+                                                              np.array(Pump2a['Avg. kW Pump 2a']).reshape((-1, 1)))])
+    writer.writerow(['Pump2b', float(P2bmodel.coef_), float(P2bmodel.intercept_), P2bmodel.score(np.array(Pump2b['Ace kW Pump 2b']).reshape((-1, 1)),
+                                                              np.array(Pump2b['Avg. kW Pump 2b']).reshape((-1, 1)))])
+    writer.writerow(['HRU', float(HRUmodel.coef_), float(HRUmodel.intercept_), HRUmodel.score(np.array(HRU['BAS kW HRU']).reshape((-1, 1)),
+                                                             np.array(HRU['Avg. kW HRU']).reshape((-1, 1)))])
+    writer.writerow(['AHU19', float(AHU19model.coef_), float(AHU19model.intercept_), AHU19model.score(np.array(AHU19['BAS kW AHU19']).reshape((-1, 1)),
+                                                              np.array(AHU19['Avg. kW AHU19']).reshape((-1, 1)))])
+    writer.writerow(['CoolingTower1', float(CT1model.coef_), float(CT1model.intercept_), CT1model.score(np.array(CT1['BAS kW CT1']).reshape((-1, 1)),
+                                                              np.array(CT1['Avg. kW CT1']).reshape((-1, 1)))])
+    writer.writerow(['CoolingTower2', float(CT2model.coef_), float(CT2model.intercept_), CT2model.score(np.array(CT2['BAS kW CT2']).reshape((-1, 1)),
+                                                             np.array(CT2['Avg. kW CT2']).reshape((-1, 1)))])
