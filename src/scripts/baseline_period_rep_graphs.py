@@ -28,7 +28,7 @@ plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
 #plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-graph_path = os.path.join(subfolder_path, f"HeatingSystem_{end_rep}.png")
+graph_path = os.path.join(subfolder_path, f"HeatingSystem.png")
 plt.savefig(graph_path)
 plt.close()
 
@@ -43,7 +43,7 @@ plt.xticks(rotation=45)
 #plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-graph_path = os.path.join(subfolder_path, f"AHU19_{end_rep}.png")
+graph_path = os.path.join(subfolder_path, f"AHU19.png")
 plt.savefig(graph_path)
 plt.close()
 
@@ -58,7 +58,7 @@ plt.xticks(rotation=45)
 #plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-graph_path = os.path.join(subfolder_path, f"HRU_{end_rep}.png")
+graph_path = os.path.join(subfolder_path, f"HRU.png")
 plt.savefig(graph_path)
 plt.close()
 
@@ -73,7 +73,7 @@ plt.xticks(rotation=45)
 #plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-graph_path = os.path.join(subfolder_path, f"CHWSystem_{end_rep}.png")
+graph_path = os.path.join(subfolder_path, f"CHWSystem.png")
 plt.savefig(graph_path)
 plt.close()
 
@@ -97,7 +97,7 @@ plt.xticks(rotation=45)
 plt.grid(True)
 plt.legend(loc='upper right', bbox_to_anchor=(1.5, 1))  # Adjust location if needed
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-graph_path = os.path.join(subfolder_path, f"CHWSystemEquipment_{end_rep}.png")
+graph_path = os.path.join(subfolder_path, f"CHWSystemEquipment.png")
 plt.savefig(graph_path)
 plt.close()
 

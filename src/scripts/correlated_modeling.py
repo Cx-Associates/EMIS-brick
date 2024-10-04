@@ -424,9 +424,12 @@ endd = datetime.strptime(end_rep,"%Y-%m-%d")
 enddateformated=endd.strftime("%B %d, %Y")
 ENDdate=endd.strftime("%B %d, %Y").upper()
 
+TeXfolderpath = subfolder_path.replace("\\", "/")
+
+
 with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Reporting\Output.tex','w') as tex_file:
     # Write the variable to the file
-    #tex_file.write(f"\\newcommand{{\\Figpath}}{{{TODO}}}\n")
+    tex_file.write(f"\\newcommand{{\\Figpath}}{{{TeXfolderpath}}}\n")
     tex_file.write(f"\\newcommand{{\\Month}}{{{Month}}}\n")
     tex_file.write(f"\\newcommand{{\\StartDate}}{{{startdateformated}}}\n")
     tex_file.write(f"\\newcommand{{\\StartDateCap}}{{{STARTdate}}}\n")
