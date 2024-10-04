@@ -1,10 +1,12 @@
 #Points above or below 10% of the limit probably needs to be a different color or something to make it easily understandable. #Todo: This is for the
 import matplotlib.pyplot as plt
+import os
 import matplotlib.dates as mdates
-from correlated_modeling import Report_df_final, file_path
+from correlated_modeling import Report_df_final, subfolder_path, end_rep
 from datetime import date
 from dateutil.relativedelta import relativedelta
 import pandas as pd
+import numpy as np
 
 #Calculate hourly means
 Report_df_final.index = pd.to_datetime(Report_df_final.index)
@@ -22,9 +24,12 @@ plt.title('Heating Plant Energy Consumption (MMBtu)')
 plt.xlabel('Hour of the Day')
 plt.ylabel('Average NG Consumption (MMBtu)')
 plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
+#y_min, y_max = plt.ylim()
+#plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\For MMM\HeatingSystem.png')
+graph_path = os.path.join(subfolder_path, f"HeatingSystem_{end_rep}.png")
+plt.savefig(graph_path)
 plt.close()
 
 #Plotting AHU19
@@ -33,10 +38,13 @@ plt.plot(hourly_avg_df.index, hourly_avg_df['AHU 19 Total kW (Correlated)'], mar
 plt.title('AHU19 Energy Consumption (kW)')
 plt.xlabel('Hour of the Day')
 plt.ylabel('Energy Consumption (kW)')
-plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
+plt.xticks(rotation=45)
+#y_min, y_max = plt.ylim()
+#plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\For MMM\AHU19.png')
+graph_path = os.path.join(subfolder_path, f"AHU19_{end_rep}.png")
+plt.savefig(graph_path)
 plt.close()
 
 #Plotting HRU
@@ -45,10 +53,13 @@ plt.plot(hourly_avg_df.index, hourly_avg_df['HRU Total kW (Correlated)'], marker
 plt.title('HRU Energy Consumption (kW)')
 plt.xlabel('Hour of the Day')
 plt.ylabel('Energy Consumption (kW)')
-plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
+plt.xticks(rotation=45)
+#y_min, y_max = plt.ylim()
+#plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\For MMM\HRU.png')
+graph_path = os.path.join(subfolder_path, f"HRU_{end_rep}.png")
+plt.savefig(graph_path)
 plt.close()
 
 #Plotting CHW System
@@ -57,10 +68,13 @@ plt.plot(hourly_avg_df.index, hourly_avg_df['Total CHW kW'], marker='o', linesty
 plt.title('CHW System Energy Consumption (kW)')
 plt.xlabel('Hour of the Day')
 plt.ylabel('Energy Consumption (kW)')
-plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
+plt.xticks(rotation=45)
+#y_min, y_max = plt.ylim()
+#plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\For MMM\CHW System.png')
+graph_path = os.path.join(subfolder_path, f"CHWSystem_{end_rep}.png")
+plt.savefig(graph_path)
 plt.close()
 
 #Adding Equipment Level Data
@@ -77,11 +91,14 @@ plt.plot(hourly_avg_df.index, hourly_avg_df['Chiller kW'], marker='o', linestyle
 plt.title('CHW System Equipment Energy Consumption (kW)')
 plt.xlabel('Hour of the Day')
 plt.ylabel('Energy Consumption (kW)')
-plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
+plt.xticks(rotation=45)
+#y_min, y_max = plt.ylim()
+#plt.yticks(np.arange(y_min, y_max, 20))
 plt.grid(True)
 plt.legend(loc='upper right', bbox_to_anchor=(1.5, 1))  # Adjust location if needed
 plt.tight_layout()  # Adjust layout to prevent overlapping of labels
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\For MMM\CHW System Equiipment.png')
+graph_path = os.path.join(subfolder_path, f"CHWSystemEquipment_{end_rep}.png")
+plt.savefig(graph_path)
 plt.close()
 
 #Todo: Add stupid graphs with baseline black bars

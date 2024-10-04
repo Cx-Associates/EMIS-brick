@@ -41,7 +41,7 @@ f_drive_path = 'F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/API keys'
 env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
 
-#Define reporting period #todo: uncomment this out before the first reporting period.
+#Define reporting period
 today = date.today()
 a_month_ago = today - relativedelta(months=1) #Setting monthly reporting period
 start = a_month_ago.replace(day=1) # Get the first day of the previous month
@@ -55,12 +55,12 @@ end = str(end) #Start and end dates need to be strings
 
 #Looks like ACE api doesn't include the last day specified so will need to set end date a day later as such -DONE
 #Todo: Now it looks like ACE's api gives us one extra day at the beginning
-#start = "2024-09-03"
+#start = "2024-09-03" #For troubleshooting, will be deleted
 #end = "2024-10-02"
 
 ACE_data = pd.DataFrame() #Defining empty dataframe into which BMS data will be pulled into from ACE API
 
-def get_value(equipment_name, data): #Todo: For next project it will be good to define alf functions in the utils.py or a seperate one
+def get_value(equipment_name, data): #Todo: For next project it will be good to define all functions in the utils.py or a seperate one
     index = data['Equipt'].index(equipment_name)  # Find index of equipment name
     size = data['value'][index]  # Retrieve corresponding size using index
     return size
