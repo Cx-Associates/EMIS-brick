@@ -14,8 +14,13 @@ import csv
 import calendar
 
 #Define baseline period
-start = '2024-07-25'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined
+timezone='US/Eastern'
+start = '2024-07-25'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, set start date a week earlier and end date a week later so that no data is missed. Unneeded data is being dropped later in the code.
 end = '2024-09-25'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined
+start_check = '' #Start check and end check should be athe actual dates of baseline
+end_check = ''
+start_check = pd.to_datetime(start).tz_localize(timezone)
+end_check = pd.to_datetime(end).tz_localize(timezone)
 
 #Finding the balance point
 
@@ -272,10 +277,10 @@ Baseline_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Baseline_df['Total CHW kW'] = Baseline_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
 Baseline_df_hourly = Baseline_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
-Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)'] = (Baseline_df_hourly['Total Boiler NG Consumption (MBtu)']/1000) + (Baseline_df_hourly['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
+Baseline_df_hourly['Total Boiler NG Consumption (MMBtu)'] = Baseline_df_hourly['Total Boiler NG Consumption (MBtu)']/1000
+Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)'] = Baseline_df_hourly['Total Boiler NG Consumption (MMBtu)'] + (Baseline_df_hourly['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
 
-Baseline_df_hourly.to_csv('Baseline_df_hourly.csv') #You know the drill
-
+#Baseline_df_hourly.to_csv('Baseline_df_hourly.csv') #You know the drill
 
 #Get weather data from Open Meteo #Todo: For future projects convert this into a function that just takes the start and end date as inputs. Maybe the variables too?
 
@@ -359,7 +364,7 @@ plt.figure(figsize=(10, 6))
 plt.scatter(monthly_balance_point_df['temperature_2m'], monthly_balance_point_df['Total Boiler NG Consumption (MBtu)'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Boiler NG Usage')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Heating_balance_point_NG.png')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Heating_balance_point_NG.png')
 plt.close()
 
 #Plotting Heating System kW consumption vs temp
@@ -367,7 +372,7 @@ plt.figure(figsize=(10, 6))
 plt.scatter(monthly_balance_point_df['temperature_2m'], monthly_balance_point_df['Heating System kW'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Heating System kW Usage')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Heating_balance_point_kW.png')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Heating_balance_point_kW.png')
 plt.close()
 
 #Cooling Balance Point
@@ -375,7 +380,7 @@ plt.figure(figsize=(10, 6))
 plt.scatter(monthly_balance_point_df['temperature_2m'], monthly_balance_point_df['Total CHW kW'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Total CHW kW')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Cooling_balance_point.png')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Cooling_balance_point.png')
 plt.close()
 
 balance_point_HDD = 65 #Todo update based on baseline data
@@ -399,6 +404,8 @@ columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 To
 
 # Drop rows where all the specified columns have NaN values
 Baseline_df_hourly= Baseline_df_hourly.dropna(subset=columns_to_check, how='all')
+Baseline_df_hourly.index = pd.to_datetime(Baseline_df_hourly.index)
+Baseline_df_hourly = Baseline_df_hourly[(Baseline_df_hourly.index>= start_check) & (Baseline_df_hourly.index <=end_check)]
 
 #Baseline_df_hourly.to_csv('Baseline_df_hourly.csv')
 
