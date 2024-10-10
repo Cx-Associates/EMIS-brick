@@ -50,15 +50,12 @@ end = today.replace(day=3) #Setting it a bit ahead because not seeing complete d
 end_rep = a_month_ago.replace(day=last_day_of_prev_month)
 end_rep = str(end_rep)
 end_check = datetime(a_month_ago.year, a_month_ago.month, last_day_of_prev_month, 23, 0, 0)
-#print("Today's date is: ", today) #Uncomment for troubleshooting
 start = str(start)
 end = str(end) #Start and end dates need to be strings
 
-#Create datetime varibales to drop unnecessary rows #Todo: Need to check why this datetime doesn't match ACE Data Index
+#Create datetime varibales to drop unnecessary rows
 start_check = pd.to_datetime(start).tz_localize(timezone)
 end_check = pd.to_datetime(end_check).tz_localize(timezone)
-
-#Looks like ACE api doesn't include the last day specified so will need to set end date a day later as such -DONE
 
 ACE_data = pd.DataFrame() #Defining empty dataframe into which BMS data will be pulled into from ACE API
 
@@ -193,8 +190,7 @@ with open(env_filepath, 'r') as file:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
 
-#ACE_data = ACE_data[(ACE_data.index>= start_check) & (ACE_data.index <=end_check)] #Todo: Get this to work and add to weather data too. For some reason it doesn't recognize the ACE index as a datetime object
-ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
+#ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
@@ -211,7 +207,7 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 
 ##HEATING SYSTEM CALCS
 #Create system level dataframes #Todo: For future projects, will be good to create system level functions which will take in equipments as input and use that to calculate system level energy consumption
-Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']]#Always use double [] brackets for picking the data you need
+Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']] #Always use double [] brackets for picking the data you need
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
 #Calculating kW from BMS information #Todo: For a future project try to get rid of the warning:  value is trying to be set on a copy of a slice from a DataFrame.
@@ -291,7 +287,7 @@ Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW
 
 #Report_df.to_csv('Report_df_15min.csv')
 Report_df_hourly = Report_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
-Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill #Todo: Comment this out before push
+#Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill
 
 ##Normalization
 balance_point_HDD = 65 #These base temp will be calculated once we have enough data to establish a baseline/balance point. These values are taken from AHSRAE recommendation: https://www.ashrae.org/File%20Library/Technical%20Resources/Building%20Energy%20Quotient/User-Tip-5_May2019.pdf
@@ -299,12 +295,12 @@ balance_point_CDD = 65
 
 #Get weather data from Open Meteo #Todo: For future projects convert this into a function that just takes the start and end date as inputs. Probably the variables too?
 
-# Setup the Open-Meteo API client with cache and retry on error.
+#Setup the Open-Meteo API client with cache and retry on error.
 cache_session = requests_cache.CachedSession('.cache', expire_after=3600) #Caching prevents the need for multiple API calls which is important since open meteo has a fixed number of free API calls
 retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
 
-# Define the parameters as variables
+#Define the parameters as variables
 latitude = 44.48
 longitude = -73.21
 hourly_variables = ["temperature_2m", "dew_point_2m", "precipitation", "weather_code"]
@@ -313,7 +309,7 @@ timezone = "America/New_York"
 start_date = start
 end_date = end_rep
 
-# Parameters dictionary using variables
+#Parameters dictionary using variables
 params = {
     "latitude": latitude,
     "longitude": longitude,
@@ -324,7 +320,7 @@ params = {
     "end_date": end_date
 }
 
-# Make the API request
+#Make the API request
 responses = openmeteo.weather_api(url="https://api.open-meteo.com/v1/forecast", params=params)
 
 # Process the first location. Add a loop if needed for multiple locations or weather models
@@ -333,14 +329,14 @@ print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
 print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
 print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
-# Process hourly data. Ensure the order of variables matches the request
+#Process hourly data. Ensure the order of variables matches the request
 hourly = response.Hourly()
 hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
 hourly_dew_point_2m = hourly.Variables(1).ValuesAsNumpy()
 hourly_precipitation = hourly.Variables(2).ValuesAsNumpy()
 hourly_weather_code = hourly.Variables(3).ValuesAsNumpy()
 
-# Prepare hourly data with date range and assign the values
+#Prepare hourly data with date range and assign the values
 hourly_data = {
     "date": pd.date_range(
         start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
@@ -354,19 +350,19 @@ hourly_data = {
     "weather_code": hourly_weather_code
 }
 
-# Create a DataFrame from the hourly data
+#Create a DataFrame from the hourly data
 hourly_weather_dataframe = pd.DataFrame(data=hourly_data)
 #hourly_weather_dataframe = hourly_weather_dataframe[(hourly_weather_dataframe.index>=start_check) & (hourly_weather_dataframe.index<=end_check)]
 
-# Calculate HDD (when temperature is below balance_point_HDD)
+#Calculate HDD (when temperature is below balance_point_HDD)
 hourly_weather_dataframe['HDD'] = hourly_weather_dataframe['temperature_2m'].apply(
     lambda temp: abs(temp - balance_point_HDD) if temp < balance_point_HDD else 0)
 
-# Calculate CDD (when temperature is above balance_point_CDD)
+#Calculate CDD (when temperature is above balance_point_CDD)
 hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].apply(
     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
 
-# Output the DataFrame
+#Output the DataFrame
 hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv") #Todo: Comment this out before push
 
 #Calculate the daily total HDD and CDD for each hours #Todo: Needs to be removed possibly
@@ -374,7 +370,7 @@ hourly_weather_df = hourly_weather_dataframe.drop(['dew_point_2m', 'precipitatio
 hourly_weather_df['date'] = pd.to_datetime(hourly_weather_df['date']) #todo: Add timezone, and that might fix it? #Date from open meteo is a RangeIndex and resample only works on DatetimeIndex, TimedeltaIndex, or PeriodIndex. The dt.date drops the time component otherwise resampling was not working properly.
 hourly_weather_df.set_index('date', inplace=True)#Setting the date as index
 hourly_weather_df.index = hourly_weather_df.index.tz_convert('US/Eastern')
-hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
+#hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
 
 #Create the final dataframe which will be used for graphing
 Report_df_final = pd.merge(Report_df_hourly, hourly_weather_df, how='outer', left_index=True, right_index=True)
@@ -385,9 +381,11 @@ Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'] = Report_df_fi
 columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 Total kW (Correlated)',
                     'HRU Total kW (Correlated)', 'Total CHW kW']
 
-# Drop rows where all the specified columns have NaN values
+#Drop rows where all the specified columns have NaN values
 Report_df_final= Report_df_final.dropna(subset=columns_to_check, how='all')
 Report_df_final.index = pd.to_datetime(Report_df_final.index)
+
+#Check to make sure data is just within the reporting period
 Report_df_final = Report_df_final[(Report_df_final.index>= start_check) & (Report_df_final.index <=end_check)]
 
 #Report_df_final.to_csv(f"Report_df_final_{end}.csv")
@@ -397,8 +395,8 @@ main_folder = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\reports"
 subfolder_name = f"Progress Report_{end_rep}"
 subfolder_path = os.path.join(main_folder, subfolder_name)
 os.makedirs(subfolder_path, exist_ok=True) # Create the subfolder if it doesn't exist
-file_path = os.path.join(subfolder_path, f"Report_df_final_{end}.csv")
-Report_df_final.to_csv(file_path)
+file_path = os.path.join(subfolder_path, f"Report_df_final_{end_rep}.csv")
+#Report_df_final.to_csv(file_path)
 
 #Total energy calculations
 Total_energy_MMBtu = round(
