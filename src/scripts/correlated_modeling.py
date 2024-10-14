@@ -408,8 +408,7 @@ Total_energy_MMBtu = round(
 
 total_energy_system_level = pd.DataFrame({
     'Heating Plant': [Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum()],
-    'AHU 19': [Report_df_final['AHU 19 Total kW (Correlated)'].sum() * 0.003412],
-    'HRU': [Report_df_final['HRU Total kW (Correlated)'].sum() * 0.003412],
+    'Ventilation': [(Report_df_final['AHU 19 Total kW (Correlated)'].sum() + Report_df_final['HRU Total kW (Correlated)'].sum()) * 0.003412],
     'Chilled Water System': [Report_df_final['Total CHW kW'].sum() * 0.003412]
 })
 
