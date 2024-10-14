@@ -35,9 +35,9 @@ plt.close()
 
 #Adding Equipment Level Data
 plt.figure(figsize=(10, 6))
-plt.plot(hourly_avg_df.index, hourly_avg_df['Total Boiler NG Consumption (MMBtu)'], marker='o', linestyle='-', color='b', label = 'Boiler NG Consumption (MMBtu)')
+plt.plot(hourly_avg_df.index, hourly_avg_df['Total Boiler NG Consumption (MMBtu)'], marker='o', linestyle='-', color='steelblue', label = 'Boiler NG Consumption (MMBtu)')
 plt.plot(hourly_avg_df.index, hourly_avg_df['Pump 4a kW (Correlated)'], marker='v', linestyle='-', color='g', label = 'Pump 4a (kW)')
-plt.plot(hourly_avg_df.index, hourly_avg_df['Pump 4b kW (Correlated)'], marker='^', linestyle='-', color='c', label = 'Pump 4b (kW)')
+plt.plot(hourly_avg_df.index, hourly_avg_df['Pump 4b kW (Correlated)'], marker='^', linestyle='-', color='peru', label = 'Pump 4b (kW)')
 plt.title('Heating Plant Equipment Energy Consumption', fontsize = 16, pad=20)
 plt.xlabel('Hour of the Day', fontsize = 14, labelpad=15)
 plt.ylabel('Energy Consumption', fontsize = 14, labelpad=15)
