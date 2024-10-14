@@ -156,7 +156,7 @@ for i, (month, value) in enumerate(zip(months, energy_values)):
     #Add the label with energy consumption value, placing it just outside the boundary of the graph
     ax.text(max_energy_value + 230, i, f'{value} MMBtu', va='center', ha='left', color='black', fontsize=18)
 ax.set_yticks(np.arange(len(months)))
-ax.set_yticklabels(months, fontsize=14)
+ax.set_yticklabels(months, fontsize=18)
 ax.set_xlim([0, max_energy_value + 200])  # Add a buffer for the label space
 ax.set_ylim([-0.5, len(months) - 0.5])  # Adjust for the number of months
 ax.set_xlabel('Energy Consumption (MMBtu)', fontsize=14, labelpad=15)
