@@ -391,19 +391,19 @@ Report_df_final = Report_df_final[(Report_df_final.index>= start_check) & (Repor
 #Report_df_final.to_csv(f"Report_df_final_{end}.csv")
 
 ##Write the final dataframe to the F drive
-main_folder = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\reports"
+main_folder = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\Monthly Reports"
 subfolder_name = f"Progress Report_{end_rep}"
 subfolder_path = os.path.join(main_folder, subfolder_name)
 os.makedirs(subfolder_path, exist_ok=True) # Create the subfolder if it doesn't exist
 file_path = os.path.join(subfolder_path, f"Report_df_final_{end_rep}.csv")
-#Report_df_final.to_csv(file_path)
+Report_df_final.to_csv(file_path)
 
 #Total energy calculations
-Total_energy_MMBtu = round(
+Total_energy_MMBtu = round((
         Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum() +
         (Report_df_final['AHU 19 Total kW (Correlated)'].sum()* 0.003412) +
         (Report_df_final['HRU Total kW (Correlated)'].sum()* 0.003412) +
-        (Report_df_final['Total CHW kW'].sum()* 0.003412)
+        (Report_df_final['Total CHW kW'].sum()* 0.003412)), 2
 )
 
 total_energy_system_level = pd.DataFrame({
@@ -411,6 +411,9 @@ total_energy_system_level = pd.DataFrame({
     'Chilled Water System': [Report_df_final['Total CHW kW'].sum() * 0.003412],
     'Heating Plant': [Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum()]
 })
+
+csv_file_path = os.path.join(subfolder_path, f'Total_energy_system_level_{end_rep}.csv')
+total_energy_system_level.to_csv(csv_file_path)
 
 #Write total energy into a csv file for historical data trend graph
 csv_file_path = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Total_Energy_MMBtu_History.csv"
