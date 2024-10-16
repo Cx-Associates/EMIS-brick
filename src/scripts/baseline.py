@@ -16,7 +16,7 @@ import calendar
 #Define baseline period
 timezone='US/Eastern'
 start = '2024-07-25'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, set start date a week earlier and end date a week later so that no data is missed. Unneeded data is being dropped later in the code.
-end = '2024-09-25'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined
+end = '2024-10-16'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined
 start_check = '' #Start check and end check should be athe actual dates of baseline
 end_check = ''
 start_check = pd.to_datetime(start).tz_localize(timezone)
@@ -383,8 +383,11 @@ plt.ylabel('Total CHW kW')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Cooling_balance_point.png')
 plt.close()
 
+
+
+
 balance_point_HDD = 65 #Todo update based on baseline data
-balance_point_CDD = 65 #Todo update based on baseline data
+balance_point_CDD = 75 #Todo update based on baseline data
 
 #Calculate HDD and CDD
 
@@ -397,6 +400,27 @@ Baseline_df_hourly ['CDD'] = Baseline_df_hourly['temperature_2m'].apply(
     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
 
 Baseline_df_hourly['Total DD'] = Baseline_df_hourly[['HDD','CDD']].sum(axis=1, min_count=1)
+
+#Fun methods figure
+plt.scatter(Baseline_df_hourly['HDD'],Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)'])
+plt.xlabel('HDD')
+plt.ylabel('Heating System Energy Usage (MMbtu)')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HeatingModel.png')
+plt.close()
+
+plt.scatter(Baseline_df_hourly['CDD'],Baseline_df_hourly['Total CHW kW'])
+plt.xlabel('Cooling Degree Days')
+plt.ylabel('Cooling System Energy Usage (kWh)')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CoolingModel.png')
+plt.close()
+
+plt.scatter(Baseline_df_hourly['temperature_2m'],Baseline_df_hourly['Total CHW kW'])
+plt.xlabel('Temperature (F)')
+plt.ylabel('Cooling System Energy Usage (kWh)')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CoolingModel.png')
+plt.close()
+
+
 
 # List of columns to check for NaN values. Due to difference in how open meteo and ACE handle API requests, we get some additional rows where we have no ACE data which causes the regression to not work
 columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 Total kW (Correlated)',
