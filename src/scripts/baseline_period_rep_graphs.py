@@ -218,9 +218,9 @@ plt.close()
 
 #Write the report via tex
 tex_file_path = r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/Reporting/Draft_1.tex" #Paths for the .tex file and the subfolder for the report
-tex_copy_path = os.path.join(subfolder_path, 'Draft_1.tex')#.replace("\\", "/")
+tex_copy_path = os.path.join(subfolder_path, 'Draft_1.tex').replace("\\", "/")
 os.system(f'copy "{tex_file_path}" "{tex_copy_path}"') #Copy the .tex file into the report folder
-#os.chdir(subfolder_path.replace("\\", "/")) #Change the working directory to the subfolder
+os.chdir(subfolder_path.replace("\\", "/")) #Change the working directory to the subfolder
 try:
     subprocess.run(["lualatex", "Draft_1.tex"], check=True)  # Compile the copied .tex file
     print(f"Report successfully generated and saved in {subfolder_path}")
