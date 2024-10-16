@@ -426,7 +426,6 @@ ENDdate=endd.strftime("%B %d, %Y").upper()
 
 TeXfolderpath = subfolder_path.replace("\\", "/")
 
-
 with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Reporting\Output.tex','w') as tex_file:
     # Write the variable to the file
     tex_file.write(f"\\newcommand{{\\Figpath}}{{{TeXfolderpath}}}\n")
