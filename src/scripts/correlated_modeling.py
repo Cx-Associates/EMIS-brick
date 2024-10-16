@@ -403,7 +403,7 @@ Total_energy_MMBtu = round((
         Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum() +
         (Report_df_final['AHU 19 Total kW (Correlated)'].sum()* 0.003412) +
         (Report_df_final['HRU Total kW (Correlated)'].sum()* 0.003412) +
-        (Report_df_final['Total CHW kW'].sum()* 0.003412)), 2
+        (Report_df_final['Total CHW kW'].sum()* 0.003412)), 1
 )
 
 total_energy_system_level = pd.DataFrame({
@@ -444,7 +444,8 @@ ENDdate=endd.strftime("%B %d, %Y").upper()
 
 TeXfolderpath = subfolder_path.replace("\\", "/")
 
-with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Reporting\Output.tex','w') as tex_file:
+texoutput_file_path = os.path.join(subfolder_path, f'Output.tex')
+with open(texoutput_file_path,'w') as tex_file:
     # Write the variable to the file
     tex_file.write(f"\\newcommand{{\\Figpath}}{{{TeXfolderpath}}}\n")
     tex_file.write(f"\\newcommand{{\\Month}}{{{Month}}}\n")
