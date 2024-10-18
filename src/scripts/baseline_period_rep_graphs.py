@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import os
 import matplotlib.dates as mdates
-from correlated_modeling import Report_df_final, subfolder_path, end_rep, csv_file_path, energy_history_df, total_energy_system_level
+from correlated_modeling import Report_df_final, subfolder_path, Month, csv_file_path, energy_history_df, total_energy_system_level
 import subprocess
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -219,12 +219,12 @@ plt.close()
 
 #Write the report via tex
 tex_file_path = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Reporting\Draft_1.tex" #Paths for the .tex file and the subfolder for the report
-tex_copy_path = os.path.join(subfolder_path, 'Draft_1.tex').replace("\\", "/")
+tex_copy_path = os.path.join(subfolder_path, f'{Month} EMIS Report.tex').replace("\\", "/")
 shutil.copy(tex_file_path,tex_copy_path)
 
 os.chdir(subfolder_path.replace("\\", "/")) #Change the working directory to the subfolder
 try:
-    subprocess.run(["lualatex", "Draft_1.tex"], check=True)  # Compile the copied .tex file
+    subprocess.run(["lualatex", f"{Month} EMIS Report.tex"], check=True)  # Compile the copied .tex file
     print(f"Report successfully generated and saved in {subfolder_path}")
 except subprocess.CalledProcessError as e:
     print(f"Error during report generation: {e}")
