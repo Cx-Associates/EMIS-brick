@@ -20,6 +20,8 @@ from datetime import datetime
 #Import Correlation Parameters
 corr_path = "F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/RegressionParameters.csv"
 Corr_param_df = pd.DataFrame(pd.read_csv(corr_path))
+baseline_corr_path = r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/Baseline_Model_Regression_Parameters.csv"
+baseline_corr_df = pd.DataFrame(pd.read_csv(baseline_corr_path))
 
 def parse_response(response,columnname):
     """
@@ -429,6 +431,13 @@ energy_history_df.to_csv(csv_file_path, index=False)
 #Todo: Add normalization below
 
 #Normalizing the energy consumption
+total_energy_system_corr = pd.DataFrame({
+    'AHU19': [Report_df_final['AHU 19 Total kW (Correlated)'].sum()],
+    'HRU': [Report_df_final['HRU Total kW (Correlated)'].sum()],
+    'Chilled Water System': [Report_df_final['Total CHW kW'].sum()],
+    'Heating Plant': [Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum()]
+})
+
 
 
 #This outputs the necessary information for the reporting
