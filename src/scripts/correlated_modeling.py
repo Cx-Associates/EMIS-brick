@@ -23,6 +23,7 @@ Corr_param_df = pd.DataFrame(pd.read_csv(corr_path))
 baseline_corr_path = r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/Baseline_Model_Regression_Parameters.csv"
 baseline_corr_df = pd.DataFrame(pd.read_csv(baseline_corr_path))
 
+
 def parse_response(response,columnname):
     """
     :param response:
@@ -430,15 +431,18 @@ energy_history_df.to_csv(csv_file_path, index=False)
 #Todo: All normalization needs to be done based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
 #Todo: Add normalization below
 
-#Normalizing the energy consumption
-total_energy_system_corr = pd.DataFrame({
-    'AHU19': [Report_df_final['AHU 19 Total kW (Correlated)'].sum()],
-    'HRU': [Report_df_final['HRU Total kW (Correlated)'].sum()],
-    'Chilled Water System': [Report_df_final['Total CHW kW'].sum()],
-    'Heating Plant': [Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum()]
-})
-
-
+#Normalizing the energy consumption using baseline #Todo: Once baseline is established, graphs needs to be updated to display the expected (normalized) energy consumption and graphs need to be updated to add the black bars. All of the below calcs are not being utilized currently.
+# total_energy_system_corr = pd.DataFrame({
+#     'AHU19': [Report_df_final['AHU 19 Total kW (Correlated)'].sum()],
+#     'HRU': [Report_df_final['HRU Total kW (Correlated)'].sum()],
+#     'Chilled Water System': [Report_df_final['Total CHW kW'].sum()],
+#     'Heating Plant': [Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum()]
+# })
+#
+# total_energy_system_corr['Heating Plant (Normalized)'] = total_energy_system_corr['Heating Plant'] * baseline_corr_df['slope'][0] + baseline_corr_df['intercept'][0]
+# total_energy_system_corr['AHU19 (Normalized)'] = total_energy_system_corr['AHU19'] * baseline_corr_df['slope'][1] + baseline_corr_df['intercept'][1]
+# total_energy_system_corr['HRU (Normalized)'] = total_energy_system_corr['HRU'] * baseline_corr_df['slope'][2] + baseline_corr_df['intercept'][2]
+# total_energy_system_corr['Chilled Water System (Normalized)'] = total_energy_system_corr['Chilled Water System'] * baseline_corr_df['slope'][3] + baseline_corr_df['intercept'][3]
 
 #This outputs the necessary information for the reporting
 #Report Period Start Date
