@@ -383,9 +383,6 @@ plt.ylabel('Total CHW kW')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Cooling_balance_point.png')
 plt.close()
 
-
-
-
 balance_point_HDD = 65 #Todo update based on baseline data
 balance_point_CDD = 75 #Todo update based on baseline data
 
