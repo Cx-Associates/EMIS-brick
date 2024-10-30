@@ -133,7 +133,7 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
                         'AHU19SupplyFan', 'AHU19ReturnFan', 'Pump3a', 'Pump3b', "CTFan1", "CTFan2", "AHU19EF1", "AHU19EF2","AHU19SF", "AHU19HRW"], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10, 7.5, 7.5, 15, 15, 10, 10, 7.5, 0.1]}
 
 start = "2023-09-20"
-end = "2024-09-01"
+end = "2024-10-29"
 
 #Ace Data locations
 #Todo: make this a file you pull from instead of hard coded.
@@ -308,8 +308,6 @@ BAS_15min = BAS_data.resample(rule='15min').mean()
 #comine ace and Dent (MSL) data
 MSL_data = pd.merge(MSL_data, Ace_15min, left_index=True, right_index=True, how='outer')
 MSL_data = pd.merge(MSL_data, BAS_15min, left_index=True, right_index=True, how='outer')
-
-Pump2a=1
 
 #Correlation time!
 #and plots :-)
