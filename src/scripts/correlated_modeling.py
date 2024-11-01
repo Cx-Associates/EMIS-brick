@@ -45,15 +45,15 @@ env_filepath = os.path.join(f_drive_path, env_filename)
 timezone='US/Eastern'
 
 #Define reporting period
-today = date.today()
+today = datetime.today() #use this format if you need to force it a previous month datetime(2024,10,25)
 a_month_ago = today - relativedelta(months=1) #Setting monthly reporting period
 start = a_month_ago.replace(day=1) # Get the first day of the previous month
 last_day_of_prev_month = calendar.monthrange(a_month_ago.year, a_month_ago.month)[1] # Get the last day of the previous month
 end = today.replace(day=3) #Setting it a bit ahead because not seeing complete data from ACE api otherwise
-end_rep = a_month_ago.replace(day=last_day_of_prev_month)
+end_rep = a_month_ago.replace(day=last_day_of_prev_month).strftime('%Y-%m-%d')
 end_rep = str(end_rep)
 end_check = datetime(a_month_ago.year, a_month_ago.month, last_day_of_prev_month, 23, 0, 0)
-start = str(start)
+start = str(start.strftime('%Y-%m-%d'))
 end = str(end) #Start and end dates need to be strings
 
 #Create datetime varibales to drop unnecessary rows
@@ -289,7 +289,7 @@ Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
 #Report_df.to_csv('Report_df_15min.csv')
-Report_df_hourly = Report_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
+Report_df_hourly = Report_df.resample(rule='H').mean() #Resmpling and aggregating consumption hourly
 #Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill
 
 ##Normalization
