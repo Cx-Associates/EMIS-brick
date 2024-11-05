@@ -289,7 +289,7 @@ Report_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Report_df['Total CHW kW'] = Report_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
 #Report_df.to_csv('Report_df_15min.csv')
-Report_df_hourly = Report_df.resample(rule='H').mean() #Resmpling and aggregating consumption hourly
+Report_df_hourly = Report_df.resample(rule='H').mean() #Resmpling and aggregating consumption hourly. After this step all electric values are essentially kWh since we get the kW consumed during that hour.
 #Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill
 
 ##Normalization
@@ -427,6 +427,12 @@ energy_history_df = pd.read_csv(csv_file_path)
 if not ((energy_history_df['Month-Year'] == month_year).any()): #If the month-year is not in the dataframe, append the new row
     energy_history_df = pd.concat([energy_history_df, new_data], ignore_index=True)
 energy_history_df.to_csv(csv_file_path, index=False)
+
+##Calculate NG Usage in CCF and Electricity in kWh
+NG_Usage_CCF = Report_df_final['Total Boiler NG Consumption (MMBtu)'].sum() * 0.1026 #https://portfoliomanager.energystar.gov/pdf/reference/Thermal%20Conversions.pdf
+Electricty_Usage_kWh = Report_df_final['Heating System kW'].sum() + Report_df_final['Total CHW kW'].sum() + Report_df_final['AHU 19 Total kW (Correlated)'].sum() + Report_df_final['HRU Total kW (Correlated)'].sum()
+print(NG_Usage_CCF)
+print(Electricty_Usage_kWh)
 
 #Todo: All normalization needs to be done based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
 #Todo: Add normalization below
