@@ -402,12 +402,12 @@ file_path = os.path.join(subfolder_path, f"Report_df_final_{end_rep}.csv")
 Report_df_final.to_csv(file_path)
 
 #Total energy calculations
-Total_energy_MMBtu = round((
+Total_energy_MMBtu = format(round((
         Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum() +
         (Report_df_final['AHU 19 Total kW (Correlated)'].sum()* 0.003412) +
         (Report_df_final['HRU Total kW (Correlated)'].sum()* 0.003412) +
         (Report_df_final['Total CHW kW'].sum()* 0.003412)), 1
-)
+),",")
 
 total_energy_system_level = pd.DataFrame({
     'Ventilation': [(Report_df_final['AHU 19 Total kW (Correlated)'].sum() + Report_df_final['HRU Total kW (Correlated)'].sum()) * 0.003412],
@@ -429,10 +429,10 @@ if not ((energy_history_df['Month-Year'] == month_year).any()): #If the month-ye
 energy_history_df.to_csv(csv_file_path, index=False)
 
 ##Calculate NG Usage in CCF and Electricity in kWh
-NG_Usage_CCF = Report_df_final['Total Boiler NG Consumption (MMBtu)'].sum() * 0.1026 #https://portfoliomanager.energystar.gov/pdf/reference/Thermal%20Conversions.pdf
-Electricty_Usage_kWh = Report_df_final['Heating System kW'].sum() + Report_df_final['Total CHW kW'].sum() + Report_df_final['AHU 19 Total kW (Correlated)'].sum() + Report_df_final['HRU Total kW (Correlated)'].sum()
-print(NG_Usage_CCF)
-print(Electricty_Usage_kWh)
+NG_Usage_CCF = format(round(Report_df_final['Total Boiler NG Consumption (MMBtu)'].sum() * 0.1026 ,2),",") #https://portfoliomanager.energystar.gov/pdf/reference/Thermal%20Conversions.pdf
+Electricty_Usage_kWh = format(round(Report_df_final['Heating System kW'].sum() + Report_df_final['Total CHW kW'].sum() + Report_df_final['AHU 19 Total kW (Correlated)'].sum() + Report_df_final['HRU Total kW (Correlated)'].sum()),",")
+#print(NG_Usage_CCF)
+#print(Electricty_Usage_kWh)
 
 #Todo: All normalization needs to be done based on today's (09/25/24) discussion between RH and LB. We first establish a baseline equaltion so first step is determiniing a balance point, second is use the balance point to calculate HDD and CDD, the fit  a trendline for the baseline case, our predicted actual energy consumption will be using this equation with the actual DD. We will also plot the "actual" energy consumption.
 #Todo: Add normalization below
@@ -473,3 +473,5 @@ with open(texoutput_file_path,'w') as tex_file:
     tex_file.write(f"\\newcommand{{\\EndDate}}{{{enddateformated}}}\n")
     tex_file.write(f"\\newcommand{{\\EndDateCap}}{{{ENDdate}}}\n")
     tex_file.write(f"\\newcommand{{\\TotalEnergy}}{{{Total_energy_MMBtu}}}\n")
+    tex_file.write(f"\\newcommand{{\\TotalCCF}}{{{NG_Usage_CCF}}}\n")
+    tex_file.write(f"\\newcommand{{\\TotalElectricity}}{{{Electricty_Usage_kWh}}}\n")
