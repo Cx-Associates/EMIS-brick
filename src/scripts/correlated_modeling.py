@@ -429,7 +429,7 @@ if not ((energy_history_df['Month-Year'] == month_year).any()): #If the month-ye
 energy_history_df.to_csv(csv_file_path, index=False)
 
 ##Calculate NG Usage in CCF and Electricity in kWh
-NG_Usage_CCF = format(round(Report_df_final['Total Boiler NG Consumption (MMBtu)'].sum() * 0.1026 ,2),",") #https://portfoliomanager.energystar.gov/pdf/reference/Thermal%20Conversions.pdf
+NG_Usage_CCF = format(round(Report_df_final['Total Boiler NG Consumption (MMBtu)'].sum() / .1026),",") #https://portfoliomanager.energystar.gov/pdf/reference/Thermal%20Conversions.pdf
 Electricty_Usage_kWh = format(round(Report_df_final['Heating System kW'].sum() + Report_df_final['Total CHW kW'].sum() + Report_df_final['AHU 19 Total kW (Correlated)'].sum() + Report_df_final['HRU Total kW (Correlated)'].sum()),",")
 #print(NG_Usage_CCF)
 #print(Electricty_Usage_kWh)
