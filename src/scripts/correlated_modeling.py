@@ -193,7 +193,13 @@ with open(env_filepath, 'r') as file:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
 
-#ACE_data.to_csv('ACE_Data_5.csv') #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
+#Create folder to store data and report
+main_folder = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\Monthly Reports"
+subfolder_name = f"Progress Report_{end_rep}"
+subfolder_path = os.path.join(main_folder, subfolder_name)
+os.makedirs(subfolder_path, exist_ok=True) # Create the subfolder if it doesn't exist
+ACE_data_file_path = os.path.join(subfolder_path, f'ACE_Data_5min_{end_rep}.csv')
+ACE_data.to_csv(ACE_data_file_path) #Uncomment this out when the start and end dates have changed or any change in data is expected. This will write over the existing file.
 
 #Pump/fan nameplates
 Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b', 'HRUSupplyFan', 'HRUReturnFan',
@@ -394,10 +400,6 @@ Report_df_final = Report_df_final[(Report_df_final.index>= start_check) & (Repor
 #Report_df_final.to_csv(f"Report_df_final_{end}.csv")
 
 ##Write the final dataframe to the F drive
-main_folder = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\Monthly Reports"
-subfolder_name = f"Progress Report_{end_rep}"
-subfolder_path = os.path.join(main_folder, subfolder_name)
-os.makedirs(subfolder_path, exist_ok=True) # Create the subfolder if it doesn't exist
 file_path = os.path.join(subfolder_path, f"Report_df_final_{end_rep}.csv")
 Report_df_final.to_csv(file_path)
 
