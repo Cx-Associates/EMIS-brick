@@ -58,7 +58,8 @@ def get_hp(equipment_name, data):
 dentdatapath=[r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876C-01.csv",
               r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876D-01.csv",
               r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-01-05/raw data/E876F-01_timeedits.csv",
-              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/XC1409243-01_CT_timeedits.csv"]
+              r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/data/Dent data pull, 2024-08-20/XC1409243-01_CT_timeedits.csv",
+              r"F:/PROJECTS\1715 Main Street Landing EMIS Pilot/data/Dent data pull 2024-12-11/E876D-01_241211.csv"]
 
 #Ace gateway data is missing between "2024-04-24 22:10:00-04:00" and "2024-07-15 14:15:00-04:00" (additional points were added a few days later so some points missing here and there)
 
@@ -133,7 +134,7 @@ Nameplate= {'Equipt':['Pump1a', 'Pump1b', 'Pump2a', 'Pump2b', 'Pump4a', 'Pump4b'
                         'AHU19SupplyFan', 'AHU19ReturnFan', 'Pump3a', 'Pump3b', "CTFan1", "CTFan2", "AHU19EF1", "AHU19EF2","AHU19SF", "AHU19HRW"], 'hp':[20, 15, 25, 25, 7.5, 7.5, 10, 10, 7.5, 10, 7.5, 7.5, 15, 15, 10, 10, 7.5, 0.1]}
 
 start = "2023-09-20"
-end = "2024-10-29"
+end = "2024-12-12"
 
 #Ace Data locations
 #Todo: make this a file you pull from instead of hard coded.
@@ -280,12 +281,15 @@ MSL_data['Avg. kW HRU'] = (MSL_data['Avg. VoltL1 HRU']*MSL_data['Avg. AmpL1 HRU'
 MSL_data['Avg. kW AHU9'] = MSL_data['Avg. Volt AHU9']*MSL_data['Avg. Amp AHU9']*3**.5*PF/1000
 MSL_data['Avg. kW CT1'] = (MSL_data['Avg. Volt L1 CT1']*MSL_data['Avg. Amp L1 CT1']*3**.5*PF/1000 +MSL_data['Avg. Volt L3 CT1']*MSL_data['Avg. Amp L3 CT1']*3**.5*PF/1000)/2
 MSL_data['Avg. kW CT2'] = MSL_data['Avg. Volt L2 CT2']*MSL_data['Avg. Amp L2 CT2']*3**.5*PF/1000
+MSL_data['Avg. kW Pump 1b'] = MSL_data['Avg. Volt Pump 1a_B']*MSL_data['Avg. Amp Pump 1a_B']*3**.5*PF/1000
+MSL_data['Avg. kW Pump 1a'] = (MSL_data['Avg. Volt Pump 1b_A']*MSL_data['Avg. Amp Pump 1b_A']*3**.5*PF/1000+MSL_data['Avg. Volt Pump 1b_B']*MSL_data['Avg. Amp Pump 1b_B']*3**.5*PF/1000)/2
 
 #Calculate expected power from AceData
 #=pump nameplate HP *0.745699872*%pump speed^2.5
 Ace_data['Ace kW Pump 4a']=get_hp('Pump4a',Nameplate)*0.745699872*(Ace_data['Pump 4a VFD Output']/100)**2.5*Ace_data['Pump 4a s/s']
 Ace_data['Ace kW Pump 4b']=get_hp('Pump4b',Nameplate)*0.745699872*(Ace_data['Pump 4b VFD Output']/100)**2.5*Ace_data['Pump 4b s/s']
 Ace_data['Ace kW Pump 1a']=get_hp('Pump1a',Nameplate)*0.745699872*(Ace_data['Pump 1a feedback']/100)**2.5 #todo: change this to command!! once we have data!
+Ace_data['Ace kW Pump 1b']=get_hp('Pump1b',Nameplate)*0.745699872*(Ace_data['Pump 1b feedback']/100)**2.5
 Ace_data['Ace kW Pump 2b']=get_hp('Pump2b',Nameplate)*0.745699872*(Ace_data['pump2b']/100)**2.5
 Ace_data['Ace kW Pump 2a']=(get_hp('Pump2a',Nameplate)*0.745699872*(Ace_data['pump2a']/100)**2.5) #todo: figure out what is happening with HRU exhaust fan data!
 Ace_data['HRU kW'] = get_hp('HRUSupplyFan', Nameplate)*0.745699872*(Ace_data['HRU supply fan VFD output']/100)**2.5 #+ get_hp('HRUReturnFan', Nameplate)*0.745699872*(Ace_data['HRU Exhaust fan VFD output']/100)**2.5
@@ -344,6 +348,38 @@ plt.ylabel('Dent kW')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump2bCorrelation.png')
 plt.close()
 
+#just Pump 1b data
+Pump1b = pd.merge(MSL_data['Ace kW Pump 1b'],MSL_data['Avg. kW Pump 1b'],left_index=True, right_index=True, how='outer')
+Pump1b=Pump1b.dropna() #drop nans from this set
+
+P1bmodel = LinearRegression().fit(np.array(Pump1b['Ace kW Pump 1b']).reshape((-1,1)), np.array(Pump1b['Avg. kW Pump 1b']).reshape((-1,1)))
+x=np.array([min(Pump1b['Ace kW Pump 1b']), max(Pump1b['Ace kW Pump 1b'])])
+y=np.array(x*P1bmodel.coef_+P1bmodel.intercept_)
+y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
+
+plt.plot(Pump1b['Ace kW Pump 1b'], Pump1b['Avg. kW Pump 1b'])
+plt.plot(x,y, linestyle='solid',color="black",)
+plt.xlabel('BAS kW estimate')
+plt.ylabel('Dent kW')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1bCorrelation.png')
+plt.close()
+
+#just Pump 1a data
+Pump1a = pd.merge(MSL_data['Ace kW Pump 1a'],MSL_data['Avg. kW Pump 1a'],left_index=True, right_index=True, how='outer')
+Pump1a=Pump1a.dropna() #drop nans from this set
+
+P1amodel = LinearRegression().fit(np.array(Pump1b['Ace kW Pump 1a']).reshape((-1,1)), np.array(Pump1b['Avg. kW Pump 1a']).reshape((-1,1)))
+x=np.array([min(Pump1b['Ace kW Pump 1a']), max(Pump1b['Ace kW Pump 1a'])])
+y=np.array(x*P1amodel.coef_+P1amodel.intercept_)
+y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
+
+plt.plot(Pump1a['Ace kW Pump 1a'], Pump1a['Avg. kW Pump 1a'])
+plt.plot(x,y, linestyle='solid',color="black",)
+plt.xlabel('BAS kW estimate')
+plt.ylabel('Dent kW')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1aCorrelation.png')
+plt.close()
+
 #just Pump 4a data
 Pump4a = pd.merge(MSL_data['Ace kW Pump 4a'],MSL_data['Avg. kW Pump 4a'],left_index=True, right_index=True, how='outer')
 Pump4a=Pump4a.dropna() #drop nans from this set
@@ -380,23 +416,6 @@ plt.xlabel('BAS kW estimate')
 plt.ylabel('Dent kW for Pump 4b')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump4bCorrelation.png')
 plt.close()
-
-# #just Pump 1a data
-# Pump1a = pd.merge(MSL_data['Ace kW Pump 1a'],MSL_data['Avg. kW Pump 1a'],left_index=True, right_index=True, how='outer')
-# Pump1a=Pump1a.dropna() #drop nans from this set
-#
-# P1amodel = LinearRegression()
-# P1amodel = LinearRegression().fit(np.array(Pump1a['Ace kW Pump 1a']).reshape((-1,1)), np.array(Pump1a['Avg. kW Pump 1a']).reshape((-1,1)))
-# x=np.array([min(Pump1a['Ace kW Pump 1a']), max(Pump1a['Ace kW Pump 1a'])])
-# y=np.array(x*P1amodel.coef_+P1amodel.intercept_)
-# y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
-#
-# plt.plot(Pump1a['Ace kW Pump 1a'], Pump1a['Avg. kW Pump 1a'])
-# plt.plot(x,y, linestyle='solid',color="black",)
-# plt.xlabel('BAS kW estimate')
-# plt.ylabel('Dent kW for Pump 1')
-# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Pump1Correlation.png')
-# plt.close()
 
 #just AHU19 data
 AHU19 = pd.merge(MSL_data['BAS kW AHU19'],MSL_data['Avg. kW AHU19'],left_index=True, right_index=True, how='outer')
@@ -531,7 +550,7 @@ plt.close()
 #Format: Equipment name, slope, intercept, rsquared
 
 # #Save in a .csv
-with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParameters.csv', 'w', newline='') as file:
+with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParameters_2.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Equipment name', 'slope', 'intercept', 'rsquared'])
     writer.writerow(['Pump4a',float(P4amodel.coef_),float(P4amodel.intercept_),P4amodel.score(np.array(Pump4a['Ace kW Pump 4a']).reshape((-1,1)),
@@ -550,3 +569,7 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\RegressionParam
                                                               np.array(CT1['Avg. kW CT1']).reshape((-1, 1)))])
     writer.writerow(['CoolingTower2', float(CT2model.coef_), float(CT2model.intercept_), CT2model.score(np.array(CT2['BAS kW CT2']).reshape((-1, 1)),
                                                              np.array(CT2['Avg. kW CT2']).reshape((-1, 1)))])
+    writer.writerow(['Pump1a', float(P1amodel.coef_), float(P1amodel.intercept_), P1amodel.score(np.array(Pump1a['Ace kW Pump 1a']).reshape((-1, 1)),
+                                    np.array(Pump1a['Avg. kW Pump 1a']).reshape((-1, 1)))])
+    writer.writerow(['PUmp1b', float(P1bmodel.coef_), float(P1bmodel.intercept_), P1bmodel.score(np.array(Pump1b['Ace kW Pump 1b']).reshape((-1, 1)),
+                                    np.array(Pump1b['Avg. kW Pump 1b']).reshape((-1, 1)))])
