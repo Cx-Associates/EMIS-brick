@@ -45,9 +45,9 @@ plt.ylabel('Energy Consumption', fontsize = 14, labelpad=15)
 plt.xticks(rotation=45, fontsize = 12)# Rotate x-axis labels for better readability
 plt.yticks(fontsize=12)
 plt.grid(True)
-plt.tight_layout()  # Adjust layout to prevent overlapping of labels
+plt.tight_layout()
+plt.legend(loc='upper right', bbox_to_anchor=(1, 1.05))  # Place legend outside
 plt.subplots_adjust(top=0.88)
-plt.legend(loc='upper right', bbox_to_anchor=(1, 1))  # Adjust location if needed
 graph_path = os.path.join(subfolder_path, f"HeatingSystemEquipment.png")
 plt.savefig(graph_path)
 plt.close()
@@ -167,6 +167,7 @@ energy_history_df.dropna(subset=["Month-Year", "Total Energy (MMBtu)"], inplace=
 months = energy_history_df["Month-Year"]
 energy_values = energy_history_df["Total Energy (MMBtu)"]
 fig, ax = plt.subplots(figsize=(12, len(months)*2))
+energy_values = pd.to_numeric(energy_values, errors='coerce')
 max_energy_value = energy_values.max()
 #Create the gradient background
 gradient = np.linspace(0, 1, int(max_energy_value) + 200).reshape(1, -1)
