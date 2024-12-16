@@ -368,8 +368,8 @@ plt.close()
 Pump1a = pd.merge(MSL_data['Ace kW Pump 1a'],MSL_data['Avg. kW Pump 1a'],left_index=True, right_index=True, how='outer')
 Pump1a=Pump1a.dropna() #drop nans from this set
 
-P1amodel = LinearRegression().fit(np.array(Pump1b['Ace kW Pump 1a']).reshape((-1,1)), np.array(Pump1b['Avg. kW Pump 1a']).reshape((-1,1)))
-x=np.array([min(Pump1b['Ace kW Pump 1a']), max(Pump1b['Ace kW Pump 1a'])])
+P1amodel = LinearRegression().fit(np.array(Pump1a['Ace kW Pump 1a']).reshape((-1,1)), np.array(Pump1a['Avg. kW Pump 1a']).reshape((-1,1)))
+x=np.array([min(Pump1a['Ace kW Pump 1a']), max(Pump1a['Ace kW Pump 1a'])])
 y=np.array(x*P1amodel.coef_+P1amodel.intercept_)
 y=[yf for ys in y for yf in ys] #For some reason you have to 'flatten' this - just do it.
 
