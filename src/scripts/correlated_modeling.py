@@ -20,8 +20,8 @@ from datetime import datetime
 #Import Correlation Parameters
 corr_path = "F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/RegressionParameters.csv"
 Corr_param_df = pd.DataFrame(pd.read_csv(corr_path))
-baseline_corr_path = r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/Baseline_Model_Regression_Parameters.csv"
-baseline_corr_df = pd.DataFrame(pd.read_csv(baseline_corr_path))
+#baseline_corr_path = r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/Baseline_Model_Regression_Parameters.csv"
+#baseline_corr_df = pd.DataFrame(pd.read_csv(baseline_corr_path))
 
 
 def parse_response(response,columnname):
