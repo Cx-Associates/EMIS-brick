@@ -15,8 +15,8 @@ import calendar
 
 #Define baseline period
 timezone='US/Eastern'
-start = '2024-07-25'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, set start date a week earlier and end date a week later so that no data is missed. Unneeded data is being dropped later in the code.
-end = '2024-10-16'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined
+start = '2024-10-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
+end = '2025-02-07'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined
 start_check = '' #Start check and end check should be athe actual dates of baseline
 end_check = ''
 start_check = pd.to_datetime(start).tz_localize(timezone)
@@ -285,7 +285,7 @@ Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)'] = Baseline_
 #Get weather data from Open Meteo #Todo: For future projects convert this into a function that just takes the start and end date as inputs. Maybe the variables too?
 
 # Setup the Open-Meteo API client with cache and retry on error.
-cache_session = requests_cache.CachedSession('.cache', expire_after=3600) #Caching prevents the need for multiple API calls which is important since open meteo has a fixed number of free API calls
+cache_session = requests_cache.CachedSession('.cache', expire_after=-1) #Caching prevents the need for multiple API calls which is important since open meteo has a fixed number of free API calls
 retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
 
@@ -310,7 +310,7 @@ params = {
 }
 
 # Make the API request
-responses = openmeteo.weather_api(url="https://api.open-meteo.com/v1/forecast", params=params)
+responses = openmeteo.weather_api(url="https://archive-api.open-meteo.com/v1/archive", params=params)
 # Process the first location.
 response = responses[0]
 print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
@@ -351,17 +351,17 @@ Baseline_df_hourly = pd.merge(Baseline_df_hourly, hourly_weather_df, how='outer'
 
 #Now to determine the balance point
 
-# Grouping by month
-monthly_balance_point_df = Baseline_df_hourly.resample('M')
-monthly_balance_point_df = monthly_balance_point_df.apply(lambda x: x.sum() if x.name != 'temperature_2m' else x.mean()) # Sum all columns except 'temperature_2m' which is being averaged
-#monthly_balance_point_df.to_csv('monthly_balance_point_df.csv')
+# Grouping by day
+daily_balance_point_df = Baseline_df_hourly.resample('D')
+daily_balance_point_df = daily_balance_point_df.apply(lambda x: x.sum() if x.name != 'temperature_2m' else x.mean()) # Sum all columns except 'temperature_2m' which is being averaged
+#daily_balance_point_df.to_csv('daily_balance_point_df.csv')
 
 ##Plotting to determine balance point
 
 #Heating Balance Point
 #Plotting NG consumption vs temp
 plt.figure(figsize=(10, 6))
-plt.scatter(monthly_balance_point_df['temperature_2m'], monthly_balance_point_df['Total Boiler NG Consumption (MBtu)'])
+plt.scatter(daily_balance_point_df['temperature_2m'], daily_balance_point_df['Total Boiler NG Consumption (MBtu)'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Boiler NG Usage')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Heating_balance_point_NG.png')
@@ -369,21 +369,21 @@ plt.close()
 
 #Plotting Heating System kW consumption vs temp
 plt.figure(figsize=(10, 6))
-plt.scatter(monthly_balance_point_df['temperature_2m'], monthly_balance_point_df['Heating System kW'])
+plt.scatter(daily_balance_point_df['temperature_2m'], daily_balance_point_df['Heating System kW'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Heating System kW Usage')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Heating_balance_point_kW.png')
 plt.close()
 
-#Cooling Balance Point
-plt.figure(figsize=(10, 6))
-plt.scatter(monthly_balance_point_df['temperature_2m'], monthly_balance_point_df['Total CHW kW'])
-plt.xlabel('Average Temperature (F)')
-plt.ylabel('Total CHW kW')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Cooling_balance_point.png')
-plt.close()
+#Cooling Balance Point #todo: uncomment it out when needed
+# plt.figure(figsize=(10, 6))
+# plt.scatter(monthly_balance_point_df['temperature_2m'], monthly_balance_point_df['Total CHW kW'])
+# plt.xlabel('Average Temperature (F)')
+# plt.ylabel('Total CHW kW')
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Cooling_balance_point.png')
+# plt.close()
 
-balance_point_HDD = 65 #Todo update based on baseline data
+balance_point_HDD = 50 #Todo Updated once, will need to be checked after
 balance_point_CDD = 75 #Todo update based on baseline data
 
 #Calculate HDD and CDD
@@ -405,18 +405,11 @@ plt.ylabel('Heating System Energy Usage (MMbtu)')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HeatingModel.png')
 plt.close()
 
-plt.scatter(Baseline_df_hourly['CDD'],Baseline_df_hourly['Total CHW kW'])
-plt.xlabel('Cooling Degree Days')
-plt.ylabel('Cooling System Energy Usage (kWh)')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CoolingModel.png')
-plt.close()
-
-plt.scatter(Baseline_df_hourly['temperature_2m'],Baseline_df_hourly['Total CHW kW'])
-plt.xlabel('Temperature (F)')
-plt.ylabel('Cooling System Energy Usage (kWh)')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CoolingModel.png')
-plt.close()
-
+# plt.scatter(Baseline_df_hourly['CDD'],Baseline_df_hourly['Total CHW kW']) #todo: uncomment this out when needed
+# plt.xlabel('Cooling Degree Days')
+# plt.ylabel('Cooling System Energy Usage (kWh)')
+# plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\CoolingModel.png')
+# plt.close()
 
 
 # List of columns to check for NaN values. Due to difference in how open meteo and ACE handle API requests, we get some additional rows where we have no ACE data which causes the regression to not work
@@ -438,20 +431,22 @@ Heating_model = LinearRegression().fit(
     Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)']
 )
 
-AHU19_model = LinearRegression().fit(
-    Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
-    Baseline_df_hourly['AHU 19 Total kW (Correlated)']
-)
+#todo: Uncomment when enough data is available
 
-HRU_model = LinearRegression().fit(
-    Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
-    Baseline_df_hourly['HRU Total kW (Correlated)']
-)
-
-CHW_model = LinearRegression().fit(
-    Baseline_df_hourly['CDD'].values.reshape(-1, 1),
-    Baseline_df_hourly['Total CHW kW']
-)
+# AHU19_model = LinearRegression().fit(
+#     Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
+#     Baseline_df_hourly['AHU 19 Total kW (Correlated)']
+# )
+#
+# HRU_model = LinearRegression().fit(
+#     Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
+#     Baseline_df_hourly['HRU Total kW (Correlated)']
+# )
+#
+# CHW_model = LinearRegression().fit(
+#     Baseline_df_hourly['CDD'].values.reshape(-1, 1),
+#     Baseline_df_hourly['Total CHW kW']
+# )
 
 # Save in a .csv
 with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Baseline_Model_Regression_Parameters.csv', 'w',
@@ -468,33 +463,33 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Baseline_Model_
             Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)']
         )
     ])
-
-    writer.writerow([
-        'AHU19_model',
-        float(AHU19_model.coef_),
-        float(AHU19_model.intercept_),
-        AHU19_model.score(
-            Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
-            Baseline_df_hourly['AHU 19 Total kW (Correlated)']
-        )
-    ])
-
-    writer.writerow([
-        'HRU_model',
-        float(HRU_model.coef_),
-        float(HRU_model.intercept_),
-        HRU_model.score(
-            Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
-            Baseline_df_hourly['HRU Total kW (Correlated)']
-        )
-    ])
-
-    writer.writerow([
-        'CHW_model',
-        float(CHW_model.coef_),
-        float(CHW_model.intercept_),
-        CHW_model.score(
-            Baseline_df_hourly['CDD'].values.reshape(-1, 1),
-            Baseline_df_hourly['Total CHW kW']
-        )
-    ])
+    #
+    # writer.writerow([
+    #     'AHU19_model',
+    #     float(AHU19_model.coef_),
+    #     float(AHU19_model.intercept_),
+    #     AHU19_model.score(
+    #         Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
+    #         Baseline_df_hourly['AHU 19 Total kW (Correlated)']
+    #     )
+    # ])
+    #
+    # writer.writerow([
+    #     'HRU_model',
+    #     float(HRU_model.coef_),
+    #     float(HRU_model.intercept_),
+    #     HRU_model.score(
+    #         Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
+    #         Baseline_df_hourly['HRU Total kW (Correlated)']
+    #     )
+    # ])
+    #
+    # writer.writerow([
+    #     'CHW_model',
+    #     float(CHW_model.coef_),
+    #     float(CHW_model.intercept_),
+    #     CHW_model.score(
+    #         Baseline_df_hourly['CDD'].values.reshape(-1, 1),
+    #         Baseline_df_hourly['Total CHW kW']
+    #     )
+    # ])
