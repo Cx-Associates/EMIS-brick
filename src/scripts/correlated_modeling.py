@@ -20,8 +20,8 @@ from datetime import datetime
 #Import Correlation Parameters
 corr_path = "F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/RegressionParameters.csv"
 Corr_param_df = pd.DataFrame(pd.read_csv(corr_path))
-#baseline_corr_path = r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/Baseline_Model_Regression_Parameters.csv"
-#baseline_corr_df = pd.DataFrame(pd.read_csv(baseline_corr_path))
+baseline_corr_path = r"F:/PROJECTS/1715 Main Street Landing EMIS Pilot/code/Baseline_Model_Regression_Parameters.csv" #Contains just heating system baseline currently
+baseline_corr_df = pd.DataFrame(pd.read_csv(baseline_corr_path))
 
 
 def parse_response(response,columnname):
@@ -372,7 +372,7 @@ hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].app
     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
 
 #Output the DataFrame
-hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv") #Todo: Comment this out before push
+#hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv") #Todo: Comment this out before push
 
 #Calculate the daily total HDD and CDD for each hours #Todo: Needs to be removed possibly
 hourly_weather_df = hourly_weather_dataframe.drop(['dew_point_2m', 'precipitation', 'weather_code'], axis=1) #Dropping whatever variables are not going to be important
@@ -440,14 +440,16 @@ Electricty_Usage_kWh = format(round(Report_df_final['Heating System kW'].sum() +
 #Todo: Add normalization below
 
 #Normalizing the energy consumption using baseline #Todo: Once baseline is established, graphs needs to be updated to display the expected (normalized) energy consumption and graphs need to be updated to add the black bars. All of the below calcs are not being utilized currently.
-# total_energy_system_corr = pd.DataFrame({
+total_energy_system_corr = pd.DataFrame()
+
+#{
 #     'AHU19': [Report_df_final['AHU 19 Total kW (Correlated)'].sum()],
 #     'HRU': [Report_df_final['HRU Total kW (Correlated)'].sum()],
 #     'Chilled Water System': [Report_df_final['Total CHW kW'].sum()],
 #     'Heating Plant': [Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'].sum()]
 # })
 #
-# total_energy_system_corr['Heating Plant (Normalized)'] = total_energy_system_corr['Heating Plant'] * baseline_corr_df['slope'][0] + baseline_corr_df['intercept'][0]
+total_energy_system_corr['Heating Plant (Normalized)'] = Report_df_final['HDD'] * baseline_corr_df['slope'][0] + baseline_corr_df['intercept'][0]
 # total_energy_system_corr['AHU19 (Normalized)'] = total_energy_system_corr['AHU19'] * baseline_corr_df['slope'][1] + baseline_corr_df['intercept'][1]
 # total_energy_system_corr['HRU (Normalized)'] = total_energy_system_corr['HRU'] * baseline_corr_df['slope'][2] + baseline_corr_df['intercept'][2]
 # total_energy_system_corr['Chilled Water System (Normalized)'] = total_energy_system_corr['Chilled Water System'] * baseline_corr_df['slope'][3] + baseline_corr_df['intercept'][3]

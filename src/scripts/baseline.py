@@ -383,7 +383,7 @@ plt.close()
 # plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Cooling_balance_point.png')
 # plt.close()
 
-balance_point_HDD = 50 #Todo Updated once, will need to be checked after
+balance_point_HDD = 45 #Todo Updated once, will need to be checked after
 balance_point_CDD = 75 #Todo update based on baseline data
 
 #Calculate HDD and CDD
