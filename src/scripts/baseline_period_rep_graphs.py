@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import os
 import matplotlib.dates as mdates
-from correlated_modeling import Report_df_final, subfolder_path, Month, csv_file_path, energy_history_df, total_energy_system_level
+from correlated_modeling import Report_df_final, subfolder_path, Month, csv_file_path, energy_history_df, total_energy_system_level, total_energy_system_corr
 import subprocess
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -16,6 +16,10 @@ Report_df_final.index = Report_df_final.index.time
 hourly_avg_df = Report_df_final.groupby(Report_df_final.index).mean()
 hourly_avg_df.index = [time.strftime("%H:%M") for time in hourly_avg_df.index] #Converting the time index to strings for easier plotting
 #hourly_avg_df.to_csv('hourly_avg_df.csv')
+
+#Baseline
+
+Heating_system_baseline = total_energy_system_corr['Heating Plant (Normalized)'].sum() #todo: Add more systems below
 
 #Plotting Heating System
 
@@ -205,6 +209,30 @@ gradient = np.vstack((gradient, gradient))
 for i, (system, value) in enumerate(zip(systems, system_values)):
     ax.imshow(gradient, aspect='auto', cmap='Oranges', extent=[0, max_energy_value + 200, i - 0.5, i + 0.5])
     ax.barh(i, value, color='purple', height=0.5)
+
+    if system == "Heating Plant":
+        ax.axvline(
+            x=Heating_system_baseline,
+            color='black',
+            linestyle='-',
+            linewidth=2,
+            ymin=(i-0.5) / (len(systems)),  # Adjust ymin ensuring overlap with the correct row. #Todo: Find an automated method of doing this
+            ymax=(i + 1) / (len(systems))  # Adjust ymax
+        )
+
+        difference = value - Heating_system_baseline
+        difference_text = "above" if difference > 0 else "below"
+
+        # Add the "how much higher/lower" label for heating system
+        ax.text(
+            max_energy_value + 230, i - 0.2,  # Slightly below the main label
+            f'{abs(difference):.1f} MMBtu {difference_text} baseline',
+            va='center', ha='left',
+            color='darkred' if difference > 0 else 'green',  # Red for above, green for below
+            fontsize=11
+        )
+
+
     ax.text(max_energy_value + 230, i, f'{value:.1f} MMBtu', va='center', ha='left', color='black', fontsize=13)
 ax.set_yticks(np.arange(len(systems)))
 ax.set_yticklabels(systems, fontsize=14)

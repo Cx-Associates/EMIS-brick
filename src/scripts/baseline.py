@@ -1,4 +1,5 @@
 #Todo: Delete whatever we don't end up using from the below imports
+#Todo: For future projects have a function for baseline where the dates are adjustable
 import os
 import requests
 import pandas as pd
@@ -15,8 +16,8 @@ import calendar
 
 #Define baseline period
 timezone='US/Eastern'
-start = '2024-10-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
-end = '2025-02-07'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined
+start = '2024-11-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
+end = '2025-02-01'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
 start_check = '' #Start check and end check should be athe actual dates of baseline
 end_check = ''
 start_check = pd.to_datetime(start).tz_localize(timezone)
@@ -276,7 +277,7 @@ Baseline_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formu
 Baseline_df['Chiller kW'] = CHW_df_15min['Chiller kW']
 Baseline_df['Total CHW kW'] = Baseline_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
-Baseline_df_hourly = Baseline_df.resample(rule='H').sum() #Resmpling and aggregating consumption hourly
+Baseline_df_hourly = Baseline_df.resample(rule='H').mean()
 Baseline_df_hourly['Total Boiler NG Consumption (MMBtu)'] = Baseline_df_hourly['Total Boiler NG Consumption (MBtu)']/1000
 Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)'] = Baseline_df_hourly['Total Boiler NG Consumption (MMBtu)'] + (Baseline_df_hourly['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
 
@@ -352,16 +353,15 @@ Baseline_df_hourly = pd.merge(Baseline_df_hourly, hourly_weather_df, how='outer'
 #Now to determine the balance point
 
 # Grouping by day
-daily_balance_point_df = Baseline_df_hourly.resample('D')
-daily_balance_point_df = daily_balance_point_df.apply(lambda x: x.sum() if x.name != 'temperature_2m' else x.mean()) # Sum all columns except 'temperature_2m' which is being averaged
-#daily_balance_point_df.to_csv('daily_balance_point_df.csv')
+Baseline_df_daily = Baseline_df_hourly.resample('D').mean()
+#Baseline_df_daily.to_csv('Baseline_df_daily.csv') #Uncomment for troubleshooting
 
 ##Plotting to determine balance point
 
 #Heating Balance Point
 #Plotting NG consumption vs temp
 plt.figure(figsize=(10, 6))
-plt.scatter(daily_balance_point_df['temperature_2m'], daily_balance_point_df['Total Boiler NG Consumption (MBtu)'])
+plt.scatter(Baseline_df_daily['temperature_2m'], Baseline_df_daily['Total Boiler NG Consumption (MBtu)'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Boiler NG Usage')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Heating_balance_point_NG.png')
@@ -369,7 +369,7 @@ plt.close()
 
 #Plotting Heating System kW consumption vs temp
 plt.figure(figsize=(10, 6))
-plt.scatter(daily_balance_point_df['temperature_2m'], daily_balance_point_df['Heating System kW'])
+plt.scatter(Baseline_df_daily['temperature_2m'], Baseline_df_daily['Heating System kW'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Heating System kW Usage')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Heating_balance_point_kW.png')
@@ -383,26 +383,36 @@ plt.close()
 # plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Cooling_balance_point.png')
 # plt.close()
 
-balance_point_HDD = 45 #Todo Updated once, will need to be checked after
+balance_point_HDD = 45 #Todo Updated once on 03/03/25, will need to be checked after
 balance_point_CDD = 75 #Todo update based on baseline data
 
 #Calculate HDD and CDD
 
+# # Calculate HDD (when temperature is below balance_point_HDD) #Commenting this out cause using hourly data is overestimating energy usage
+# Baseline_df_hourly ['HDD'] = Baseline_df_hourly ['temperature_2m'].apply(
+#     lambda temp: abs(temp - balance_point_HDD) if temp < balance_point_HDD else 0)
+#
+# # Calculate CDD (when temperature is above balance_point_CDD)
+# Baseline_df_hourly ['CDD'] = Baseline_df_hourly['temperature_2m'].apply(
+#     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
+#
+# Baseline_df_hourly['Total DD'] = Baseline_df_hourly[['HDD','CDD']].sum(axis=1, min_count=1)
+
 # Calculate HDD (when temperature is below balance_point_HDD)
-Baseline_df_hourly ['HDD'] = Baseline_df_hourly ['temperature_2m'].apply(
+Baseline_df_daily['HDD'] = Baseline_df_daily['temperature_2m'].apply(
     lambda temp: abs(temp - balance_point_HDD) if temp < balance_point_HDD else 0)
 
 # Calculate CDD (when temperature is above balance_point_CDD)
-Baseline_df_hourly ['CDD'] = Baseline_df_hourly['temperature_2m'].apply(
+Baseline_df_daily['CDD'] = Baseline_df_daily['temperature_2m'].apply(
     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
 
-Baseline_df_hourly['Total DD'] = Baseline_df_hourly[['HDD','CDD']].sum(axis=1, min_count=1)
+Baseline_df_daily['Total DD'] = Baseline_df_daily[['HDD','CDD']].sum(axis=1, min_count=1)
 
 #Fun methods figure
-plt.scatter(Baseline_df_hourly['HDD'],Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)'])
+plt.scatter(Baseline_df_daily['HDD'],Baseline_df_daily['Total Heating Plant Energy Consumption (MMBtu)'])
 plt.xlabel('HDD')
 plt.ylabel('Heating System Energy Usage (MMbtu)')
-plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HeatingModel.png')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HeatingModel_daily.png')
 plt.close()
 
 # plt.scatter(Baseline_df_hourly['CDD'],Baseline_df_hourly['Total CHW kW']) #todo: uncomment this out when needed
@@ -416,19 +426,24 @@ plt.close()
 columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 Total kW (Correlated)',
                     'HRU Total kW (Correlated)', 'Total CHW kW']
 
-# Drop rows where all the specified columns have NaN values
-Baseline_df_hourly= Baseline_df_hourly.dropna(subset=columns_to_check, how='all')
-Baseline_df_hourly.index = pd.to_datetime(Baseline_df_hourly.index)
-Baseline_df_hourly = Baseline_df_hourly[(Baseline_df_hourly.index>= start_check) & (Baseline_df_hourly.index <=end_check)]
+# # Drop rows where all the specified columns have NaN values
+# Baseline_df_hourly= Baseline_df_hourly.dropna(subset=columns_to_check, how='all')
+# Baseline_df_hourly.index = pd.to_datetime(Baseline_df_hourly.index)
+# Baseline_df_hourly = Baseline_df_hourly[(Baseline_df_hourly.index>= start_check) & (Baseline_df_hourly.index <=end_check)]
 
-#Baseline_df_hourly.to_csv('Baseline_df_hourly.csv')
+# Drop rows where all the specified columns have NaN values
+Baseline_df_daily= Baseline_df_daily.dropna(subset=columns_to_check, how='all')
+Baseline_df_daily.index = pd.to_datetime(Baseline_df_daily.index)
+Baseline_df_daily = Baseline_df_daily[(Baseline_df_daily.index>= start_check) & (Baseline_df_daily.index <=end_check)]
+
+Baseline_df_daily.to_csv('Baseline_df_daily.csv')
 
 ##Now to fit regression equations for normalization
 
 # Fitting the models
 Heating_model = LinearRegression().fit(
-    Baseline_df_hourly['HDD'].values.reshape(-1, 1),
-    Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)']
+    Baseline_df_daily['HDD'].values.reshape(-1, 1),
+    Baseline_df_daily['Total Heating Plant Energy Consumption (MMBtu)']
 )
 
 #todo: Uncomment when enough data is available
@@ -459,8 +474,8 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Baseline_Model_
         float(Heating_model.coef_),
         float(Heating_model.intercept_),
         Heating_model.score(
-            Baseline_df_hourly['HDD'].values.reshape(-1, 1),
-            Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)']
+            Baseline_df_daily['HDD'].values.reshape(-1, 1),
+            Baseline_df_daily['Total Heating Plant Energy Consumption (MMBtu)']
         )
     ])
     #
@@ -493,3 +508,28 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Baseline_Model_
     #         Baseline_df_hourly['Total CHW kW']
     #     )
     # ])
+
+#Plot regressions for checking
+x = Baseline_df_daily['HDD'].values.reshape(-1, 1)
+y = Baseline_df_daily['Total Heating Plant Energy Consumption (MMBtu)'].values
+
+# Predicting y values using the fitted model
+y_pred = Heating_model.predict(x)
+
+# Plotting the data points
+plt.scatter(x, y, color='blue', label='Data points')
+
+# Plotting the regression line
+plt.plot(x, y_pred, color='red', linewidth=2, label='Regression line')
+
+# Adding labels and title
+plt.xlabel('Heating Degree Days (HDD)')
+plt.ylabel('Total Heating Plant Energy Consumption (MMBtu)')
+plt.title('Linear Regression: HDD vs. Heating Energy Consumption')
+
+# Adding a legend
+plt.legend()
+
+# Showing the plot
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HeatingModel_with regression line.png')
+plt.close()

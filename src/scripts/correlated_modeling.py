@@ -299,8 +299,8 @@ Report_df_hourly = Report_df.resample(rule='H').mean() #Resmpling and aggregatin
 #Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill
 
 ##Normalization
-balance_point_HDD = 65 #These base temp will be calculated once we have enough data to establish a baseline/balance point. These values are taken from AHSRAE recommendation: https://www.ashrae.org/File%20Library/Technical%20Resources/Building%20Energy%20Quotient/User-Tip-5_May2019.pdf
-balance_point_CDD = 65
+balance_point_HDD = 45 #Updated on 03/03/25
+balance_point_CDD = 65 #These base temp will be calculated once we have enough data to establish a baseline/balance point. These values are taken from AHSRAE recommendation: https://www.ashrae.org/File%20Library/Technical%20Resources/Building%20Energy%20Quotient/User-Tip-5_May2019.pdf
 
 #Get weather data from Open Meteo #Todo: For future projects convert this into a function that just takes the start and end date as inputs. Probably the variables too?
 
