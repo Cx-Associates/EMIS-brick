@@ -216,8 +216,8 @@ for i, (system, value) in enumerate(zip(systems, system_values)):
             color='black',
             linestyle='-',
             linewidth=2,
-            ymin=(i-0.5) / (len(systems)),  # Adjust ymin ensuring overlap with the correct row. #Todo: Find an automated method of doing this
-            ymax=(i + 1) / (len(systems))  # Adjust ymax
+            ymin=(i+0.15) / (len(systems)),  # Adjust ymin ensuring overlap with the correct row. #Todo: Find an automated method of doing this
+            ymax=(i + 0.85) / (len(systems))  # Adjust ymax
         )
 
         difference = value - Heating_system_baseline
