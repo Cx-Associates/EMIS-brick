@@ -479,5 +479,5 @@ with open(texoutput_file_path,'w') as tex_file:
     tex_file.write(f"\\newcommand{{\\TotalEnergy}}{{{Total_energy_MMBtu}}}\n")
     tex_file.write(f"\\newcommand{{\\TotalCCF}}{{{NG_Usage_CCF}}}\n")
     tex_file.write(f"\\newcommand{{\\TotalElectricity}}{{{Electricty_Usage_kWh}}}\n")
-    tex_file.write(f"\\newcommand{{\\heatingstart}}{{{Electricty_Usage_kWh}}}\n") #todo actually use the right variable here down!
-    tex_file.write(f"\\newcommand{{\\heatingend}}{{{Electricty_Usage_kWh}}}\n")
+    tex_file.write(f"\\newcommand{{\\heatingstart}}{{{STARTdate}}}\n") #todo actually use the right variable here down!
+    tex_file.write(f"\\newcommand{{\\heatingend}}{{{ENDdate}}}\n")
