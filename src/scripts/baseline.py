@@ -16,12 +16,12 @@ import calendar
 
 #Define baseline period
 timezone='US/Eastern'
-start = '2024-11-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
-end = '2025-02-01'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
+start_baseline_heating = '2024-11-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
+end_baseline_heating = '2025-02-01'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
 start_check = '' #Start check and end check should be athe actual dates of baseline
 end_check = ''
-start_check = pd.to_datetime(start).tz_localize(timezone)
-end_check = pd.to_datetime(end).tz_localize(timezone)
+start_check = pd.to_datetime(start_baseline_heating).tz_localize(timezone)
+end_check = pd.to_datetime(end_baseline_heating).tz_localize(timezone)
 
 #Finding the balance point
 
@@ -63,52 +63,52 @@ def get_hp(equipment_name, data):
     return size
 
 #Ace Data locations
-str = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
-fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Pump 4b VFD Output
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time={start}&end_time={end}', #Pump 4a s/s
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/13/timeseries?start_time={start}&end_time={end}', #Pump 4b s/s
-fr'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Supply Temp_2
-fr'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Return Temp_2
-fr'/cxa_main_st_landing/2404:9-240409/analogOutput/3/timeseries?start_time={start}&end_time={end}', #Boiler 1% signal
-fr'/cxa_main_st_landing/2404:9-240409/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Boiler 2% signal
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/6/timeseries?start_time={start}&end_time={end}', #Boiler 1 Status
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/7/timeseries?start_time={start}&end_time={end}', #Boiler 2 Status'
-fr'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time={start}&end_time={end}', #chilled water power meter
-fr'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time={start}&end_time={end}', #pump 2a-b VFD output
-fr'/cxa_main_st_landing/2404:7-240407/binaryInput/18/timeseries?start_time={start}&end_time={end}', #Pump 2a status
-fr'/cxa_main_st_landing/2404:7-240407/binaryInput/19/timeseries?start_time={start}&end_time={end}', #Pump 2b status
-fr'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time={start}&end_time={end}', #P1a Feedback
-fr'/cxa_main_st_landing/2404:2-240402/analogInput/11/timeseries?start_time={start}&end_time={end}', #P1b Feedback
-fr'/cxa_main_st_landing/2404:2-240402/analogOutput/3/timeseries?start_time={start}&end_time={end}', #P1 VFD Signal
-fr'/cxa_main_st_landing/2404:7-240407/binaryInput/9/timeseries?start_time={start}&end_time={end}', #Pump 3a status
-fr'/cxa_main_st_landing/2404:7-240407/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Pump 3b status
-fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/5/timeseries?start_time={start}&end_time={end}', #Chiller Status (binary)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/8/timeseries?start_time={start}&end_time={end}', #Chiller HX1 Flow (GPM) (only flow data we have for chiller)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/21/timeseries?start_time={start}&end_time={end}', #Chilled water supply temp (F)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/20/timeseries?start_time={start}&end_time={end}', #Chilled water return temp (F)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/17/timeseries?start_time={start}&end_time={end}', #Condenser Water Supply Temperature (F)
-fr'/cxa_main_st_landing/2404:7-240407/analogInput/13/timeseries?start_time={start}&end_time={end}', #Condenser Water Return Temperature (F)
-fr'/cxa_main_st_landing/2404:2-240402/analogInput/7/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp In (F)
-fr'/cxa_main_st_landing/2404:2-240402/analogInput/8/timeseries?start_time={start}&end_time={end}', #Cooling Tower Temp Out (F)
-fr'/cxa_main_st_landing/2404:7-240407/binaryValue/11/timeseries?start_time={start}&end_time={end}', #Cooling Tower Free Cool Status (binary)
-fr'/cxa_main_st_landing/2404:2-240402/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Cooling tower fan %speed
-fr'/cxa_main_st_landing/2404:2-240402/binaryInput/10/timeseries?start_time={start}&end_time={end}', #Cooling tower Fan1 Status
-fr'/cxa_main_st_landing/2404:2-240402/binaryInput/11/timeseries?start_time={start}&end_time={end}', #Cooling tower Fan2 Status
-fr'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time={start}&end_time={end}', #HRU Supply fan VFD output
-fr'/cxa_main_st_landing/2404:10-240410/analogOutput/2/timeseries?start_time={start}&end_time={end}', #HRU Exhaust Fan VFD speed
-fr'/cxa_main_st_landing/2404:10-240410/binaryInput/1/timeseries?start_time={start}&end_time={end}', #HRU Exhaust Fan Status
-fr'/cxa_main_st_landing/2404:10-240410/binaryInput/9/timeseries?start_time={start}&end_time={end}', #HRU Supply Fan Status
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/3/timeseries?start_time={start}&end_time={end}', #AHU19 Supply fan VFD
-fr'/cxa_main_st_landing/2404:3-240403/binaryInput/3/timeseries?start_time={start}&end_time={end}', #AHU19 Supply fan Status
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Exhaust fan 1 VFD speed
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Exhaust fan 2 VFD speed
-fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel VFD
-fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel Status
-fr'/cxa_main_st_landing/2404:3-240403/analogValue/9/timeseries?start_time={start}&end_time={end}', #Exhaust fan CFM
-fr'/cxa_main_st_landing/2404:3-240403/analogValue/16/timeseries?start_time={start}&end_time={end}', #Total Cool Request from Zones
-fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start}&end_time={end}', #Total Heat Request from Zones
-fr'/cxa_main_st_landing/2404:9-240409/binaryInput/19/timeseries?start_time={start}&end_time={end}', #P4B Status
-fr'/cxa_main_st_landing/2404:9-240409/binaryInput/18/timeseries?start_time={start}&end_time={end}'] #P4A Status
+str = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Pump 4a VFD Output
+fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Pump 4b VFD Output
+fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Pump 4a s/s
+fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/13/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Pump 4b s/s
+fr'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Primary Hot Water Supply Temp_2
+fr'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Primary Hot Water Return Temp_2
+fr'/cxa_main_st_landing/2404:9-240409/analogOutput/3/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Boiler 1% signal
+fr'/cxa_main_st_landing/2404:9-240409/analogOutput/4/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Boiler 2% signal
+fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/6/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Boiler 1 Status
+fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/7/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Boiler 2 Status'
+fr'/cxa_main_st_landing/2404:7-240407/analogValue/11/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #chilled water power meter
+fr'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #pump 2a-b VFD output
+fr'/cxa_main_st_landing/2404:7-240407/binaryInput/18/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Pump 2a status
+fr'/cxa_main_st_landing/2404:7-240407/binaryInput/19/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Pump 2b status
+fr'/cxa_main_st_landing/2404:2-240402/analogInput/10/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #P1a Feedback
+fr'/cxa_main_st_landing/2404:2-240402/analogInput/11/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #P1b Feedback
+fr'/cxa_main_st_landing/2404:2-240402/analogOutput/3/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #P1 VFD Signal
+fr'/cxa_main_st_landing/2404:7-240407/binaryInput/9/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Pump 3a status
+fr'/cxa_main_st_landing/2404:7-240407/binaryInput/10/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Pump 3b status
+fr'/cxa_main_st_landing/2404:7-240407/binaryOutput/5/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Chiller Status (binary)
+fr'/cxa_main_st_landing/2404:7-240407/analogInput/8/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Chiller HX1 Flow (GPM) (only flow data we have for chiller)
+fr'/cxa_main_st_landing/2404:7-240407/analogInput/21/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Chilled water supply temp (F)
+fr'/cxa_main_st_landing/2404:7-240407/analogInput/20/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Chilled water return temp (F)
+fr'/cxa_main_st_landing/2404:7-240407/analogInput/17/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Condenser Water Supply Temperature (F)
+fr'/cxa_main_st_landing/2404:7-240407/analogInput/13/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Condenser Water Return Temperature (F)
+fr'/cxa_main_st_landing/2404:2-240402/analogInput/7/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Cooling Tower Temp In (F)
+fr'/cxa_main_st_landing/2404:2-240402/analogInput/8/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Cooling Tower Temp Out (F)
+fr'/cxa_main_st_landing/2404:7-240407/binaryValue/11/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Cooling Tower Free Cool Status (binary)
+fr'/cxa_main_st_landing/2404:2-240402/analogOutput/4/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Cooling tower fan %speed
+fr'/cxa_main_st_landing/2404:2-240402/binaryInput/10/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Cooling tower Fan1 Status
+fr'/cxa_main_st_landing/2404:2-240402/binaryInput/11/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Cooling tower Fan2 Status
+fr'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #HRU Supply fan VFD output
+fr'/cxa_main_st_landing/2404:10-240410/analogOutput/2/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #HRU Exhaust Fan VFD speed
+fr'/cxa_main_st_landing/2404:10-240410/binaryInput/1/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #HRU Exhaust Fan Status
+fr'/cxa_main_st_landing/2404:10-240410/binaryInput/9/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #HRU Supply Fan Status
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/3/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #AHU19 Supply fan VFD
+fr'/cxa_main_st_landing/2404:3-240403/binaryInput/3/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #AHU19 Supply fan Status
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/5/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Exhaust fan 1 VFD speed
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/6/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Exhaust fan 2 VFD speed
+fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Heat Recovery Wheel VFD
+fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Heat Recovery Wheel Status
+fr'/cxa_main_st_landing/2404:3-240403/analogValue/9/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Exhaust fan CFM
+fr'/cxa_main_st_landing/2404:3-240403/analogValue/16/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Total Cool Request from Zones
+fr'/cxa_main_st_landing/2404:3-240403/analogValue/17/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #Total Heat Request from Zones
+fr'/cxa_main_st_landing/2404:9-240409/binaryInput/19/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}',  #P4B Status
+fr'/cxa_main_st_landing/2404:9-240409/binaryInput/18/timeseries?start_time={start_baseline_heating}&end_time={end_baseline_heating}'] #P4A Status
 
 
 #Ace Data descriptions
@@ -296,8 +296,8 @@ longitude = -73.21
 hourly_variables = ["temperature_2m", "dew_point_2m", "precipitation", "weather_code"]
 temperature_unit = "fahrenheit"
 timezone = "America/New_York"
-start_date = start
-end_date = end
+start_date = start_baseline_heating
+end_date = end_baseline_heating
 
 # Parameters dictionary using variables
 params = {
