@@ -466,6 +466,12 @@ Month=startd.strftime("%B %Y")
 endd = datetime.strptime(end_rep,"%Y-%m-%d")
 enddateformated=endd.strftime("%B %d, %Y")
 ENDdate=endd.strftime("%B %d, %Y").upper()
+#baseline times
+sbhn = datetime.strptime(start_baseline_heating,"%Y-%m-%d")
+start_baseline_heatingnice=sbhn.strftime("%m/%d/%Y")
+ebhn =  datetime.strptime(end_baseline_heating,"%Y-%m-%d")
+end_baseline_heatingnice = ebhn.strftime("%m/%d/%Y")
+
 
 TeXfolderpath = subfolder_path.replace("\\", "/")
 
@@ -481,5 +487,5 @@ with open(texoutput_file_path,'w') as tex_file:
     tex_file.write(f"\\newcommand{{\\TotalEnergy}}{{{Total_energy_MMBtu}}}\n")
     tex_file.write(f"\\newcommand{{\\TotalCCF}}{{{NG_Usage_CCF}}}\n")
     tex_file.write(f"\\newcommand{{\\TotalElectricity}}{{{Electricty_Usage_kWh}}}\n")
-    tex_file.write(f"\\newcommand{{\\heatingbaselinestart}}{{{STARTdate}}}\n") #todo actually use the right variable here down!
-    tex_file.write(f"\\newcommand{{\\heatingbaselineend}}{{{ENDdate}}}\n")
+    tex_file.write(f"\\newcommand{{\\heatingbaselinestart}}{{{start_baseline_heatingnice}}}\n") #todo actually use the right variable here down!
+    tex_file.write(f"\\newcommand{{\\heatingbaselineend}}{{{end_baseline_heatingnice}}}\n")
