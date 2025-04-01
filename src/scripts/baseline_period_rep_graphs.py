@@ -1,3 +1,7 @@
+"""
+HELP WHAT DOES THIS CODE DO
+
+"""
 #Points above or below 10% of the limit probably needs to be a different color or something to make it easily understandable. #Todo: This is for after basline is established
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -247,7 +251,7 @@ graph_path = os.path.join(subfolder_path, f"System_Level_Total_Energy.png")
 plt.savefig(graph_path)
 plt.close()
 
-#Write the report via tex
+#Write the report via TeX
 tex_file_path = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Reporting\Draft_1.tex" #Paths for the .tex file and the subfolder for the report
 tex_copy_path = os.path.join(subfolder_path, f'{Month} EMIS Report.tex').replace("\\", "/")
 shutil.copy(tex_file_path,tex_copy_path)

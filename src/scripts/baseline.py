@@ -1,3 +1,11 @@
+"""
+CODE FINDS A LINEAR RELATIONSHIP BETWEEN HEATING DEGREE DAYS AND HEATING SYSTEM ENERGY USAGE
+OUTPUTS MODEL TO A .CSV FILE THAT CAN BE READ BY OTHER CODES TO COMPARE HEATING SYSTEM USAGE WITH
+THE USAGE DURING THE BAESLINE PERIOD.
+
+CODE ALSO HAS THE FRAMEWORK TO DO THIS FOR THE VENTILATION SYSTEM AND COOLING SYSTEM.
+"""
+
 #Todo: Delete whatever we don't end up using from the below imports
 #Todo: For future projects have a function for baseline where the dates are adjustable
 import os
@@ -15,13 +23,17 @@ import csv
 import calendar
 
 #Define baseline period
+#IF YOU UPDATE THESE DATES, ALSO UPDATE THEM IN CORRELATED_MODELING.PY!!!
 timezone='US/Eastern'
 start_baseline_heating = '2024-11-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
 end_baseline_heating = '2025-02-01'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
-start_check = '' #Start check and end check should be athe actual dates of baseline
-end_check = ''
+start_baseline_vent = '2024-11-01'#"xx-xx-xxxx" #start of baseline period for ventilation #todo: update when baseline period is determined, current dates are for ventilation system baseline
+end_baseline_vent = '2025-03-01'#"xx-xx-xxxx" #end of baseline period for ventilation #todo: update when baseline period is determined, current dates are for ventilation system baseline
+
+#start_check = '' #Start check and end check should be the actual dates of baseline
+#end_check = ''
 start_check = pd.to_datetime(start_baseline_heating).tz_localize(timezone)
-end_check = pd.to_datetime(end_baseline_heating).tz_localize(timezone)
+end_check = pd.to_datetime(end_baseline_vent).tz_localize(timezone) #this is the later date.  todo:make this automatically choose the last date
 
 #Finding the balance point
 
@@ -192,7 +204,9 @@ nameplate=pd.DataFrame(Nameplate)
 #Boiler Nameplate
 Boiler_Nameplate = {'Equipt':['Boiler1_capacity', 'Boiler2_capacity', 'Boiler1_Eff', 'Boiler2_Eff'], 'value':[2047, 2081, 0.878, 0.891]}
 
-Baseline_df = pd.DataFrame() #Dataframe which will store all calculated energy consumption and any data needed for reporting
+Baseline_heating = pd.DataFrame() #Dataframe which will store all calculated energy consumption and any data needed for reporting
+Baseline_vent = pd.DataFrame() #Dataframe which will store all calculated energy consumption and any data needed for reporting
+Baseline_cooling = pd.DataFrame() #Dataframe which will store all calculated energy consumption and any data needed for reporting
 
 #Todo: For future projects, will be good if we do system level correlations instead of doing equipment level, will reduce steps and problems with loss of data
 #Todo: For future projects, we should have different py files for each system so that if data is missing for certain points, it doesn't break the whole code. Also easier troubleshooting.
@@ -200,6 +214,8 @@ Baseline_df = pd.DataFrame() #Dataframe which will store all calculated energy c
 ##HEATING SYSTEM CALCS
 #Create system level dataframes
 Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']]#Always use double [] brackets for picking the data you need
+#Pull in only the heating system baseline period:
+Heating_df = Heating_df.loc[start_baseline_heating:end_baseline_heating]
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
 #Calculating kW from BMS information
@@ -213,17 +229,18 @@ Heating_df_15min = Heating_df.resample(rule='15Min').mean() #Averaging for 15 mi
 #Heating_df_15min.to_csv('Heating_df_15min.csv') #Uncomment for troubleshooting
 
 #Calculating correlated values and adding reporting variables to dataframe
-Baseline_df['Boiler 1 MBtu'] = Heating_df_15min['Boiler 1 MBtu']
-Baseline_df['Boiler 2 MBtu'] = Heating_df_15min['Boiler 2 MBtu']
-Baseline_df['Total Boiler NG Consumption (MBtu)'] = Heating_df_15min[['Boiler 1 MBtu', 'Boiler 2 MBtu']].sum(axis=1, min_count=1)
-Baseline_df['Pump 4a kW (Correlated)'] = Heating_df_15min['Pump 4a kW (Formula Based)'] * Corr_param_df['slope'][0] + Corr_param_df['intercept'][0]
-Baseline_df['Pump 4b kW (Correlated)'] = Heating_df_15min['Pump 4b kW (Formula Based)'] * Corr_param_df['slope'][1] + Corr_param_df['intercept'][1]
-Baseline_df['Heating System kW'] = Baseline_df[['Pump 4a kW (Correlated)', 'Pump 4b kW (Correlated)']].sum(axis=1, min_count=1) #If there are columns with NAN data then the sum won't work and the total column will also be nan. The min_count deals with this so if at least one column has a non-NaN value, the sum will be computed using the non-NaN values. The NaN values will be ignored
+Baseline_heating['Boiler 1 MBtu'] = Heating_df_15min['Boiler 1 MBtu']
+Baseline_heating['Boiler 2 MBtu'] = Heating_df_15min['Boiler 2 MBtu']
+Baseline_heating['Total Boiler NG Consumption (MBtu)'] = Heating_df_15min[['Boiler 1 MBtu', 'Boiler 2 MBtu']].sum(axis=1, min_count=1)
+Baseline_heating['Pump 4a kW (Correlated)'] = Heating_df_15min['Pump 4a kW (Formula Based)'] * Corr_param_df['slope'][0] + Corr_param_df['intercept'][0]
+Baseline_heating['Pump 4b kW (Correlated)'] = Heating_df_15min['Pump 4b kW (Formula Based)'] * Corr_param_df['slope'][1] + Corr_param_df['intercept'][1]
+Baseline_heating['Heating System kW'] = Baseline_heating[['Pump 4a kW (Correlated)', 'Pump 4b kW (Correlated)']].sum(axis=1, min_count=1) #If there are columns with NAN data then the sum won't work and the total column will also be nan. The min_count deals with this so if at least one column has a non-NaN value, the sum will be computed using the non-NaN values. The NaN values will be ignored
 
 
 ##AHU-19 CALCS
 AHU_df = ACE_data[['AHU19 supply fan VFD output', 'AHU19 Supply fan Status', 'AHU19 Exhaust fan 1 VFD speed', 'AHU19 Exhaust fan 2 VFD speed', 'AHU19 Heat Recovery Wheel VFD', 'AHU19 Heat Recovery Wheel Status', 'AHU19 Exhaust fan CFM']]
-
+#Pull in only the ventilation system baseline period:
+AHU_df = AHU_df.loc[start_baseline_vent:end_baseline_vent]
 #Calculating kW from BMS information
 AHU_df['AHU 19 EF1 kW (Formula Based)'] = (get_hp('AHU19EF1', Nameplate))*0.745699872*(AHU_df['AHU19 Exhaust fan 1 VFD speed']/100)**2.5 #No status exists
 AHU_df['AHU 19 EF2 kW (Formula Based)'] = (get_hp('AHU19EF2', Nameplate))*0.745699872*(AHU_df['AHU19 Exhaust fan 2 VFD speed']/100)**2.5 #No status exists
@@ -234,10 +251,12 @@ AHU_df_15min = AHU_df.resample(rule='15Min').mean()
 #AHU_df.to_csv('AHU_df.csv) #Uncomment for troubleshooting
 
 #Calculating correlated values and adding reporting variables to dataframe
-Baseline_df['AHU 19 Total kW (Correlated)'] = AHU_df_15min['AHU 19 Total kW (Formula Based)']* Corr_param_df['slope'][5] + Corr_param_df['intercept'][5]
+Baseline_vent['AHU 19 Total kW (Correlated)'] = AHU_df_15min['AHU 19 Total kW (Formula Based)']* Corr_param_df['slope'][5] + Corr_param_df['intercept'][5]
 
 ##HRU CALCS
 HRU_df = ACE_data[['HRU supply fan VFD output', 'HRU Exhaust fan VFD output', 'HRU Exhaust Fan Status', 'HRU Supply Fan Status']]
+#Pull in only the ventilation system baseline period:
+HRU_df = HRU_df.loc[start_baseline_vent:end_baseline_vent]
 HRU_df['HRU Supply Fan kW (Formula Based)'] = HRU_df['HRU Supply Fan Status']*(get_hp('HRUSupplyFan',Nameplate))*0.745699872*(HRU_df['HRU supply fan VFD output']/100)**2.5
 HRU_df['HRU Exhaust Fan kW (Formula Based)'] = HRU_df['HRU Exhaust Fan Status']*(get_hp('HRUReturnFan',Nameplate))*0.745699872*(HRU_df['HRU Exhaust fan VFD output']/100)**2.5
 HRU_df['HRU Total kW (Formula Based)'] = HRU_df[['HRU Exhaust Fan kW (Formula Based)', 'HRU Supply Fan kW (Formula Based)']].sum(axis=1, min_count=1) #One DENT on all HRU so will need to correlate to total
@@ -245,7 +264,7 @@ HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 #HRU_df_15min.to_csv('HRU_df_15min.csv')
 
 #Calculating correlated values and adding reporting variables to dataframe
-Baseline_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][4] + Corr_param_df['intercept'][4]
+Baseline_vent['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][4] + Corr_param_df['intercept'][4]
 
 #CHILLED WATER SYSTEM CALCS
 CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling Tower Free Cool Status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
@@ -266,24 +285,26 @@ CHW_df_15min = CHW_df.resample(rule='15Min').mean()
 
 #Calculating correlated values and adding reporting variables to dataframe
 #Baseline_df['Pump 1a kW (Correlated)'] = CHW_df_15min['Pump 1a kW (Formula Based)']* Corr_param_df['slope'][x] + Corr_param_df['intercept'][x] #Todo: Add corr parameters when available
-Baseline_df['Pump 1a kW (Formula Based)'] = CHW_df_15min['Pump 1a kW (Formula Based)']
-Baseline_df['Pump 1b kW (Formula Based)'] = CHW_df_15min['Pump 1b kW (Formula Based)']
-Baseline_df['Pump 2a kW (Correlated)'] = CHW_df_15min['Pump 2a kW (Formula Based)'] * Corr_param_df['slope'][2] + Corr_param_df['intercept'][2]
-Baseline_df['Pump 2b kW (Correlated)'] = CHW_df_15min['Pump 2b kW (Formula Based)'] * Corr_param_df['slope'][3] + Corr_param_df['intercept'][3]
-Baseline_df['Pump 3a kW (Formula Based)'] = CHW_df_15min['Pump 3a kW (Formula Based)']
-Baseline_df['Pump 3b kW (Formula Based)'] = CHW_df_15min['Pump 3b kW (Formula Based)']
-Baseline_df['Tower Fan 1 kW (Correlated)'] = CHW_df_15min['Tower Fan 1 kW (Formula Based)'] * Corr_param_df['slope'][6] + Corr_param_df['intercept'][6] #the only electricty consuming equipment in the CTs are the fan assemblies
-Baseline_df['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula Based)'] * Corr_param_df['slope'][7] + Corr_param_df['intercept'][7]
-Baseline_df['Chiller kW'] = CHW_df_15min['Chiller kW']
-Baseline_df['Total CHW kW'] = Baseline_df[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
+Baseline_cooling['Pump 1a kW (Formula Based)'] = CHW_df_15min['Pump 1a kW (Formula Based)']
+Baseline_cooling['Pump 1b kW (Formula Based)'] = CHW_df_15min['Pump 1b kW (Formula Based)']
+Baseline_cooling['Pump 2a kW (Correlated)'] = CHW_df_15min['Pump 2a kW (Formula Based)'] * Corr_param_df['slope'][2] + Corr_param_df['intercept'][2]
+Baseline_cooling['Pump 2b kW (Correlated)'] = CHW_df_15min['Pump 2b kW (Formula Based)'] * Corr_param_df['slope'][3] + Corr_param_df['intercept'][3]
+Baseline_cooling['Pump 3a kW (Formula Based)'] = CHW_df_15min['Pump 3a kW (Formula Based)']
+Baseline_cooling['Pump 3b kW (Formula Based)'] = CHW_df_15min['Pump 3b kW (Formula Based)']
+Baseline_cooling['Tower Fan 1 kW (Correlated)'] = CHW_df_15min['Tower Fan 1 kW (Formula Based)'] * Corr_param_df['slope'][6] + Corr_param_df['intercept'][6] #the only electricty consuming equipment in the CTs are the fan assemblies
+Baseline_cooling['Tower Fan 2 kW (Correlated)'] = CHW_df_15min['Tower Fan 2 kW (Formula Based)'] * Corr_param_df['slope'][7] + Corr_param_df['intercept'][7]
+Baseline_cooling['Chiller kW'] = CHW_df_15min['Chiller kW']
+Baseline_cooling['Total CHW kW'] = Baseline_cooling[['Pump 1a kW (Formula Based)', 'Pump 1b kW (Formula Based)', 'Pump 2a kW (Correlated)', 'Pump 2b kW (Correlated)', 'Pump 3a kW (Formula Based)', 'Pump 3b kW (Formula Based)', 'Tower Fan 1 kW (Correlated)', 'Tower Fan 2 kW (Correlated)', 'Chiller kW']].sum(axis=1, min_count=1)
 
-Baseline_df_hourly = Baseline_df.resample(rule='H').mean()
-Baseline_df_hourly['Total Boiler NG Consumption (MMBtu)'] = Baseline_df_hourly['Total Boiler NG Consumption (MBtu)']/1000
-Baseline_df_hourly['Total Heating Plant Energy Consumption (MMBtu)'] = Baseline_df_hourly['Total Boiler NG Consumption (MMBtu)'] + (Baseline_df_hourly['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
+Baseline_heating_hourly = Baseline_heating.resample(rule='H').mean()
+Baseline_heating_hourly['Total Boiler NG Consumption (MMBtu)'] = Baseline_heating_hourly['Total Boiler NG Consumption (MBtu)']/1000
+Baseline_heating_hourly['Total Heating Plant Energy Consumption (MMBtu)'] = Baseline_heating_hourly['Total Boiler NG Consumption (MMBtu)'] + (Baseline_heating_hourly['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
 
+Baseline_vent_hourly = Baseline_vent.resample(rule='H').mean()
+Baseline_cooling_hourly = Baseline_cooling.resample(rule='H').mean()
 #Baseline_df_hourly.to_csv('Baseline_df_hourly.csv') #You know the drill
 
-#Get weather data from Open Meteo #Todo: For future projects convert this into a function that just takes the start and end date as inputs. Maybe the variables too?
+#Get weather data from Open Meteo #Todo: For future projects convert this into a function that just takes the start and end date as inputs. Maybe the variables too? (this exists in AMI Functions now, could pull over for this project)
 
 # Setup the Open-Meteo API client with cache and retry on error.
 cache_session = requests_cache.CachedSession('.cache', expire_after=-1) #Caching prevents the need for multiple API calls which is important since open meteo has a fixed number of free API calls
@@ -348,12 +369,16 @@ hourly_weather_df.set_index('date', inplace=True) #Setting the date as index
 
 #hourly_weather_df.to_csv('Hourly_weather_df.csv') #You know the drill
 
-Baseline_df_hourly = pd.merge(Baseline_df_hourly, hourly_weather_df, how='outer', left_index=True, right_index=True) #Merging energy data with wetaher data
+Baseline_heating_hourly = pd.merge(Baseline_heating_hourly, hourly_weather_df, how='outer', left_index=True, right_index=True) #Merging energy data with wetaher data
+Baseline_vent_hourly = pd.merge(Baseline_vent_hourly, hourly_weather_df, how='outer', left_index=True, right_index=True) #Merging energy data with wetaher data
+Baseline_cooling_hourly = pd.merge(Baseline_cooling_hourly, hourly_weather_df, how='outer', left_index=True, right_index=True) #Merging energy data with wetaher data
 
 #Now to determine the balance point
 
 # Grouping by day
-Baseline_df_daily = Baseline_df_hourly.resample('D').mean()
+Baseline_heating_daily = Baseline_heating_hourly.resample('D').mean()
+Baseline_vent_daily = Baseline_vent_hourly.resample('D').mean()
+Baseline_cooling_daily = Baseline_cooling_hourly.resample('D').mean()
 #Baseline_df_daily.to_csv('Baseline_df_daily.csv') #Uncomment for troubleshooting
 
 ##Plotting to determine balance point
@@ -361,7 +386,7 @@ Baseline_df_daily = Baseline_df_hourly.resample('D').mean()
 #Heating Balance Point
 #Plotting NG consumption vs temp
 plt.figure(figsize=(10, 6))
-plt.scatter(Baseline_df_daily['temperature_2m'], Baseline_df_daily['Total Boiler NG Consumption (MBtu)'])
+plt.scatter(Baseline_heating_daily['temperature_2m'], Baseline_heating_daily['Total Boiler NG Consumption (MBtu)'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Boiler NG Usage')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Heating_balance_point_NG.png')
@@ -369,10 +394,26 @@ plt.close()
 
 #Plotting Heating System kW consumption vs temp
 plt.figure(figsize=(10, 6))
-plt.scatter(Baseline_df_daily['temperature_2m'], Baseline_df_daily['Heating System kW'])
+plt.scatter(Baseline_heating_daily['temperature_2m'], Baseline_heating_daily['Heating System kW'])
 plt.xlabel('Average Temperature (F)')
 plt.ylabel('Heating System kW Usage')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\Heating_balance_point_kW.png')
+plt.close()
+
+#Plotting AHU System kW consumption vs temp
+plt.figure(figsize=(10, 6))
+plt.scatter(Baseline_vent_daily['temperature_2m'], Baseline_vent_daily['AHU 19 Total kW (Correlated)'])
+plt.xlabel('Average Temperature (F)')
+plt.ylabel('AHU kW Usage')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\AHU_Temp_kW.png')
+plt.close()
+
+#Plotting HRU System kW consumption vs temp
+plt.figure(figsize=(10, 6))
+plt.scatter(Baseline_vent_daily['temperature_2m'], Baseline_vent_daily['HRU Total kW (Correlated)'])
+plt.xlabel('Average Temperature (F)')
+plt.ylabel('HRU kW Usage')
+plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\Baseline\HRU_temp_kW.png')
 plt.close()
 
 #Cooling Balance Point #todo: uncomment it out when needed
@@ -399,17 +440,17 @@ balance_point_CDD = 75 #Todo update based on baseline data
 # Baseline_df_hourly['Total DD'] = Baseline_df_hourly[['HDD','CDD']].sum(axis=1, min_count=1)
 
 # Calculate HDD (when temperature is below balance_point_HDD)
-Baseline_df_daily['HDD'] = Baseline_df_daily['temperature_2m'].apply(
+Baseline_heating_daily['HDD'] = Baseline_heating_daily['temperature_2m'].apply(
     lambda temp: abs(temp - balance_point_HDD) if temp < balance_point_HDD else 0)
 
 # Calculate CDD (when temperature is above balance_point_CDD)
-Baseline_df_daily['CDD'] = Baseline_df_daily['temperature_2m'].apply(
+Baseline_heating_daily['CDD'] = Baseline_heating_daily['temperature_2m'].apply(
     lambda temp: abs(temp - balance_point_CDD) if temp > balance_point_CDD else 0)
 
-Baseline_df_daily['Total DD'] = Baseline_df_daily[['HDD','CDD']].sum(axis=1, min_count=1)
+Baseline_heating_daily['Total DD'] = Baseline_heating_daily[['HDD','CDD']].sum(axis=1, min_count=1)
 
 #Fun methods figure
-plt.scatter(Baseline_df_daily['HDD'],Baseline_df_daily['Total Heating Plant Energy Consumption (MMBtu)'])
+plt.scatter(Baseline_heating_daily['HDD'],Baseline_heating_daily['Total Heating Plant Energy Consumption (MMBtu)'])
 plt.xlabel('HDD')
 plt.ylabel('Heating System Energy Usage (MMbtu)')
 plt.savefig(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Plots\HeatingModel_daily.png')
@@ -432,11 +473,11 @@ columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 To
 # Baseline_df_hourly = Baseline_df_hourly[(Baseline_df_hourly.index>= start_check) & (Baseline_df_hourly.index <=end_check)]
 
 # Drop rows where all the specified columns have NaN values
-Baseline_df_daily= Baseline_df_daily.dropna(subset=columns_to_check, how='all')
+Baseline_df_daily= Baseline_heating_daily.dropna(subset=columns_to_check, how='all')
 Baseline_df_daily.index = pd.to_datetime(Baseline_df_daily.index)
 Baseline_df_daily = Baseline_df_daily[(Baseline_df_daily.index>= start_check) & (Baseline_df_daily.index <=end_check)]
 
-Baseline_df_daily.to_csv('Baseline_df_daily.csv')
+Baseline_df_daily.to_csv('Baseline_heating_daily.csv')
 
 ##Now to fit regression equations for normalization
 
@@ -449,15 +490,15 @@ Heating_model = LinearRegression().fit(
 #todo: Uncomment when enough data is available
 
 # AHU19_model = LinearRegression().fit(
-#     Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
-#     Baseline_df_hourly['AHU 19 Total kW (Correlated)']
+#     Baseline_vent_hourly['Total DD'].values.reshape(-1, 1),
+#     Baseline_vent_hourly['AHU 19 Total kW (Correlated)']
 # )
 #
 # HRU_model = LinearRegression().fit(
-#     Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
-#     Baseline_df_hourly['HRU Total kW (Correlated)']
+#     Baseline_vent_hourly['Total DD'].values.reshape(-1, 1),
+#     Baseline_vent_hourly['HRU Total kW (Correlated)']
 # )
-#
+
 # CHW_model = LinearRegression().fit(
 #     Baseline_df_hourly['CDD'].values.reshape(-1, 1),
 #     Baseline_df_hourly['Total CHW kW']
@@ -478,14 +519,14 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Baseline_Model_
             Baseline_df_daily['Total Heating Plant Energy Consumption (MMBtu)']
         )
     ])
-    #
+
     # writer.writerow([
     #     'AHU19_model',
     #     float(AHU19_model.coef_),
     #     float(AHU19_model.intercept_),
     #     AHU19_model.score(
-    #         Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
-    #         Baseline_df_hourly['AHU 19 Total kW (Correlated)']
+    #         Baseline_vent_hourly['Total DD'].values.reshape(-1, 1),
+    #         Baseline_vent_hourly['AHU 19 Total kW (Correlated)']
     #     )
     # ])
     #
@@ -494,8 +535,8 @@ with open(r'F:\PROJECTS\1715 Main Street Landing EMIS Pilot\code\Baseline_Model_
     #     float(HRU_model.coef_),
     #     float(HRU_model.intercept_),
     #     HRU_model.score(
-    #         Baseline_df_hourly['Total DD'].values.reshape(-1, 1),
-    #         Baseline_df_hourly['HRU Total kW (Correlated)']
+    #         Baseline_vent_hourly['Total DD'].values.reshape(-1, 1),
+    #         Baseline_vent_hourly['HRU Total kW (Correlated)']
     #     )
     # ])
     #

@@ -1,5 +1,8 @@
+"""
+HELP - what does this code do!!
 
-#Copied from new_model - sorting through it
+"""
+
 import os
 import requests
 import pandas as pd
@@ -14,7 +17,10 @@ import math
 import numpy as np
 from datetime import datetime
 
-from baseline import start_baseline_heating, end_baseline_heating
+start_baseline_heating = '2024-11-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
+end_baseline_heating = '2025-02-01'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
+start_baseline_vent = '2024-11-01'#"xx-xx-xxxx" #start of baseline period for ventilation #todo: update when baseline period is determined, current dates are for ventilation system baseline
+end_baseline_vent = '2025-03-01'#"xx-xx-xxxx" #end of baseline period for ventilation #todo: update when baseline period is determined, current dates are for ventilation system baseline
 
 #from src.utils import Project
 #from config_MSL import config_dict
@@ -28,8 +34,7 @@ baseline_corr_df = pd.DataFrame(pd.read_csv(baseline_corr_path))
 
 def parse_response(response,columnname):
     """
-    :param response:
-    :return:
+    This reads JSON responses from AceIOT.
     """
     dict_ = response.json()
     list_ = dict_['point_samples']

@@ -1,4 +1,9 @@
 """
+THIS CODE USES DATA FROM BAS (ACE) AND TEMPORARILY INSTALLED POWER METERS (DENTS)
+TO BUILD CORRELATIIONS BETWEEN BAS DATA AND ACTUAL POWER CONSUMPTION AT THE EQUIPMENT
+LEVEL.  THESE CORRELATIONS ARE USED IN ESTIMATING POWER USAGE IN EQUIPMENT FOR
+THE MAIN STREET LANDING EMIS CODE AND REPORTING.
+
 Get data from Ace and dents (and BAS where missing Ace data)
 Combine data
 Calculate estimated kW using proxy formulas
@@ -35,8 +40,7 @@ from config_MSL import config_dict, heating_system_Btus
 
 def parse_response(response,columnname):
     """
-    :param response:
-    :return:
+    This reads JSON responses from AceIOT.
     """
     dict_ = response.json()
     list_ = dict_['point_samples']
