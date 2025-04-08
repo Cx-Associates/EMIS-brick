@@ -87,7 +87,7 @@ def get_hp(equipment_name, data):
     index = data['Equipt'].index(equipment_name)  # Find index of equipment name
     size = data['hp'][index]  # Retrieve corresponding size using index
     return size
-
+"""
 #Ace Data locations
 mystr = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Pump 4b VFD Output
@@ -208,9 +208,8 @@ with open(env_filepath, 'r') as file:
         else:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
-
+"""
 #READ IN BMS DATA
-#list = builtins.list
 #get paths for all the files
 BMS_path =Path(r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\Monthly Reports\Progress Report_2025-03-31\BMS Data")
 csv_files = list(BMS_path.glob('**/*.csv'))
@@ -218,7 +217,7 @@ BASdatapath = [str(file.resolve()) for file in csv_files]
 
 #read in BAS data (for where we didn't get appropriate data from Ace):
 for path in BASdatapath:
-    # Read in data from a file with data collected via on-site monitoring
+    # Read in data from a file with data collected via direct download from the BAS
     BAS_data1 = pd.read_csv(path, skiprows=1, header=0)
     folder_name = os.path.basename(os.path.dirname(path))
     BAS_data1[folder_name] = BAS_data1['Value']
@@ -228,10 +227,14 @@ for path in BASdatapath:
     BAS_data1.set_index('CombinedDatetime', inplace=True)
     BAS_data1.index = BAS_data1.index.tz_localize('US/Eastern', ambiguous='NaT',
                                                   nonexistent='shift_forward')  # Non-existent deals with daylight savings
+    BAS_data1 = BAS_data1.loc[(BAS_data1.index >= start)]
     if 'BAS_data' in locals():
         BAS_data = pd.merge(BAS_data, BAS_data1[folder_name], left_index=True, right_index=True, how='outer')
     else:
         BAS_data=BAS_data1
+
+#Deal with change of value data
+BAS_data = BAS_data[~BAS_data.index.duplicated()]
 BAS_data=BAS_data.resample('1min').ffill()
 BAS_data=BAS_data.resample('5min').mean()
 
