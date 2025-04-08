@@ -1,5 +1,6 @@
 """
-HELP WHAT DOES THIS CODE DO
+THIS IS THE CODE YOU RUN TO GENERATE THE REPORT.
+IT ALSO RUNS CORRELATED_MODELING.PY IN THE PROCESS, CALCS HAPPEN IN BOTH PLACES
 
 """
 #Points above or below 10% of the limit probably needs to be a different color or something to make it easily understandable. #Todo: This is for after basline is established
