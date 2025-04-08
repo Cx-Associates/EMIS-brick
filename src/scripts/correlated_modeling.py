@@ -16,6 +16,9 @@ import calendar
 import math
 import numpy as np
 from datetime import datetime
+from pathlib import Path
+from dateutil import tz
+import builtins
 
 start_baseline_heating = '2024-11-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
 end_baseline_heating = '2025-02-01'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
@@ -37,8 +40,8 @@ def parse_response(response,columnname):
     This reads JSON responses from AceIOT.
     """
     dict_ = response.json()
-    list_ = dict_['point_samples']
-    df = pd.DataFrame(list_)
+    alist_ = dict_['point_samples']
+    df = pd.DataFrame(alist_)
     df.index = pd.to_datetime(df.pop('time'))
     df.drop(columns='name', inplace=True)
     df[columnname] = pd.to_numeric(df['value'])
@@ -67,6 +70,12 @@ end = str(end) #Start and end dates need to be strings
 start_check = pd.to_datetime(start).tz_localize(timezone)
 end_check = pd.to_datetime(end_check).tz_localize(timezone)
 
+# Mapping EDT and EST to America/New_York handles both DST and standard time
+tzinfos = {
+    'EDT': tz.gettz('US/Eastern'),
+    'EST': tz.gettz('US/Eastern'),
+}
+
 ACE_data = pd.DataFrame() #Defining empty dataframe into which BMS data will be pulled into from ACE API
 
 def get_value(equipment_name, data): #Todo: For next project it will be good to define all functions in the utils.py or a seperate one
@@ -80,12 +89,12 @@ def get_hp(equipment_name, data):
     return size
 
 #Ace Data locations
-str = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
+mystr = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Pump 4b VFD Output
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time={start}&end_time={end}', #Pump 4a s/s
-fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/13/timeseries?start_time={start}&end_time={end}', #Pump 4b s/s
-fr'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Supply Temp_2
-fr'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Return Temp_2
+#fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/12/timeseries?start_time={start}&end_time={end}', #Pump 4a s/s
+#fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/13/timeseries?start_time={start}&end_time={end}', #Pump 4b s/s
+#fr'/cxa_main_st_landing/2404:9-240409/analogInput/16/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Supply Temp_2
+#fr'/cxa_main_st_landing/2404:9-240409/analogInput/15/timeseries?start_time={start}&end_time={end}', #Primary Hot Water Return Temp_2
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/3/timeseries?start_time={start}&end_time={end}', #Boiler 1% signal
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/4/timeseries?start_time={start}&end_time={end}', #Boiler 2% signal
 fr'/cxa_main_st_landing/2404:9-240409/binaryOutput/6/timeseries?start_time={start}&end_time={end}', #Boiler 1 Status
@@ -131,10 +140,10 @@ fr'/cxa_main_st_landing/2404:9-240409/binaryInput/18/timeseries?start_time={star
 #Ace Data descriptions
 headers = ['Pump 4a VFD Output',
          'Pump 4b VFD Output',
-         'Pump 4a s/s',
-         'Pump 4b s/s',
-         'Primary Hot Water Supply Temp_2',
-         'Primary Hot Water Return Temp_2',
+#         'Pump 4a s/s',
+#         'Pump 4b s/s',
+#         'Primary Hot Water Supply Temp_2',
+#         'Primary Hot Water Return Temp_2',
          'Boiler 1% signal',
          'Boiler 2% signal',
          'Boiler 1 status',
@@ -180,16 +189,16 @@ headers = ['Pump 4a VFD Output',
 with open(env_filepath, 'r') as file:
     config = yaml.safe_load(file)
     url = config['DATABASE_URL']
-    for str_, head in zip(str, headers):
-        str_ = url + str_
+    for mystr_, head in zip(mystr, headers):
+        mystr_ = url + mystr_
         auth_token = config['API_KEY']
         headers = {
             'Authorization': f'Bearer {auth_token}',
             'Content-Type': 'application/json',
         }
-        res = requests.get(str_, headers=headers)
+        res = requests.get(mystr_, headers=headers)
         if res.status_code == 200:
-            print(f'...Got data! From: \n {str_} \n')
+            print(f'...Got data! From: \n {mystr_} \n')
             df = parse_response(res, head)
             df.index = df.index.tz_localize('UTC').tz_convert(timezone)
             #do 15-minute averages
@@ -199,6 +208,35 @@ with open(env_filepath, 'r') as file:
         else:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
+
+#READ IN BMS DATA
+#list = builtins.list
+#get paths for all the files
+BMS_path =Path(r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\Monthly Reports\Progress Report_2025-03-31\BMS Data")
+csv_files = list(BMS_path.glob('**/*.csv'))
+BASdatapath = [str(file.resolve()) for file in csv_files]
+
+#read in BAS data (for where we didn't get appropriate data from Ace):
+for path in BASdatapath:
+    # Read in data from a file with data collected via on-site monitoring
+    BAS_data1 = pd.read_csv(path, skiprows=1, header=0)
+    folder_name = os.path.basename(os.path.dirname(path))
+    BAS_data1[folder_name] = BAS_data1['Value']
+    BAS_data1['Date'] = BAS_data1['Date'].str.replace('EDT', '')
+    BAS_data1['Date'] = BAS_data1['Date'].str.replace('EST', '')
+    BAS_data1['CombinedDatetime'] = pd.to_datetime(BAS_data1['Date'])
+    BAS_data1.set_index('CombinedDatetime', inplace=True)
+    BAS_data1.index = BAS_data1.index.tz_localize('US/Eastern', ambiguous='NaT',
+                                                  nonexistent='shift_forward')  # Non-existent deals with daylight savings
+    if 'BAS_data' in locals():
+        BAS_data = pd.merge(BAS_data, BAS_data1[folder_name], left_index=True, right_index=True, how='outer')
+    else:
+        BAS_data=BAS_data1
+BAS_data=BAS_data.resample('1min').ffill()
+BAS_data=BAS_data.resample('5min').mean()
+
+#Combine ACE data and BAS data with preference for ACE data.
+ACE_data=ACE_data.combine_first(BAS_data)
 
 #Create folder to store data and report
 main_folder = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\Monthly Reports"
@@ -223,7 +261,7 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 
 ##HEATING SYSTEM CALCS
 #Create system level dataframes #Todo: For future projects, will be good to create system level functions which will take in equipments as input and use that to calculate system level energy consumption
-Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Pump 4a Status', 'Pump 4b Status', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']] #Always use double [] brackets for picking the data you need
+Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']] #Always use double [] brackets for picking the data you need
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
 #Calculating kW from BMS information #Todo: For a future project try to get rid of the warning:  value is trying to be set on a copy of a slice from a DataFrame.
@@ -272,7 +310,7 @@ HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 Report_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][4] + Corr_param_df['intercept'][4]
 
 #CHILLED WATER SYSTEM CALCS
-CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling Tower Free Cool Status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
+CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
 
 #Calculating kW from BMS information
 CHW_df['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists #todo: add correlation if needed
