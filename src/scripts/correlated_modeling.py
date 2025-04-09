@@ -87,7 +87,7 @@ def get_hp(equipment_name, data):
     index = data['Equipt'].index(equipment_name)  # Find index of equipment name
     size = data['hp'][index]  # Retrieve corresponding size using index
     return size
-"""
+
 #Ace Data locations
 mystr = [fr'/cxa_main_st_landing/2404:9-240409/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Pump 4a VFD Output
 fr'/cxa_main_st_landing/2404:9-240409/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Pump 4b VFD Output
@@ -208,7 +208,7 @@ with open(env_filepath, 'r') as file:
         else:
             msg = f'API request from ACE was unsuccessful. \n {res.reason} \n {res.content}'
             #raise Exception(msg) #Uncomment this to troubleshoot any points that are not being downloaded
-"""
+
 #READ IN BMS DATA
 #get paths for all the files
 BMS_path =Path(r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\Monthly Reports\Progress Report_2025-03-31\BMS Data")
@@ -234,8 +234,11 @@ for path in BASdatapath:
         BAS_data=BAS_data1
 
 #Deal with change of value data
+BAS_data.sort_index(inplace=True)
 BAS_data = BAS_data[~BAS_data.index.duplicated()]
+BAS_data.replace(['nan', 'NaN', '', 'None', ' nan', 'nan '], pd.NA,inplace=True)
 BAS_data=BAS_data.resample('1min').ffill()
+BAS_data.ffill(inplace=True)
 BAS_data=BAS_data.resample('5min').mean()
 
 #Combine ACE data and BAS data with preference for ACE data.
@@ -264,14 +267,14 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 
 ##HEATING SYSTEM CALCS
 #Create system level dataframes #Todo: For future projects, will be good to create system level functions which will take in equipments as input and use that to calculate system level energy consumption
-Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal', 'Boiler 1 status', 'Boiler 2 status']] #Always use double [] brackets for picking the data you need
+Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal']] #Always use double [] brackets for picking the data you need
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
 #Calculating kW from BMS information #Todo: For a future project try to get rid of the warning:  value is trying to be set on a copy of a slice from a DataFrame.
-Heating_df['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(Heating_df['Pump 4a VFD Output']/100)**2.5*Heating_df['Pump 4a Status']
-Heating_df['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(Heating_df['Pump 4b VFD Output']/100)**2.5*Heating_df['Pump 4b Status']
-Heating_df['Boiler 1 MBtu'] = get_value('Boiler1_capacity', Boiler_Nameplate)*Heating_df['Boiler 1 status']*Heating_df['Boiler 1% signal']/(100*get_value('Boiler1_Eff', Boiler_Nameplate)) #The 100 in the denominator is to convert the % signal value
-Heating_df['Boiler 2 MBtu'] = get_value('Boiler2_capacity', Boiler_Nameplate)*Heating_df['Boiler 2 status']*Heating_df['Boiler 2% signal']/(100*get_value('Boiler2_Eff', Boiler_Nameplate))
+Heating_df['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(Heating_df['Pump 4a VFD Output']/100)**2.5
+Heating_df['Pump 4b kW (Formula Based)'] = get_hp('Pump4b',Nameplate)*0.745699872*(Heating_df['Pump 4b VFD Output']/100)**2.5
+Heating_df['Boiler 1 MBtu'] = get_value('Boiler1_capacity', Boiler_Nameplate)*Heating_df['Boiler 1% signal']/(100*get_value('Boiler1_Eff', Boiler_Nameplate)) #The 100 in the denominator is to convert the % signal value
+Heating_df['Boiler 2 MBtu'] = get_value('Boiler2_capacity', Boiler_Nameplate)*Heating_df['Boiler 2% signal']/(100*get_value('Boiler2_Eff', Boiler_Nameplate))
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 Heating_df_15min = Heating_df.resample(rule='15Min').mean() #Averaging for 15 min in order to use the correlation factors
 #Heating_df_15min.to_csv('Heating_df_15min.csv') #Uncomment for troubleshooting
@@ -287,13 +290,13 @@ Report_df['Heating System kW'] = Report_df[['Pump 4a kW (Correlated)', 'Pump 4b 
 #Report_df.to_csv('Report_df.csv') #Uncomment for troubleshooting
 
 ##AHU-19 CALCS
-AHU_df = ACE_data[['AHU19 supply fan VFD output', 'AHU19 Supply fan Status', 'AHU19 Exhaust fan 1 VFD speed', 'AHU19 Exhaust fan 2 VFD speed', 'AHU19 Heat Recovery Wheel VFD', 'AHU19 Heat Recovery Wheel Status', 'AHU19 Exhaust fan CFM']]
+AHU_df = ACE_data[['AHU19 supply fan VFD output', 'AHU19 Exhaust fan 1 VFD speed', 'AHU19 Exhaust fan 2 VFD speed', 'AHU19 Heat Recovery Wheel VFD']]
 
 #Calculating kW from BMS information
 AHU_df['AHU 19 EF1 kW (Formula Based)'] = (get_hp('AHU19EF1', Nameplate))*0.745699872*(AHU_df['AHU19 Exhaust fan 1 VFD speed']/100)**2.5 #No status exists
 AHU_df['AHU 19 EF2 kW (Formula Based)'] = (get_hp('AHU19EF2', Nameplate))*0.745699872*(AHU_df['AHU19 Exhaust fan 2 VFD speed']/100)**2.5 #No status exists
-AHU_df['AHU 19 SF kW (Formula Based)'] = AHU_df['AHU19 Supply fan Status']*(get_hp('AHU19SF', Nameplate))*0.745699872*(AHU_df['AHU19 supply fan VFD output']/100)**2.5
-AHU_df['AHU 19 HRW kW (Formula Based)'] = AHU_df['AHU19 Heat Recovery Wheel Status']*(get_hp('AHU19HRW', Nameplate))*0.745699872*(AHU_df['AHU19 Heat Recovery Wheel VFD']/100)**2.5
+AHU_df['AHU 19 SF kW (Formula Based)'] = (get_hp('AHU19SF', Nameplate))*0.745699872*(AHU_df['AHU19 supply fan VFD output']/100)**2.5
+AHU_df['AHU 19 HRW kW (Formula Based)'] = (get_hp('AHU19HRW', Nameplate))*0.745699872*(AHU_df['AHU19 Heat Recovery Wheel VFD']/100)**2.5
 AHU_df['AHU 19 Total kW (Formula Based)'] = AHU_df[['AHU 19 EF1 kW (Formula Based)', 'AHU 19 EF2 kW (Formula Based)', 'AHU 19 SF kW (Formula Based)', 'AHU 19 HRW kW (Formula Based)']].sum(axis=1, min_count=1)
 AHU_df_15min = AHU_df.resample(rule='15Min').mean()
 #AHU_df.to_csv('AHU_df.csv) #Uncomment for troubleshooting
@@ -302,9 +305,9 @@ AHU_df_15min = AHU_df.resample(rule='15Min').mean()
 Report_df['AHU 19 Total kW (Correlated)'] = AHU_df_15min['AHU 19 Total kW (Formula Based)']* Corr_param_df['slope'][5] + Corr_param_df['intercept'][5]
 
 ##HRU CALCS
-HRU_df = ACE_data[['HRU supply fan VFD output', 'HRU Exhaust fan VFD output', 'HRU Exhaust Fan Status', 'HRU Supply Fan Status']]
-HRU_df['HRU Supply Fan kW (Formula Based)'] = HRU_df['HRU Supply Fan Status']*(get_hp('HRUSupplyFan',Nameplate))*0.745699872*(HRU_df['HRU supply fan VFD output']/100)**2.5
-HRU_df['HRU Exhaust Fan kW (Formula Based)'] = HRU_df['HRU Exhaust Fan Status']*(get_hp('HRUReturnFan',Nameplate))*0.745699872*(HRU_df['HRU Exhaust fan VFD output']/100)**2.5
+HRU_df = ACE_data[['HRU supply fan VFD output', 'HRU Exhaust fan VFD output']]
+HRU_df['HRU Supply Fan kW (Formula Based)'] = (get_hp('HRUSupplyFan',Nameplate))*0.745699872*(HRU_df['HRU supply fan VFD output']/100)**2.5
+HRU_df['HRU Exhaust Fan kW (Formula Based)'] = (get_hp('HRUReturnFan',Nameplate))*0.745699872*(HRU_df['HRU Exhaust fan VFD output']/100)**2.5
 HRU_df['HRU Total kW (Formula Based)'] = HRU_df[['HRU Exhaust Fan kW (Formula Based)', 'HRU Supply Fan kW (Formula Based)']].sum(axis=1, min_count=1) #One DENT on all HRU so will need to correlate to total
 HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 #HRU_df_15min.to_csv('HRU_df_15min.csv')
@@ -313,13 +316,13 @@ HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 Report_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][4] + Corr_param_df['intercept'][4]
 
 #CHILLED WATER SYSTEM CALCS
-CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Pump 3a status', 'Pump 3b status', 'Chiller status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
+CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 3a status', 'Pump 3b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Chiller status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
 
 #Calculating kW from BMS information
-CHW_df['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists #todo: add correlation if needed
-CHW_df['Pump 1b kW (Formula Based)'] = get_hp('Pump1b', Nameplate)*0.745699872*(CHW_df['Pump 1b feedback']/100)**2.5 #No status exists and does not need correlation
-CHW_df['Pump 2b kW (Formula Based)'] = CHW_df['Pump 2b status']*get_hp('Pump2b',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5
-CHW_df['Pump 2a kW (Formula Based)'] = CHW_df['Pump 2a status']*(get_hp('Pump2a',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5)
+CHW_df['Pump 1a kW (Formula Based)'] = CHW_df['Pump 1a feedback']*get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists #todo: add correlation if needed
+CHW_df['Pump 1b kW (Formula Based)'] = CHW_df['Pump 1b feedback']*get_hp('Pump1b', Nameplate)*0.745699872*(CHW_df['Pump 1b feedback']/100)**2.5 #No status exists and does not need correlation
+CHW_df['Pump 2b kW (Formula Based)'] = CHW_df['Pump 2a status']*get_hp('Pump2b',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5
+CHW_df['Pump 2a kW (Formula Based)'] = CHW_df['Pump 2b status']*(get_hp('Pump2a',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5)
 CHW_df['Pump 3a kW (Formula Based)'] = CHW_df['Pump 3a status']*(get_hp('Pump3a', Nameplate))*0.745699872
 CHW_df['Pump 3b kW (Formula Based)'] = CHW_df['Pump 3b status']*(get_hp('Pump3a', Nameplate))*0.745699872
 CHW_df['Tower Fan 1 kW (Formula Based)'] = CHW_df['Cooling tower Fan 1 Status']*(get_hp('CTFan1', Nameplate))*0.745699872*(CHW_df['Cooling tower fan %speed']/100)**2.5
