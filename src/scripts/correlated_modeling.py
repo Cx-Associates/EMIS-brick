@@ -59,7 +59,7 @@ today = datetime.today() #use this format if you need to force it a previous mon
 a_month_ago = today - relativedelta(months=1) #Setting monthly reporting period
 start = a_month_ago.replace(day=1) # Get the first day of the previous month
 last_day_of_prev_month = calendar.monthrange(a_month_ago.year, a_month_ago.month)[1] # Get the last day of the previous month
-end = today.replace(day=3) #Setting it a bit ahead because not seeing complete data from ACE api otherwise
+end = today.replace(day=4) #Setting it a bit ahead because not seeing complete data from ACE api otherwise
 end_rep = a_month_ago.replace(day=last_day_of_prev_month).strftime('%Y-%m-%d')
 end_rep = str(end_rep)
 end_check = datetime(a_month_ago.year, a_month_ago.month, last_day_of_prev_month, 23, 0, 0)
@@ -279,6 +279,14 @@ Heating_df['Boiler 2 MBtu'] = get_value('Boiler2_capacity', Boiler_Nameplate)*He
 Heating_df_15min = Heating_df.resample(rule='15Min').mean() #Averaging for 15 min in order to use the correlation factors
 #Heating_df_15min.to_csv('Heating_df_15min.csv') #Uncomment for troubleshooting
 
+#If days are missing, assume they are the same as days we DO have data for
+#number of expected hours:
+
+#number of actual hours:
+
+#calc to get ALL hours:
+
+
 #Calculating correlated values and adding reporting variables to dataframe
 Report_df['Boiler 1 MBtu'] = Heating_df_15min['Boiler 1 MBtu']
 Report_df['Boiler 2 MBtu'] = Heating_df_15min['Boiler 2 MBtu']
@@ -316,18 +324,21 @@ HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 Report_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][4] + Corr_param_df['intercept'][4]
 
 #CHILLED WATER SYSTEM CALCS
-CHW_df = ACE_data[['Chilled water power meter', 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 3a status', 'Pump 3b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Chiller status', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
+CHW_df = ACE_data[[ 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 3a status', 'Pump 3b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
+chiller_df=ACE_data[['Chilled water power meter','Chiller status',]] #doing this one separate since it has shorter data storage in the BMS
 
 #Calculating kW from BMS information
-CHW_df['Pump 1a kW (Formula Based)'] = CHW_df['Pump 1a feedback']*get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists #todo: add correlation if needed
-CHW_df['Pump 1b kW (Formula Based)'] = CHW_df['Pump 1b feedback']*get_hp('Pump1b', Nameplate)*0.745699872*(CHW_df['Pump 1b feedback']/100)**2.5 #No status exists and does not need correlation
+CHW_df['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists #todo: add correlation if needed
+CHW_df['Pump 1b kW (Formula Based)'] = get_hp('Pump1b', Nameplate)*0.745699872*(CHW_df['Pump 1b feedback']/100)**2.5 #No status exists and does not need correlation
 CHW_df['Pump 2b kW (Formula Based)'] = CHW_df['Pump 2a status']*get_hp('Pump2b',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5
 CHW_df['Pump 2a kW (Formula Based)'] = CHW_df['Pump 2b status']*(get_hp('Pump2a',Nameplate)*0.745699872*(CHW_df['Pump 2a-b VFD output']/100)**2.5)
 CHW_df['Pump 3a kW (Formula Based)'] = CHW_df['Pump 3a status']*(get_hp('Pump3a', Nameplate))*0.745699872
 CHW_df['Pump 3b kW (Formula Based)'] = CHW_df['Pump 3b status']*(get_hp('Pump3a', Nameplate))*0.745699872
 CHW_df['Tower Fan 1 kW (Formula Based)'] = CHW_df['Cooling tower Fan 1 Status']*(get_hp('CTFan1', Nameplate))*0.745699872*(CHW_df['Cooling tower fan %speed']/100)**2.5
 CHW_df['Tower Fan 2 kW (Formula Based)'] = CHW_df['Cooling tower Fan 2 Status']*(get_hp('CTFan2', Nameplate))*0.745699872*(CHW_df['Cooling tower fan %speed']/100)**2.5
-CHW_df['Chiller kW'] = CHW_df['Chiller status'] * CHW_df['Chilled water power meter']
+
+
+CHW_df['Chiller kW'] = chiller_df['Chiller status'] * chiller_df['Chilled water power meter']
 
 CHW_df_15min = CHW_df.resample(rule='15Min').mean()
 #CHW_df_15min.to_csv("CHW_df_15min.csv")
