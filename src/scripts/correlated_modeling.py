@@ -61,9 +61,9 @@ a_month_ago = today - relativedelta(months=1) #Setting monthly reporting period
 start = a_month_ago.replace(day=1) # Get the first day of the previous month
 last_day_of_prev_month = calendar.monthrange(a_month_ago.year, a_month_ago.month)[1] # Get the last day of the previous month
 end = today.replace(day=4) #Setting it a bit ahead because not seeing complete data from ACE api otherwise
-end_rep = today.replace(day=last_day_of_prev_month).strftime('%Y-%m-%d')
+end_rep = a_month_ago.replace(day=last_day_of_prev_month).strftime('%Y-%m-%d')
 end_rep = str(end_rep)
-end_check = datetime(a_month_ago.year, a_month_ago.month, hour = 23, minute =0, second = 0)
+end_check = datetime(a_month_ago.year, a_month_ago.month, last_day_of_prev_month, 23, 0, 0)
 start = str(start.strftime('%Y-%m-%d'))
 end = str(end) #Start and end dates need to be strings
 
@@ -362,7 +362,7 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 
 ##HEATING SYSTEM CALCS
 #Create system level dataframes #Todo: For future projects, will be good to create system level functions which will take in equipments as input and use that to calculate system level energy consumption
-Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal']] #Always use double [] brackets for picking the data you need
+Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal', 'temperature_2m']] #Always use double [] brackets for picking the data you need
 columns_to_fill = ['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal']
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
@@ -546,12 +546,6 @@ for col in ventcolumns:
 # Cleanup (optional)
 df.drop(columns=['weekday', 'time', 'group_key'], inplace=True)
 
-
-
-
-
-
-#Report_df_final.to_csv(f"Report_df_final_{end}.csv")
 
 ##Write the final dataframe to the F drive
 file_path = os.path.join(subfolder_path, f"Report_df_final_{end_rep}.csv")
