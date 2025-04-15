@@ -362,7 +362,7 @@ Report_df = pd.DataFrame() #Dataframe which will store all calculated energy con
 
 ##HEATING SYSTEM CALCS
 #Create system level dataframes #Todo: For future projects, will be good to create system level functions which will take in equipments as input and use that to calculate system level energy consumption
-Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal', 'temperature_2m']] #Always use double [] brackets for picking the data you need
+Heating_df = ACE_data[['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal', 'temperature_2m', 'HDD', 'CDD']] #Always use double [] brackets for picking the data you need
 columns_to_fill = ['Pump 4a VFD Output', 'Pump 4b VFD Output', 'Boiler 1% signal', 'Boiler 2% signal']
 #Heating_df.to_csv('Heating_df.csv') #Uncomment for troubleshooting
 
@@ -383,7 +383,7 @@ for col in columns_to_fill:
         if len(valid_rows) < 2:
             # Not enough data to build a model, widen search:
             temp_mask = Heating_df['temperature_2m'].between(temp_at_time - 8, temp_at_time + 8)
-            valid_rows = Heating_df[temp_mask & df[col].notna()]
+            valid_rows = Heating_df[temp_mask & Heating_df[col].notna()]
             if len(valid_rows) < 2:
                 continue #just give up...
 
@@ -393,10 +393,10 @@ for col in columns_to_fill:
         model = LinearRegression().fit(X, y)
 
         # Predict using temperature at the missing index
-        predicted_value = model.predict(np.array([[temp_at_time]]))[0]
+        predicted_value = max(model.predict(np.array([[temp_at_time]]))[0],0)
 
         # Fill in the missing value
-        df.loc[idx, col] = predicted_value
+        Heating_df.loc[idx, col] = predicted_value
 
 #Calculating kW from BMS information #Todo: For a future project try to get rid of the warning:  value is trying to be set on a copy of a slice from a DataFrame.
 Heating_df['Pump 4a kW (Formula Based)'] = get_hp('Pump4a',Nameplate)*0.745699872*(Heating_df['Pump 4a VFD Output']/100)**2.5
@@ -414,6 +414,10 @@ Report_df['Total Boiler NG Consumption (MBtu)'] = Heating_df_15min[['Boiler 1 MB
 Report_df['Pump 4a kW (Correlated)'] = Heating_df_15min['Pump 4a kW (Formula Based)'] * Corr_param_df['slope'][0] + Corr_param_df['intercept'][0]
 Report_df['Pump 4b kW (Correlated)'] = Heating_df_15min['Pump 4b kW (Formula Based)'] * Corr_param_df['slope'][1] + Corr_param_df['intercept'][1]
 Report_df['Heating System kW'] = Report_df[['Pump 4a kW (Correlated)', 'Pump 4b kW (Correlated)']].sum(axis=1, min_count=1) #If there are columns with NAN data then the sum won't work and the total column will also be nan. The min_count deals with this so if at least one column has a non-NaN value, the sum will be computed using the non-NaN values. The NaN values will be ignored
+Report_df['HDD']=Heating_df_15min['HDD']
+Report_df['CDD']=Heating_df_15min['CDD']
+Report_df['temperature_2m']=Heating_df_15min['temperature_2m']
+
 
 #Report_df.to_csv('Report_df.csv') #Uncomment for troubleshooting
 
@@ -444,8 +448,42 @@ HRU_df_15min = HRU_df.resample(rule='15Min').mean()
 Report_df['HRU Total kW (Correlated)'] = HRU_df_15min['HRU Total kW (Formula Based)'] * Corr_param_df['slope'][4] + Corr_param_df['intercept'][4]
 
 #CHILLED WATER SYSTEM CALCS
-CHW_df = ACE_data[[ 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 3a status', 'Pump 3b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']]
+CHW_df = ACE_data[[ 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 3a status', 'Pump 3b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status', 'temperature_2m']]
 chiller_df=ACE_data[['Chilled water power meter','Chiller status',]] #doing this one separate since it has shorter data storage in the BMS
+columns_to_fill = [ 'Pump 2a-b VFD output', 'Pump 2a status', 'Pump 2b status', 'Pump 3a status', 'Pump 3b status', 'Pump 1a feedback', 'Pump 1b feedback', 'Pump 1 VFD Signal', 'Cooling tower fan %speed', 'Cooling tower Fan 1 Status', 'Cooling tower Fan 2 Status']
+
+#for missing data use similar temperature times to fill the missing data:
+for col in columns_to_fill:
+    missing_indices = CHW_df[CHW_df[col].isna()].index
+    for idx in missing_indices:
+        temp_at_time = CHW_df.loc[idx, 'temperature_2m']
+
+        if pd.isna(temp_at_time):
+            # Skip if temp itself is missing
+            continue
+
+        # Find rows within +/- 3 degrees of the temp at this missing point
+        temp_mask = CHW_df['temperature_2m'].between(temp_at_time - 3, temp_at_time + 3)
+        valid_rows = CHW_df[temp_mask & CHW_df[col].notna()]
+
+        if len(valid_rows) < 2:
+            # Not enough data to build a model, widen search:
+            temp_mask = CHW_df['temperature_2m'].between(temp_at_time - 8, temp_at_time + 8)
+            valid_rows = CHW_df[temp_mask & CHW_df[col].notna()]
+            if len(valid_rows) < 2:
+                continue #just give up...
+
+        # Fit linear model: temperature_2m -> col
+        X = valid_rows[['temperature_2m']]
+        y = valid_rows[col]
+        model = LinearRegression().fit(X, y)
+
+        # Predict using temperature at the missing index
+        predicted_value = max(model.predict(np.array([[temp_at_time]]))[0],0)
+
+        # Fill in the missing value
+        CHW_df.loc[idx, col] = predicted_value
+
 
 #Calculating kW from BMS information
 CHW_df['Pump 1a kW (Formula Based)'] = get_hp('Pump1a',Nameplate)*0.745699872*(CHW_df['Pump 1a feedback']/100)**2.5 #No status exists #todo: add correlation if needed
@@ -481,28 +519,24 @@ Report_df_hourly = Report_df.resample(rule='H').mean() #Resmpling and aggregatin
 #Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill
 
 
-Report_df_final['Total Boiler NG Consumption (MMBtu)'] = Report_df_final['Total Boiler NG Consumption (MBtu)']/1000
-Report_df_final['Total Heating Plant Energy Consumption (MMBtu)'] = Report_df_final['Total Boiler NG Consumption (MMBtu)'] + (Report_df_final['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
+Report_df['Total Boiler NG Consumption (MMBtu)'] = Report_df['Total Boiler NG Consumption (MBtu)']/1000
+Report_df['Total Heating Plant Energy Consumption (MMBtu)'] = Report_df['Total Boiler NG Consumption (MMBtu)'] + (Report_df['Heating System kW'] * 0.003412) #converting total consumption to MMBtu
 
 # List of columns to check for NaN values. Due to difference in how open meteo and ACE handle API requests, we get some additional rows where we have no ACE data
 columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 Total kW (Correlated)',
                     'HRU Total kW (Correlated)', 'Total CHW kW']
 
 #Drop rows where all the specified columns have NaN values
-Report_df_final= Report_df_final.dropna(subset=columns_to_check, how='all')
+Report_df_final= Report_df.dropna(subset=columns_to_check, how='all')
 Report_df_final.index = pd.to_datetime(Report_df_final.index)
+Report_df_final = Report_df_final.resample(rule='H').mean() #Resmpling and aggregating consumption hourly. After this step all electric values are essentially kWh since we get the kW consumed during that hour.
+#Report_df_hourly.to_csv('Report_df_hourly.csv') #You know the drill
 
 #Check to make sure data is just within the reporting period
 Report_df_final = Report_df_final[(Report_df_final.index>= start_check) & (Report_df_final.index <=end_check)]
 
 #TODO: MOVE THIS FILLING IN TO THE INDIVIDUAL DATA FRAMES, SO THAT MORE DATA CAN BE INCLUDED AND WE CAN GET EACH PIECE OF EQUIPMENT
 #If some data is missing in the final reporting data frame fill it in as appropriate
-#first, check how much data we expect
-#number of expected hours:
-diff = end_check - start_check
-exp_hours = diff.total_seconds()/3600 +2
-#second, check how much data we actually have for each column in the dataframe
-
 #find nans in the reporting data frame
 nans_per_column = Report_df_final.isna().sum()
 columns_with_nans = nans_per_column[nans_per_column > 0]
@@ -526,8 +560,8 @@ for col in meteocolumns:
 
 #for ventilation system, similar day/time values from other parts of the month:
 
-Report_df_final['weekday'] = Report_df_final.index.dt.dayofweek     # Monday=0, Sunday=6
-Report_df_final['time'] = Report_df_final.index.dt.time              # Time part only
+Report_df_final['weekday'] = Report_df_final.index.dayofweek     # Monday=0, Sunday=6
+Report_df_final['time'] = Report_df_final.index.time              # Time part only
 
 # Set of columns where you want this fill strategy
 ventcolumns = ['AHU 19 Total kW (Correlated)', 'HRU Total kW (Correlated)']
@@ -544,8 +578,7 @@ for col in ventcolumns:
         Report_df_final[col] = Report_df_final[col].fillna(group_means)
 
 # Cleanup (optional)
-df.drop(columns=['weekday', 'time', 'group_key'], inplace=True)
-
+Report_df_final.drop(columns=['weekday', 'time', 'group_key'], inplace=True, errors='ignore')
 
 ##Write the final dataframe to the F drive
 file_path = os.path.join(subfolder_path, f"Report_df_final_{end_rep}.csv")

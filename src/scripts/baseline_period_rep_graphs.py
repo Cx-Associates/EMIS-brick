@@ -2,6 +2,10 @@
 THIS IS THE CODE YOU RUN TO GENERATE THE REPORT.
 IT ALSO RUNS CORRELATED_MODELING.PY IN THE PROCESS, CALCS HAPPEN IN BOTH PLACES
 
+IF YOU ARE USING THIS CODE WITH THE BAS DATA.  YOU NEED TO PUT EACH .CSV FILE IN A FOLDER
+THAT IS NAMED THE WAY THE ACE DATA IS NAMED IN THE DATA FRAME. FOR AN EXAMPLE SEE THE
+MARCH 2025 MONTHLY REPORT FOLDER THAT HAS THE BAS DATA.
+
 """
 #Points above or below 10% of the limit probably needs to be a different color or something to make it easily understandable. #Todo: This is for after basline is established
 import matplotlib.pyplot as plt
