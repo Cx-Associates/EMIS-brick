@@ -378,7 +378,7 @@ for col in columns_to_fill:
 
         # Find rows within +/- 3 degrees of the temp at this missing point
         temp_mask = Heating_df['temperature_2m'].between(temp_at_time - 3, temp_at_time + 3)
-        valid_rows = Heating_df[temp_mask & df[col].notna()]
+        valid_rows = Heating_df[temp_mask & Heating_df[col].notna()]
 
         if len(valid_rows) < 2:
             # Not enough data to build a model, widen search:
