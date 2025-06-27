@@ -24,7 +24,8 @@ hourly_avg_df.index = [time.strftime("%H:%M") for time in hourly_avg_df.index] #
 
 #Baseline
 
-Heating_system_baseline = total_energy_system_corr['Heating Plant (Normalized)'].sum() #todo: Add more systems below
+Heating_system_baseline = total_energy_system_corr['Heating Plant (Normalized)'].sum()
+Ventilation_baseline = total_energy_system_corr['AHU19 (Normalized)'].sum() + total_energy_system_corr['HRU (Normalized)'].sum()  #todo: Add more systems below
 
 #Plotting Heating System
 
@@ -236,7 +237,23 @@ for i, (system, value) in enumerate(zip(systems, system_values)):
             color='darkred' if difference > 0 else 'green',  # Red for above, green for below
             fontsize=11
         )
-
+    elif system == "Ventilation":  # <-- Adjust this name if needed to match the column
+        ax.axvline(
+            x=Ventilation_baseline,
+            color='black',
+            linestyle='-',
+            linewidth=2,
+            ymin=(i+0.15) / (len(systems)),
+            ymax=(i + 0.85) / (len(systems))
+        )
+        difference = value - Ventilation_baseline
+        ax.text(
+            max_energy_value + 230, i - 0.2,
+            f'{abs(difference):.1f} MMBtu {"above" if difference > 0 else "below"} baseline',
+            va='center', ha='left',
+            color='darkred' if difference > 0 else 'green',
+            fontsize=11
+        )
 
     ax.text(max_energy_value + 230, i, f'{value:.1f} MMBtu', va='center', ha='left', color='black', fontsize=13)
 ax.set_yticks(np.arange(len(systems)))

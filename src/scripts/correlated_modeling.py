@@ -17,10 +17,10 @@ import math
 import numpy as np
 from datetime import datetime
 
-start_baseline_heating = '2024-11-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
-end_baseline_heating = '2025-02-01'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
-start_baseline_vent = '2024-11-01'#"xx-xx-xxxx" #start of baseline period for ventilation #todo: update when baseline period is determined, current dates are for ventilation system baseline
-end_baseline_vent = '2025-03-01'#"xx-xx-xxxx" #end of baseline period for ventilation #todo: update when baseline period is determined, current dates are for ventilation system baseline
+start_baseline_heating = '2024-09-01'#"xx-xx-xxxx" #start of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
+end_baseline_heating = '2025-05-31'#"xx-xx-xxxx" #end of baseline period #todo: update when baseline period is determined, current dates are for heating system baseline
+start_baseline_vent = '2024-09-01'#"xx-xx-xxxx" #start of baseline period for ventilation #todo: update when baseline period is determined, current dates are for ventilation system baseline
+end_baseline_vent = '2025-05-31'#"xx-xx-xxxx" #end of baseline period for ventilation #todo: update when baseline period is determined, current dates are for ventilation system baseline
 
 #from src.utils import Project
 #from config_MSL import config_dict
@@ -381,7 +381,7 @@ hourly_weather_dataframe['CDD'] = hourly_weather_dataframe['temperature_2m'].app
 #Output the DataFrame
 #hourly_weather_dataframe.to_csv("Open_meteo_weather_data.csv") #Todo: Comment this out before push
 
-#Calculate the daily total HDD and CDD for each hours #Todo: Needs to be removed possibly
+#Calculate the daily total HDD and CDD for each hours
 hourly_weather_df = hourly_weather_dataframe.drop(['dew_point_2m', 'precipitation', 'weather_code'], axis=1) #Dropping whatever variables are not going to be important
 hourly_weather_df['date'] = pd.to_datetime(hourly_weather_df['date']) #todo: Add timezone, and that might fix it? #Date from open meteo is a RangeIndex and resample only works on DatetimeIndex, TimedeltaIndex, or PeriodIndex. The dt.date drops the time component otherwise resampling was not working properly.
 hourly_weather_df.set_index('date', inplace=True)#Setting the date as index
@@ -400,11 +400,11 @@ columns_to_check = ['Total Heating Plant Energy Consumption (MMBtu)', 'AHU 19 To
 #Drop rows where all the specified columns have NaN values
 Report_df_final= Report_df_final.dropna(subset=columns_to_check, how='all')
 Report_df_final.index = pd.to_datetime(Report_df_final.index)
+Report_df_final['DD'] = Report_df_final['HDD'] + Report_df_final['CDD']
 
 #Check to make sure data is just within the reporting period
 Report_df_final = Report_df_final[(Report_df_final.index>= start_check) & (Report_df_final.index <=end_check)]
 
-#Report_df_final.to_csv(f"Report_df_final_{end}.csv")
 
 ##Write the final dataframe to the F drive
 file_path = os.path.join(subfolder_path, f"Report_df_final_{end_rep}.csv")
@@ -457,8 +457,8 @@ total_energy_system_corr = pd.DataFrame()
 # })
 #
 total_energy_system_corr['Heating Plant (Normalized)'] = Report_df_final['HDD'] * baseline_corr_df['slope'][0] + baseline_corr_df['intercept'][0]
-# total_energy_system_corr['AHU19 (Normalized)'] = total_energy_system_corr['AHU19'] * baseline_corr_df['slope'][1] + baseline_corr_df['intercept'][1]
-# total_energy_system_corr['HRU (Normalized)'] = total_energy_system_corr['HRU'] * baseline_corr_df['slope'][2] + baseline_corr_df['intercept'][2]
+total_energy_system_corr['AHU19 (Normalized)'] = Report_df_final['DD'] * baseline_corr_df['slope'][1] + baseline_corr_df['intercept'][1]
+total_energy_system_corr['HRU (Normalized)'] = Report_df_final['temperature_2m'] * baseline_corr_df['slope'][2] + baseline_corr_df['intercept'][2]
 # total_energy_system_corr['Chilled Water System (Normalized)'] = total_energy_system_corr['Chilled Water System'] * baseline_corr_df['slope'][3] + baseline_corr_df['intercept'][3]
 
 #This outputs the necessary information for the reporting
