@@ -17,10 +17,10 @@ import math
 import numpy as np
 from datetime import datetime
 
-#START AND END DATES - EDIT THESE TO GET THE TIME FRAME YOU WANT TO LOOK AT
+#Todo: START AND END DATES - EDIT THESE TO GET THE TIME FRAME YOU WANT TO LOOK AT
 
-start = '2025-04-20' #YYYY-MM-DD
-end = '2025-04-30' #YYYY-MM-DD
+start = '2025-06-01' #YYYY-MM-DD
+end = '2025-06-27' #YYYY-MM-DD
 
 #Ace Stuff
 env_filename = 'api_keys.yml'
@@ -53,7 +53,10 @@ fr'/cxa_main_st_landing/2404:7-240407/analogOutput/4/timeseries?start_time={star
 fr'/cxa_main_st_landing/2404:3-240403/analogOutput/5/timeseries?start_time={start}&end_time={end}', #Exhaust fan 1 VFD speed
 fr'/cxa_main_st_landing/2404:3-240403/analogOutput/6/timeseries?start_time={start}&end_time={end}', #Exhaust fan 2 VFD speed
 fr'/cxa_main_st_landing/2404:3-240403/analogOutput/2/timeseries?start_time={start}&end_time={end}', #Heat Recovery Wheel VFD
-fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}'] #Heat Recovery Wheel Status
+fr'/cxa_main_st_landing/2404:3-240403/binaryInput/6/timeseries?start_time={start}&end_time={end}',
+fr'/cxa_main_st_landing/2404:9-240409/analogOutput/3/timeseries?start_time={start}&end_time={end}',
+fr'/cxa_main_st_landing/2404:10-240410/analogOutput/8/timeseries?start_time={start}&end_time={end}'
+] #Boiler 1% signal] #Heat Recovery Wheel Status
 
 #Ace Data descriptions
 headers = ['Pump 4a VFD Output',
@@ -63,7 +66,9 @@ headers = ['Pump 4a VFD Output',
          'AHU19 Exhaust fan 1 VFD speed',
          'AHU19 Exhaust fan 2 VFD speed',
          'AHU19 Heat Recovery Wheel VFD',
-         'AHU19 Heat Recovery Wheel Status'
+         'AHU19 Heat Recovery Wheel Status',
+         'Boiler 1% signal',
+         'HRU supply fan VFD output'
 ]
 
 #For each path for AceIoT data (listed above) and the description, get the data and put the data in the data frame with header listed above
@@ -93,5 +98,5 @@ with open(env_filepath, 'r') as file:
 
 #Export the data for troubleshooting
 main_folder = r"F:\PROJECTS\1715 Main Street Landing EMIS Pilot\data"
-ACE_data_file_path = os.path.join(main_folder, f'ACE_Data_5min_{end}.csv')
+ACE_data_file_path = os.path.join(main_folder, f'ACE_Data_Check_5min_{end}.csv')
 ACE_data.to_csv(ACE_data_file_path)

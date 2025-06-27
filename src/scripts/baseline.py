@@ -428,9 +428,42 @@ Baseline_df['DateTime'] = pd.to_datetime(Baseline_df['DateTime'], errors='coerce
 Baseline_df.set_index('DateTime', inplace=True)
 Baseline_df.index = pd.to_datetime(Baseline_df.index, errors='coerce', utc=True).tz_convert('America/New_York')
 Baseline_df = Baseline_df.resample('D').mean()
+Baseline_df['month'] = Baseline_df.index.month
+Baseline_df['hour'] = Baseline_df.index.hour
+Baseline_df['is_weekend'] = Baseline_df.index.weekday >= 5  # Saturday (5) and Sunday (6) are weekends
+Baseline_df['day_type'] = Baseline_df['is_weekend'].map({True: 'Weekend', False: 'Weekday'})
+
+#PLOT TEMPERATURE DEPENDENCE OF AHU and HRU DATA (this color-codes by weekday and weekend)
+#AHU
+fig, ax = plt.subplots(figsize=(10, 6))
+# Plot Weekdays
+weekday_data_AHU = Baseline_df[Baseline_df['day_type'] == 'Weekday']
+ax.scatter(weekday_data_AHU['temperature_2m'], weekday_data_AHU['AHU 19 Total kW (Correlated)'], color='blue', label='Weekday', alpha=0.7)
+# Plot Weekends
+weekend_data_AHU = Baseline_df[Baseline_df['day_type'] == 'Weekend']
+ax.scatter(weekend_data_AHU['temperature_2m'], weekend_data_AHU['AHU 19 Total kW (Correlated)'], color='orange', label='Weekend', alpha=0.7)
+plt.xlabel('Average Outdoor Temperature')
+plt.ylabel('AHU Daily Demand (kW)')
+plt.legend(loc='upper right', bbox_to_anchor=(1, 1))
+plt.show()
+
+#HRU
+fig, ax = plt.subplots(figsize=(10, 6))
+# Plot Weekdays
+weekday_data_HRU = Baseline_df[Baseline_df['day_type'] == 'Weekday']
+ax.scatter(weekday_data_HRU['temperature_2m'], weekday_data_HRU['HRU Total kW (Correlated)'], color='blue', label='Weekday', alpha=0.7)
+# Plot Weekends
+weekend_data_HRU = Baseline_df[Baseline_df['day_type'] == 'Weekend']
+ax.scatter(weekend_data_HRU['temperature_2m'], weekend_data_HRU['HRU Total kW (Correlated)'], color='orange', label='Weekend', alpha=0.7)
+plt.xlabel('Average Outdoor Temperature')
+plt.ylabel('HRU Daily Demand (kW)')
+plt.legend(loc='upper right', bbox_to_anchor=(1, 1))
+plt.show()
+
+
 # Baseline_vent_daily = Baseline_vent_hourly.resample('D').mean()
 # Baseline_cooling_daily = Baseline_cooling_hourly.resample('D').mean()
-Baseline_df.to_csv('Baseline_df.csv') #Uncomment for troubleshooting
+#Baseline_df.to_csv('Baseline_df.csv') #Uncomment for troubleshooting
 Baseline_df['Ventilation_kW'] = Baseline_df['AHU 19 Total kW (Correlated)'] + Baseline_df['HRU Total kW (Correlated)']
 
 ##Plotting to determine balance point
@@ -509,7 +542,7 @@ balance_point_CDD = 75 #Todo update based on baseline data
 #
 # Baseline_heating_daily['Total DD'] = Baseline_heating_daily[['HDD','CDD']].sum(axis=1, min_count=1)
 
-#Fun methods figure
+## Fun methods figure
 plt.scatter(Baseline_df['HDD'],Baseline_df['Total Heating Plant Energy Consumption (MMBtu)'])
 plt.xlabel('HDD')
 plt.ylabel('Heating System Energy Usage (MMbtu)')
@@ -540,7 +573,7 @@ plt.close()
 # Baseline_df_daily.to_csv('Baseline_heating_daily.csv')
 
 ##Now to fit regression equations for normalization
-'''Heating and Cooling Models are against HDD and CDD; AHU model is against DD and HRU models are against temp'''
+'''Heating and Cooling Models are against HDD and CDD; AHU model is against DD (HDD+CDD) and HRU model is against temp'''
 
 # Fitting the models
 Heating_model = LinearRegression().fit(
